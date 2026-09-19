@@ -1,8 +1,9 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `0795459` + review — **đã push**
-**Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **34/34 PASS**, ổn định qua 3 lần chạy
+**Commit cuối:** `e99ae9e` — **CHƯA PUSH** (xem C-01 bên dưới)
+**Đã push tới:** `7191248`
+**Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **58/58 PASS**, ổn định qua 3 lần chạy
 
 ---
 
@@ -22,22 +23,29 @@ Tiến độ: **5/19 task tính năng & refactor**. Suite 26/26 PASS.
 
 ---
 
-## Bước kế tiếp — plan 06 (content / media / settings)
+## Vì sao `e99ae9e` chưa push
 
-**`docs/superpowers/plans/2026-09-19-06-content-media-settings.md`**
+Plan 06 làm tốt phần khó (lưu file chống traversal + chống stored XSS), nhưng review ra hai lỗi
+MAJOR — chi tiết trong `docs/reviews/2026-09-20-code-review-plan-06.md`:
 
-**Plan 06 CẦN RÀ LẠI TRƯỚC KHI IMPLEMENT.** Các khối code trong file vẫn còn dạng
-`package com.portfolio.platform.content;` từ trước khi có spec 5.1 — đường dẫn trong mục "Files"
-đã sửa nhưng code block thì chưa. Plan 05 khi rà lại đã lòi ra 6 lỗi ngoài chuyện package; plan 06
-nhiều khả năng cũng vậy, nên đừng giao thẳng.
+- **C-01** — upload bị từ chối trả **500** và ghi một dòng `system_error_logs`. Đã kiểm chứng
+  bằng probe chạy thật: `PROBE_STATUS=500`, `PROBE_ERRORLOG_DELTA=1`. Người có role EDITOR bơm
+  được bảng đó tuỳ ý. Cùng dạng với R-01 (404→500) đã vá ở plan 04b — khuôn mẫu đang lặp: thêm
+  exception mới mà quên handler, catch-all nuốt hết.
+- **C-02** — `store_withSpoofedContentType_usesSniffedType` không canh điều tên nó hứa. Đổi
+  `setMimeType(detectedMimeType)` thành `setMimeType(file.getContentType())` mà suite **vẫn
+  xanh**. Ca chưa phủ: PNG thật khai `Content-Type: text/html`.
 
-Ba việc phải gộp vào plan 06:
+---
 
-| Việc | Vì sao |
-|---|---|
-| T-01 — xoá overload `create(form, Long)` chết trong `TemplateService` | `TemplateService` là khuôn plan 06–10 sẽ sao chép; và `create(form, null)` hiện không biên dịch được vì nhập nhằng |
-| T-04 — tạo **một** `CacheConfig` với TTL tường minh | Plan 06 thêm cache thứ hai; để mỗi plan tự nghĩ TTL là hỏng |
-| Rà toàn bộ code block của plan 06 về spec 5.1 | Như plan 05 |
+## Bước kế tiếp — plan 07 (lead + notification)
+
+**`docs/superpowers/plans/2026-09-19-07-lead-notification.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
+Code block vẫn còn `package com.portfolio.platform.lead;` từ trước spec 5.1. Plan 05 rà ra 6 lỗi,
+plan 06 rà ra 9 lỗi (2 lỗ hổng bảo mật). Đừng giao thẳng.
+
+Task 1 của plan 07 phải gánh ba việc mang sang từ review plan 06: C-01 (handler 400 cho lỗi
+upload, kèm test tầng controller), C-02 (ca PNG thật khai sai type), C-03 (`readNBytes(12)`).
 
 ---
 
@@ -66,6 +74,10 @@ Ba việc phải gộp vào plan 06:
 | A-04 (p04b) | INFO | `LayerDependencyTest` mù với tham chiếu fully-qualified | ArchUnit nếu dự án chịu thêm dependency |
 | A-05 (p04b) | INFO | `RotationDto` mang entity `User` nên `dto` phụ thuộc `model` | Cân nhắc khi chạm lần sau |
 | **T-02 (p05)** | MINOR | `view_count` có trong schema, entity và `TemplateDto` nhưng không code nào ghi — FE plan 12 sẽ vẽ số 0 vĩnh viễn | **Plan 08 phải quyết**: wire hoặc bỏ khỏi DTO |
+| **C-01 (p06)** | MAJOR | Upload bị từ chối → 500 + ghi `system_error_logs`; EDITOR bơm được bảng | plan 07 task 1 |
+| **C-02 (p06)** | MAJOR | Test sniffed-type không canh giá trị `mime_type` lưu xuống | plan 07 task 1 |
+| C-03 (p06) | MINOR | `in.read(header)` có thể đọc thiếu → WEBP hợp lệ bị từ chối | plan 07 task 1 |
+| C-04 (p06) | MINOR | `media.file_name` là tên do người gửi đặt, trả ra `MediaDto` | Plan 14 phải escape |
 | T-03 (p05) | INFO | Handler 404 trả `ex.getMessage()`; chỉ an toàn vì exception là của ta | Ghi nhận |
 | T-05 (p05) | INFO | `config` và `filter` miễn trắng khỏi allow-list | Siết lại nếu `config/` phình |
 | R-03 (p04) | MINOR | Mỗi audit row tốn thêm một SELECT `users` | Hoãn; cân nhắc nhét `userId` vào JWT claim |

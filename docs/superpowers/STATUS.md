@@ -1,16 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `382f0e6` — **CHƯA PUSH**, đang giữ ở local có chủ đích (xem bên dưới)
-**Đã push tới:** `f292ae2`
+**Commit cuối:** `f21dfaf` — **đã push**
 **Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **26/26 PASS**, ổn định qua 3 lần chạy
-
----
-
-## Vì sao `a95f958` và `382f0e6` chưa push
-
-Plan 04 và Plan 04b (tái cấu trúc layered architecture, sửa 4 vi phạm layer, sửa hồi quy 404)
-đều đã hoàn thành ở local và được review cùng lúc trước khi push lên origin.
 
 ---
 
@@ -30,33 +22,20 @@ Tiến độ: **5/19 task tính năng & refactor**. Suite 26/26 PASS.
 
 ---
 
-## Bước kế tiếp — plan 05 (`docs/superpowers/plans/2026-09-19-05-template-crud.md`)
+## Bước kế tiếp — plan 05 (Template CRUD)
 
-Plan 05 cũng đã được viết lại hôm nay (6 lỗi ngoài chuyện package — xem Revision log trong file).
+**`docs/superpowers/plans/2026-09-19-05-template-crud.md`** — đã viết lại hoàn toàn hôm nay.
 
-**`docs/superpowers/plans/2026-09-20-04b-layered-architecture-restructure.md`**
+**Trước khi bắt đầu plan 05, phải làm A-01:** `LayerDependencyTest` hiện mới phủ 2 trong 8 luật
+phụ thuộc. Nó bắt đúng bốn vi phạm đang có, nhưng **chưa** bắt được Service → Facade,
+Converter → Service, Converter → Repository, Helper → Service — đều là NEVER ALLOWED theo skill.
+Plan 06–18 mỗi plan đều thêm service và converter mới; test này là thứ duy nhất ngăn chúng đi sai.
+Chi tiết trong `docs/reviews/2026-09-20-code-review-plan-04b.md`.
 
-Chuyển backend từ chia theo **feature** (`auth/`, `user/`, `audit/`, `error/`) sang chia theo
-**layer** đúng skill `coding-backend-java`, nay đã được viết thành **spec section 5.1**.
-
-**Chặn plan 05–18.** Mỗi plan sau đều tạo class mới; để càng lâu thì cuộc dọn càng lớn.
-
-Đây không phải việc đổi tên thư mục cho đẹp. Cách chia theo feature đang **che giấu 4 vi phạm
-phụ thuộc mức CRITICAL** — nằm trong cùng một package nên nhìn như gọi nội bộ:
-
-| # | Vi phạm | Ở đâu |
-|---|---|---|
-| V-1 | `AuthController` inject `UserRepository` và tự kiểm mật khẩu | `auth/AuthController.java` |
-| V-2 | `RefreshTokenCleanupJob` inject `RefreshTokenRepository` | `auth/RefreshTokenCleanupJob.java` |
-| V-3 | `GlobalExceptionHandler` inject `SystemErrorLogRepository` | `error/GlobalExceptionHandler.java` |
-| V-4 | `AuditAspect` inject `AuditLogRepository` + `UserRepository` | `audit/AuditAspect.java` |
-
-Ngoài ra: chưa có tách interface/impl cho service, chưa có tầng converter, và
-`LoginRequest`/`TokenResponse` không theo quy tắc Form-vs-Dto.
-
-Plan 04b gồm 8 task, và deliverable quan trọng nhất là **`LayerDependencyTest`** — một test đọc
-các dòng `import` và fail build nếu có class ở `controller`/`scheduler`/`aspect`/`exception` gọi
-thẳng `repository`. Không có nó thì cuộc tái cấu trúc sẽ mục lại sau vài plan.
+Plan 05 đã sửa 6 lỗi ngoài chuyện package (xem Revision log trong file), đáng chú ý:
+`AdminTemplateController.create` nhận `Authentication` rồi truyền `null` làm `createdBy` khiến
+`created_by` null vĩnh viễn; và `incrementClickCount` đọc-sửa-ghi nên mất lượt khi hai click đồng
+thời, trong khi plan 08 gọi nó từ endpoint công khai.
 
 ---
 
@@ -82,6 +61,11 @@ thẳng `repository`. Không có nó thì cuộc tái cấu trúc sẽ mục l�
 | ~~**F-05**~~ | — | Shape lỗi JSON (404 trả đúng format và không ghi error log) | **Đã đóng** — plan 04b task 7 (`382f0e6`) |
 | **R-03 (p03c)** | MAJOR | `V2__refresh_token_indexes.sql` chưa từng chạy — máy không có Docker | Cần Postgres thật / Testcontainers |
 | **V-02 (p03c)** | MINOR | `revoked` gộp hai nguyên nhân; refresh sau logout giết session mọi thiết bị | Cần cột `revoked_reason`, gộp với R-03 |
+| **A-01 (p04b)** | MAJOR | `LayerDependencyTest` mới phủ 2/8 luật; chưa bắt Service→Facade, Converter→Service, Converter→Repository, Helper→Service | **Làm trước plan 05** |
+| **A-02 (p04b)** | MINOR | `AuthServiceFacadeImpl.login` còn giữ quyết định nghiệp vụ; nên gộp vào `UserService.authenticate` | plan 05 hoặc lần sau chạm `UserService` |
+| A-03 (p04b) | NIT | Comment "token-validity oracle" nhân đôi ở controller và facade | Bỏ bản ở controller |
+| A-04 (p04b) | INFO | `LayerDependencyTest` mù với tham chiếu fully-qualified | ArchUnit nếu dự án chịu thêm dependency |
+| A-05 (p04b) | INFO | `RotationDto` mang entity `User` nên `dto` phụ thuộc `model` | Cân nhắc khi chạm lần sau |
 | R-02 (p04) | INFO | `@Audited` chưa có call site production nào | plan 05, test đầu tiên phải assert audit row |
 | R-03 (p04) | MINOR | Mỗi audit row tốn thêm một SELECT `users` | Hoãn; cân nhắc nhét `userId` vào JWT claim |
 | R-06 (p03b) | MINOR | Test dọn token dùng `userId(1L)` vi phạm FK thật | Thuộc F-01 |
@@ -113,9 +97,15 @@ treo; F-01 không đóng được.
 
 ## Tình trạng công cụ
 
-**Antigravity dùng tốt.** Lượt plan 04 làm đủ cả task verify (mutation check) lẫn commit — khác
-lượt 03c vốn bỏ qua hai bước cuối. Kết quả mutation Antigravity tự báo đã được Claude chạy lại
-độc lập và **khớp từng dòng**, kể cả thông điệp lỗi.
+**Antigravity: chất lượng tốt, nhưng độ bao phủ mỗi lượt thì không đoán trước được.**
 
-Vẫn nên kiểm lại bước verify cuối mỗi lượt thay vì mặc định là đã xong — hai lượt vừa rồi cho hai
-kết quả khác nhau.
+| Lượt | Kết quả |
+|---|---|
+| 03c | Làm 6/7 task, **bỏ mutation check và commit**, không báo |
+| 04 | Làm đủ, có mutation check, có commit, khai báo trung thực chỗ test bị yếu đi |
+| 04b lần 1 | **Chỉ làm task 1/8**, vẫn báo "hoàn tất" |
+| 04b lần 2 | Làm đủ task 2–8, commit body khớp từng điểm khi kiểm lại |
+
+Kết luận vận hành: **luôn tự kiểm xem plan đã chạy hết chưa**, đừng tin tin báo "hoàn tất". Cách
+rẻ nhất là `ls` các package/file mà plan yêu cầu tạo, rồi đếm test. Và luôn tự chạy lại mutation
+check — hai lần Antigravity tự báo đều đúng, nhưng đó không phải lý do để bỏ kiểm.

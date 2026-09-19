@@ -38,6 +38,20 @@ public class UserServiceImpl implements UserService {
         return passwordEncoder.matches(rawPassword, user.getPasswordHash());
     }
 
+    // Login returns the same error for unknown-user and wrong-password (no enumeration oracle).
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<User> authenticate(String username, String password) {
+        return findActiveByUsername(username)
+                .filter(user -> verifyPassword(user, password));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Long> findIdByUsername(String username) {
+        return userRepository.findByUsername(username).map(User::getId);
+    }
+
     // JPQL bulk updates bypass JPA lifecycle callbacks (@PreUpdate), ensuring
     // last_login_at is stamped without updating updated_at.
     @Override

@@ -31,8 +31,6 @@ public class AuthController {
         return ResponseEntity.ok(authServiceFacade.refresh(request));
     }
 
-    // Always 204: telling the caller whether a row matched would turn this into a
-    // token-validity oracle.
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenForm request) {
         authServiceFacade.logout(request);

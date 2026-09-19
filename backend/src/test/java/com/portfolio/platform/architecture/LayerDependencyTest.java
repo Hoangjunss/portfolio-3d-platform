@@ -8,9 +8,31 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LayerDependencyTest {
+
+    private static final Set<String> EXEMPT_LAYERS = Set.of("config", "filter", "root");
+
+    private static final Map<String, Set<String>> ALLOWED_DEPENDENCIES = Map.ofEntries(
+            entry("controller", Set.of("facade", "service", "dto", "form", "enums", "exception")),
+            entry("scheduler", Set.of("facade", "service")),
+            entry("aspect", Set.of("service", "annotation")),
+            entry("exception", Set.of("service", "dto")),
+            entry("facade", Set.of("service", "converter", "helper", "util", "dto", "form", "model", "enums", "exception")),
+            entry("service", Set.of("repository", "converter", "helper", "util", "dto", "model", "enums", "exception")),
+            entry("converter", Set.of("util", "helper", "dto", "form", "model", "enums")),
+            entry("helper", Set.of("repository", "model")),
+            entry("repository", Set.of("model", "enums")),
+            entry("model", Set.of("enums")),
+            entry("dto", Set.of("model")),
+            entry("form", Set.of()),
+            entry("enums", Set.of()),
+            entry("annotation", Set.of()),
+            entry("constant", Set.of()),
+            entry("util", Set.of())
+    );
 
     private static Path findSourceRoot() {
         Path p = Path.of("src/main/java/com/portfolio/platform");
@@ -53,22 +75,25 @@ class LayerDependencyTest {
 
     @Test
     void layerDependenciesMustFollowRules() throws IOException {
-        Set<String> noRepoLayers = Set.of("controller", "scheduler", "aspect", "exception");
         List<String> violations = new ArrayList<>();
 
         for (ClassFile cf : scanClasses()) {
-            if (noRepoLayers.contains(cf.layer())) {
-                for (String imp : cf.imports()) {
-                    if (imp.startsWith("com.portfolio.platform.repository.")) {
-                        violations.add(cf.relativePath() + " imports " + imp);
-                    }
-                }
+            if (EXEMPT_LAYERS.contains(cf.layer())) {
+                continue;
             }
-            if ("controller".equals(cf.layer())) {
-                for (String imp : cf.imports()) {
-                    if (imp.startsWith("com.portfolio.platform.converter.")) {
-                        violations.add(cf.relativePath() + " imports " + imp);
-                    }
+
+            Set<String> allowed = ALLOWED_DEPENDENCIES.get(cf.layer());
+
+            for (String imp : cf.imports()) {
+                String sub = imp.substring("com.portfolio.platform.".length());
+                String targetLayer = sub.contains(".") ? sub.substring(0, sub.indexOf('.')) : sub;
+
+                if (EXEMPT_LAYERS.contains(targetLayer) || targetLayer.equals(cf.layer())) {
+                    continue;
+                }
+
+                if (allowed == null || !allowed.contains(targetLayer)) {
+                    violations.add(cf.relativePath() + " imports " + imp);
                 }
             }
         }

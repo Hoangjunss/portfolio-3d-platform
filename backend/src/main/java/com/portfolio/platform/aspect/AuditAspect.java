@@ -1,7 +1,6 @@
 package com.portfolio.platform.aspect;
 
 import com.portfolio.platform.annotation.Audited;
-import com.portfolio.platform.model.User;
 import com.portfolio.platform.service.AuditLogService;
 import com.portfolio.platform.service.UserService;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -44,10 +43,8 @@ public class AuditAspect {
         Long userId = null;
         if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
             // JwtAuthFilter sets the principal to the username String, not a user ID;
-            // look up the User by username to resolve the primary key.
-            userId = userService.findByUsername(auth.getName())
-                    .map(User::getId)
-                    .orElse(null);
+            // look up the user ID by username to resolve the primary key.
+            userId = userService.findIdByUsername(auth.getName()).orElse(null);
         }
 
         auditLogService.record(audited.entityType(), audited.action(), entityId, userId, ipAddress);

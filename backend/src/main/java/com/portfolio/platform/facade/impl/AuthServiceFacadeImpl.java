@@ -31,9 +31,7 @@ public class AuthServiceFacadeImpl implements AuthServiceFacade {
 
     @Override
     public TokenDto login(LoginForm form) {
-        // Login returns the same error for unknown-user and wrong-password (no enumeration oracle).
-        User user = userService.findActiveByUsername(form.username())
-                .filter(u -> userService.verifyPassword(u, form.password()))
+        User user = userService.authenticate(form.username(), form.password())
                 .orElseThrow(InvalidCredentialsException::new);
 
         userService.touchLastLoginAt(user.getId());

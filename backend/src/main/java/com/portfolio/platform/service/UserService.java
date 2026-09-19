@@ -12,5 +12,9 @@ public interface UserService {
 
     boolean verifyPassword(User user, String rawPassword);
 
+    Optional<User> authenticate(String username, String password);
+
+    Optional<Long> findIdByUsername(String username);
+
     void touchLastLoginAt(Long userId);
 }

@@ -11,6 +11,12 @@ public class ResourceNotFoundException extends RuntimeException {
         this.entityId = entityId;
     }
 
+    public ResourceNotFoundException(String entityType, String key) {
+        super(entityType + " not found with key: " + key);
+        this.entityType = entityType;
+        this.entityId = null;
+    }
+
     public String getEntityType() {
         return entityType;
     }

@@ -63,18 +63,6 @@ public class TemplateServiceImpl implements TemplateService {
     }
 
     @Override
-    @Audited(entityType = "Template", action = "CREATE")
-    @CacheEvict(value = "public-templates", allEntries = true)
-    @Transactional
-    public Long create(TemplateUpsertForm form, Long createdBy) {
-        Template template = new Template();
-        templateConverter.applyForm(template, form);
-        template.setCreatedBy(createdBy);
-        Template saved = templateRepository.save(template);
-        return saved.getId();
-    }
-
-    @Override
     @Audited(entityType = "Template", action = "UPDATE")
     @CacheEvict(value = "public-templates", allEntries = true)
     @Transactional

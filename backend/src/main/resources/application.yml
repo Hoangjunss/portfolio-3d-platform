@@ -26,3 +26,13 @@ jwt:
   access-secret: ${JWT_ACCESS_SECRET:dev-only-access-secret-change-me-32bytes}
   access-ttl-minutes: 15
   refresh-ttl-days: 7
+
+media:
+  upload-dir: ${MEDIA_UPLOAD_DIR:/data/media}
+  max-size-bytes: 10485760
+  allowed-content-types:
+    - image/png
+    - image/jpeg
+    - image/webp
+    - image/gif
+

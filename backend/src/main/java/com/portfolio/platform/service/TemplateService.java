@@ -14,8 +14,6 @@ public interface TemplateService {
     // Mutating methods return the entity Long ID so AuditAspect can populate audit_logs.entity_id.
     Long create(TemplateUpsertForm form, String username);
 
-    Long create(TemplateUpsertForm form, Long createdBy);
-
     Long update(Long id, TemplateUpsertForm form);
 
     Long softDelete(Long id);

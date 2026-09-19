@@ -76,6 +76,7 @@ Ba việc phải gộp vào plan 06:
 | F-01 | — | Migration và entity chưa từng được đối chiếu | Cần Docker. **Phải đóng trước plan 15** |
 | F-08 | — | `TIMESTAMP` vs `Instant` lệch timezone | Chốt trước deploy thật |
 | F-09 | — | JWT sống thêm tối đa 15 phút sau khi deactivate | Chấp nhận theo spec |
+| **M-01 (p06)** | INFO | Đường dẫn `/media/<name>` chưa có endpoint/static resource mapping | Plan 16 (nginx) quản lý phục vụ path này; phải phục vụ với `Content-Disposition: attachment` hoặc từ origin riêng nếu allow-list mở rộng |
 
 ---
 

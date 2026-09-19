@@ -24,6 +24,8 @@ plus the structural findings recorded in this plan.
 
 **Depends on:** plan 04 (commit `a95f958`), which must be in the tree before this starts.
 
+**Progress:** task 1 DONE in commit `1d3087f` (25/25 PASS). Tasks 2-8 outstanding.
+
 **Blocks:** plans 05–18. Every one of them writes new classes, and each additional plan landed on
 the old layout makes this move bigger. **Do this before plan 05.**
 
@@ -76,7 +78,7 @@ There is also no Service interface/impl split anywhere, no Converter layer, and 
 **Why first:** leaf packages (`model`, `enums`, `dto`, `form`) have no outgoing dependencies, so
 moving them cannot break a layer rule — only imports.
 
-- [ ] **Step 1: Move entities to `model/`, enum to `enums/`**
+- [x] **Step 1: Move entities to `model/`, enum to `enums/`**
 
 Use `git mv` for every move in this plan so history follows the file.
 
@@ -91,7 +93,7 @@ Use `git mv` for every move in this plan so history follows the file.
 Entities keep **no suffix** (spec 5.1). Update the `package` line in each file and fix imports
 across the tree.
 
-- [ ] **Step 2: Split the request/response records into `form/` and `dto/`**
+- [x] **Step 2: Split the request/response records into `form/` and `dto/`**
 
 Ownership rule decides, not the direction of travel:
 
@@ -107,12 +109,12 @@ Rename the types as well as the files. Keep the JSON field names identical — `
 `AuthControllerTest`'s `objectMapper.readValue` both depend on it. Renaming a Java type is fine;
 renaming a JSON field is not.
 
-- [ ] **Step 3: Move `RefreshTokenService.Rotation` out of the service**
+- [x] **Step 3: Move `RefreshTokenService.Rotation` out of the service**
 
 It is inter-layer data, so it is a Dto: `dto/RotationDto.java`, fields unchanged
 (`User user`, `String rawRefreshToken`).
 
-- [ ] **Step 4: Compile and run the suite**
+- [x] **Step 4: Compile and run the suite**
 
 ```bash
 export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"

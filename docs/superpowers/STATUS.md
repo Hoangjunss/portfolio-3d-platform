@@ -1,7 +1,7 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `a95f958` — **CHƯA PUSH**, đang giữ ở local có chủ đích (xem bên dưới)
+**Commit cuối:** `1d3087f` — **CHƯA PUSH**, đang giữ ở local có chủ đích (xem bên dưới)
 **Đã push tới:** `f292ae2`
 **Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **25/25 PASS**, ổn định qua 3 lần chạy
 
@@ -32,7 +32,14 @@ Tiến độ: **4/18 task tính năng**. Chưa có luồng nào dùng được �
 
 ---
 
-## Bước kế tiếp — plan 04b, ưu tiên cao nhất
+## Bước kế tiếp — plan 04b **tasks 2-8**, ưu tiên cao nhất
+
+**Task 1 đã xong** (`1d3087f`): các class lá đã về `model/`, `enums/`, `form/`, `dto/`, suite 25/25.
+Tasks 2-8 chưa làm — chưa có `controller/`, `service/`, `repository/`, `facade/`, `converter/`,
+`filter/`, `scheduler/`, `aspect/`, `annotation/`, `exception/`; chưa có `LayerDependencyTest`;
+chưa vá lỗi 404→500.
+
+Plan 05 cũng đã được viết lại hôm nay (6 lỗi ngoài chuyện package — xem Revision log trong file).
 
 **`docs/superpowers/plans/2026-09-20-04b-layered-architecture-restructure.md`**
 

@@ -24,7 +24,7 @@ plus the structural findings recorded in this plan.
 
 **Depends on:** plan 04 (commit `a95f958`), which must be in the tree before this starts.
 
-**Progress:** task 1 DONE in commit `1d3087f` (25/25 PASS). Tasks 2-8 outstanding.
+**Progress:** Tasks 1-8 DONE (commit 382f0e6, 26/26 PASS).
 
 **Blocks:** plans 05–18. Every one of them writes new classes, and each additional plan landed on
 the old layout makes this move bigger. **Do this before plan 05.**
@@ -126,7 +126,7 @@ Expected: 25/25 PASS. Nothing behavioural has changed yet.
 
 ### Task 2: Move repositories, filter, scheduler, aspect, annotation, advice
 
-- [ ] **Step 1: Move the remaining classes to their layer package**
+- [x] **Step 1: Move the remaining classes to their layer package**
 
 | From | To |
 |---|---|
@@ -144,19 +144,19 @@ Expected: 25/25 PASS. Nothing behavioural has changed yet.
 
 `config/SecurityConfig.java` already sits correctly.
 
-- [ ] **Step 2: Delete the now-empty `auth/`, `user/`, `audit/`, `error/` packages**
+- [x] **Step 2: Delete the now-empty `auth/`, `user/`, `audit/`, `error/` packages**
 
 If any of them still holds a file, that file was missed — go back to the table rather than
 inventing a home for it.
 
-- [ ] **Step 3: Move the test classes to mirror the new layout**
+- [x] **Step 3: Move the test classes to mirror the new layout**
 
 `AuthControllerTest` → `controller/`, `JwtServiceTest` → `service/`,
 `RefreshTokenCleanupJobTest` → `scheduler/`, `UserRepositoryTest` → `repository/`,
 `AuditAspectTest` → `aspect/`, `GlobalExceptionHandlerTest` → `exception/`.
 `SecurityConfigTest` and `ErrorDispatchSecurityTest` stay in `config/`.
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Expected: 25/25 PASS. Still no behaviour change — the four violations are now *visible* (a
 Controller importing `repository.UserRepository`) but not yet fixed.
@@ -168,7 +168,7 @@ Controller importing `repository.UserRepository`) but not yet fixed.
 **Why:** spec 5.1 requires `service/*Service` + `service/impl/*ServiceImpl`. Right now
 `JwtService` and `RefreshTokenService` are bare concrete classes.
 
-- [ ] **Step 1: Extract interfaces**
+- [x] **Step 1: Extract interfaces**
 
 | Interface (`service/`) | Impl (`service/impl/`) | Methods |
 |---|---|---|
@@ -184,7 +184,7 @@ type, not inter-layer transfer data.
 `purgeExpired()` is new: it is what lets task 4 remove the scheduler's repository dependency. Move
 the `Instant.now()` cutoff decision into the service; the scheduler should not compute it.
 
-- [ ] **Step 2: Keep the `@Transactional` boundaries exactly where they are**
+- [x] **Step 2: Keep the `@Transactional` boundaries exactly where they are**
 
 `rotate()` and `revoke()` are already `@Transactional` — the annotation moves to the **impl**
 method, not the interface. Read flows that only read get `@Transactional(readOnly = true)`.
@@ -192,7 +192,7 @@ method, not the interface. Read flows that only read get `@Transactional(readOnl
 Do not widen any boundary while moving it. `rotate()`'s single transaction is what makes the
 is-active check and the revoke atomic (plan 03b task 2).
 
-- [ ] **Step 3: Run the suite**
+- [x] **Step 3: Run the suite**
 
 Expected: 25/25 PASS.
 
@@ -200,7 +200,7 @@ Expected: 25/25 PASS.
 
 ### Task 4: Fix V-2, V-3, V-4 — the three non-controller repository violations
 
-- [ ] **Step 1: Write the failing architecture test**
+- [x] **Step 1: Write the failing architecture test**
 
 Create `backend/src/test/java/com/portfolio/platform/architecture/LayerDependencyTest.java`.
 
@@ -225,13 +225,13 @@ from `com.portfolio.platform.repository`. That assertion fails on three files to
 This test is the point of the whole task: it is what stops plans 05–18 from quietly reintroducing
 the violation. Without it, this restructure decays.
 
-- [ ] **Step 2: Run it and confirm it fails, naming all three files**
+- [x] **Step 2: Run it and confirm it fails, naming all three files**
 
 Expected failure lists `scheduler/RefreshTokenCleanupJob`, `exception/GlobalExceptionHandler`,
 `aspect/AuditAspect`. If it names fewer, the walk is not reaching every file — fix the test before
 fixing the code.
 
-- [ ] **Step 3: Rewire the three classes**
+- [x] **Step 3: Rewire the three classes**
 
 - `RefreshTokenCleanupJob` injects `RefreshTokenService`, calls `purgeExpired()`. Keep the
   `@Scheduled(cron = "0 30 3 * * *")` and keep the comment about retaining revoked-but-unexpired
@@ -240,7 +240,7 @@ fixing the code.
   same value in the response body and the persisted row.
 - `AuditAspect` injects `AuditLogService` and `UserService`. The username→id lookup comment stays.
 
-- [ ] **Step 4: Run the architecture test, then the suite**
+- [x] **Step 4: Run the architecture test, then the suite**
 
 Expected: architecture test green, 25/25 + 1 = **26 PASS**.
 
@@ -259,17 +259,17 @@ Expected: architecture test green, 25/25 + 1 = **26 PASS**.
 which is exactly the case spec 5.1 says a Facade is for. Do not add a Facade anywhere else in this
 plan.
 
-- [ ] **Step 1: Extend the architecture test**
+- [x] **Step 1: Extend the architecture test**
 
 Add the assertion that no `controller` class imports `com.portfolio.platform.repository` or
 `com.portfolio.platform.converter`. Confirm it fails on `AuthController` today.
 
-- [ ] **Step 2: Create `InvalidCredentialsException`**
+- [x] **Step 2: Create `InvalidCredentialsException`**
 
 A typed domain exception extending `RuntimeException` (unchecked — Spring Boot convention per the
 skill's exception-handling criteria). Not a bare `RuntimeException`.
 
-- [ ] **Step 3: Move the login flow into `AuthServiceFacadeImpl`**
+- [x] **Step 3: Move the login flow into `AuthServiceFacadeImpl`**
 
 ```
 TokenDto login(LoginForm form)          // throws InvalidCredentialsException
@@ -287,7 +287,7 @@ Preserve both existing security properties, and keep their comments:
 - logout always succeeds whether or not a row matched (no token-validity oracle) — so `logout`
   returns `void` and never throws.
 
-- [ ] **Step 4: Reduce `AuthController` to delegation**
+- [x] **Step 4: Reduce `AuthController` to delegation**
 
 ```java
 @PostMapping("/login")
@@ -298,13 +298,13 @@ public ResponseEntity<TokenDto> login(@Valid @RequestBody LoginForm form) {
 
 Three methods, no `if`, no repository, no `ResponseEntity<?>`. `logout` keeps returning 204.
 
-- [ ] **Step 5: Handle the exception in the advice**
+- [x] **Step 5: Handle the exception in the advice**
 
 `@ExceptionHandler(InvalidCredentialsException.class)` → 401 with
 `ApiErrorDto("INVALID_CREDENTIALS", "Invalid credentials", null)` and **no** `system_error_logs`
 row. Same code and message both paths.
 
-- [ ] **Step 6: Run the suite**
+- [x] **Step 6: Run the suite**
 
 Expected: 26/26 PASS. `AuthControllerTest` should need **no assertion changes** — the wire contract
 is identical. If a test needs editing to pass, the refactor changed behaviour; find out why before
@@ -314,7 +314,7 @@ editing the test.
 
 ### Task 6: Add the Converter layer for the audit path
 
-- [ ] **Step 1: `converter/AuditLogConverter` + impl**
+- [x] **Step 1: `converter/AuditLogConverter` + impl**
 
 Builds an `AuditLog` from `(entityType, action, entityId, userId, ipAddress)`. Stateless, no
 repository, no business decisions — a pure shape transformation, called from `AuditLogServiceImpl`.
@@ -322,7 +322,7 @@ repository, no business decisions — a pure shape transformation, called from `
 This is small on purpose. The point is that plans 05–10, which all write audit rows, have a
 converter to follow instead of inventing entity-building inline in each service.
 
-- [ ] **Step 2: Run the suite**
+- [x] **Step 2: Run the suite**
 
 Expected: 26/26 PASS.
 
@@ -337,18 +337,18 @@ Two consequences: a client cannot tell a typo from a server fault, and **every 4
 so any crawler inflates the table without bound. The global constraint says nothing below 5xx may
 write one.
 
-- [ ] **Step 1: Rewrite the test to assert the correct behaviour**
+- [x] **Step 1: Rewrite the test to assert the correct behaviour**
 
 Rename `unmappedPublicEndpoint_returns500` back to `unmappedPublicEndpoint_returns404`. Assert
 status 404, body `code = NOT_FOUND`, **and** that `system_error_logs` count is unchanged. The
 third assertion is the one that matters — it is what stops the handler being "fixed" later by
 widening the catch-all again.
 
-- [ ] **Step 2: Run it and confirm it fails**
+- [x] **Step 2: Run it and confirm it fails**
 
 Expected: FAIL with 500.
 
-- [ ] **Step 3: Add the handler**
+- [x] **Step 3: Add the handler**
 
 `@ExceptionHandler(NoResourceFoundException.class)` (Spring Framework 6.1+,
 `org.springframework.web.servlet.resource.NoResourceFoundException`) → 404,
@@ -358,7 +358,7 @@ Check whether `NoHandlerFoundException` can also reach the advice in this config
 handler for it only if it can. Do not add a speculative handler for an exception this app cannot
 produce.
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Expected: 26/26 PASS.
 
@@ -366,7 +366,7 @@ Expected: 26/26 PASS.
 
 ### Task 8: Verify, then commit
 
-- [ ] **Step 1: Full suite, three consecutive runs**
+- [x] **Step 1: Full suite, three consecutive runs**
 
 ```bash
 export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"
@@ -375,14 +375,14 @@ for i in 1 2 3; do mvn -f backend/pom.xml test; done
 All three must report 26/26. Three runs because a restructure that changes bean wiring is exactly
 where order-dependent test state shows up.
 
-- [ ] **Step 2: Confirm every class landed in the right package**
+- [x] **Step 2: Confirm every class landed in the right package**
 
 ```bash
 find backend/src/main/java/com/portfolio/platform -name "*.java" | sort
 ```
 Compare against spec 5.1 by hand. No file may remain under `auth/`, `user/`, `audit/` or `error/`.
 
-- [ ] **Step 3: Confirm the moves are recorded as renames, not delete+add**
+- [x] **Step 3: Confirm the moves are recorded as renames, not delete+add**
 
 ```bash
 git add -A && git status --short
@@ -390,13 +390,13 @@ git add -A && git status --short
 Expect `R` entries. A `D` + `??` pair means `git mv` was not used and the file's history is lost —
 redo that move.
 
-- [ ] **Step 4: Mutation-check the architecture test**
+- [x] **Step 4: Mutation-check the architecture test**
 
 Temporarily make `AuthController` inject `UserRepository` again. `LayerDependencyTest` must go red
 and name that file. Restore. An architecture test that does not fail on a real violation is worse
 than none — it grants false confidence to every later plan.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A

@@ -10,3 +10,5 @@ spring:
         generate_statistics: true
   flyway:
     enabled: false
+  cache:
+    type: simple

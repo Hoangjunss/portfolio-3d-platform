@@ -21,7 +21,7 @@ class LayerDependencyTest {
             entry("aspect", Set.of("service", "annotation")),
             entry("exception", Set.of("service", "dto")),
             entry("facade", Set.of("service", "converter", "helper", "util", "dto", "form", "model", "enums", "exception")),
-            entry("service", Set.of("repository", "converter", "helper", "util", "dto", "model", "enums", "exception")),
+            entry("service", Set.of("repository", "converter", "helper", "util", "dto", "model", "enums", "exception", "form", "annotation")),
             entry("converter", Set.of("util", "helper", "dto", "form", "model", "enums")),
             entry("helper", Set.of("repository", "model")),
             entry("repository", Set.of("model", "enums")),

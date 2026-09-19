@@ -51,6 +51,13 @@ public class GlobalExceptionHandler {
                 .body(new ApiErrorDto("INVALID_CREDENTIALS", "Invalid credentials", null));
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiErrorDto> handleResourceNotFound(ResourceNotFoundException ex) {
+        // 404 is the caller's fault, not a system fault — no system_error_logs row.
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiErrorDto("NOT_FOUND", ex.getMessage(), null));
+    }
+
     @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
     public ResponseEntity<ApiErrorDto> handleNoResourceFound(org.springframework.web.servlet.resource.NoResourceFoundException ex) {
         // 404 is the caller's fault or unmapped route, not a system fault — no system_error_logs row.

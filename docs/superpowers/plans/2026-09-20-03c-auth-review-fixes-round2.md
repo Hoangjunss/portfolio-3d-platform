@@ -59,21 +59,21 @@ before any compose file hardcodes a profile.
 `ddl-auto: create-drop` and Flyway disabled. The app comes up green, logins appear to work, and
 all data is gone at the next restart. Nothing warns.
 
-- [ ] **Step 1: Move the file with git so history follows it**
+- [x] **Step 1: Move the file with git so history follows it**
 
 ```bash
 mkdir -p backend/src/test/resources
 git mv backend/src/main/resources/application-test.yml backend/src/test/resources/application-test.yml
 ```
 
-- [ ] **Step 2: Confirm the test suite still resolves the profile**
+- [x] **Step 2: Confirm the test suite still resolves the profile**
 
 Run: `export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11" && mvn -f backend/pom.xml test`
 Expected: still 16/16 PASS. `src/test/resources` is on the test classpath, so
 `@ActiveProfiles("test")` resolves exactly as before. If anything turns red here, the move was
 done wrong — do not "fix" it by putting the file back.
 
-- [ ] **Step 3: Confirm the file is no longer in the packaged jar**
+- [x] **Step 3: Confirm the file is no longer in the packaged jar**
 
 ```bash
 export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"
@@ -95,7 +95,7 @@ Expected: `ABSENT - correct`.
 `User`'s `@PreUpdate`, so `updated_at` tracks logins instead of profile edits. Plan 10 puts both
 columns side by side in the admin UI, where they would always read the same value.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `AuthControllerTest`, add `login_doesNotChangeUpdatedAt`:
 
@@ -111,12 +111,12 @@ The second assertion fails today. Clear the persistence context (or read in a fr
 before re-reading, otherwise the assertion may pass off a stale first-level-cache entity and
 prove nothing.
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [x] **Step 2: Run the test and confirm it fails**
 
 Run: `mvn -f backend/pom.xml test -Dtest=AuthControllerTest#login_doesNotChangeUpdatedAt`
 Expected: FAIL on the `updatedAt` assertion, with the observed value later than the captured one.
 
-- [ ] **Step 3: Add a bulk-update query that bypasses the callback**
+- [x] **Step 3: Add a bulk-update query that bypasses the callback**
 
 In `UserRepository`:
 
@@ -130,7 +130,7 @@ int touchLastLoginAt(@Param("id") Long id, @Param("now") Instant now);
 JPQL bulk updates do not run JPA lifecycle callbacks — that is exactly the property wanted here,
 and it is the non-obvious bit, so say so in a comment.
 
-- [ ] **Step 4: Use it from the controller**
+- [x] **Step 4: Use it from the controller**
 
 Replace `user.setLastLoginAt(...)` + `userRepository.save(user)` in `AuthController.login` with a
 `userRepository.touchLastLoginAt(user.getId(), Instant.now())` call. Keep it **after** the
@@ -139,7 +139,7 @@ password check — only a successful login may move the column, per `ac1808c`'s 
 The in-memory `user` object is now stale on `lastLoginAt`. It is used only to mint the access
 token, which does not read that field, so do not add a re-read just to keep it in sync.
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 Run: `mvn -f backend/pom.xml test`
 Expected: all green, including the pre-existing `login_withValidCredentials_recordsLastLoginAt`.
@@ -155,7 +155,7 @@ Expected: all green, including the pre-existing `login_withValidCredentials_reco
 the column has no index — a sequential scan on a table that is only pruned once a day. There is
 also no UNIQUE constraint, so nothing at the DB level stops two rows sharing a hash.
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 ```sql
 -- token_hash is the lookup key for every refresh and logout; UNIQUE additionally turns a hash
@@ -166,7 +166,7 @@ CREATE UNIQUE INDEX idx_refresh_tokens_token_hash ON refresh_tokens (token_hash)
 CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens (expires_at);
 ```
 
-- [ ] **Step 2: Verify the migration actually applies**
+- [ ] **Step 2: Verify the migration actually applies** — BLOCKED 2026-09-20: `docker: command not found` on this machine. Per this step's own instruction, left unchecked. See V-01 in `docs/reviews/2026-09-20-code-review-plan-03c.md`.
 
 The suite runs on H2 with Flyway **disabled**, so a green suite proves nothing about this file —
 this is finding F-01 and it is not solved here. Verify by hand against a real Postgres:
@@ -199,7 +199,7 @@ bulk — that annotation only affects `@Query`. Measured SQL: one `select ... wh
 followed by one `delete from refresh_tokens where id=?` per row. Under the `-Xmx350m` budget, a
 nightly job that materialises every expired token at once has no ceiling on its heap use.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Extend `RefreshTokenCleanupJobTest` with `purgeExpiredTokens_usesBulkDelete`. Assert on Hibernate
 statistics rather than on log output:
@@ -221,12 +221,12 @@ deleted nothing.
 Requires `spring.jpa.properties.hibernate.generate_statistics: true` in
 `application-test.yml` (now at `src/test/resources` after task 1).
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [x] **Step 2: Run the test and confirm it fails**
 
 Run: `mvn -f backend/pom.xml test -Dtest=RefreshTokenCleanupJobTest`
 Expected: FAIL — `entityDeleteCount` is 3, not 0.
 
-- [ ] **Step 3: Replace the derived delete with a bulk query**
+- [x] **Step 3: Replace the derived delete with a bulk query**
 
 In `RefreshTokenRepository`, drop `deleteByExpiresAtBefore` and add:
 
@@ -241,7 +241,7 @@ Update the call site in `RefreshTokenCleanupJob.purgeExpiredTokens()`. Keep the 
 about revoked-but-unexpired rows being retained on purpose — it explains why the predicate is
 `expiresAt` and not `revoked`, and R-04 depends on that retention.
 
-- [ ] **Step 4: Run the full suite**
+- [x] **Step 4: Run the full suite**
 
 Run: `mvn -f backend/pom.xml test`
 Expected: all green, and `purgeExpiredTokens_deletesOnlyExpiredRows` still passes unchanged.
@@ -260,7 +260,7 @@ token being presented at all means the token leaked — either the attacker or t
 is replaying. Today the victim gets logged out while the thief's freshly rotated token stays valid
 for its full 7 days. The strongest breach signal the system ever receives is currently discarded.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 In `AuthControllerTest`, add `refresh_withReplayedToken_killsTheWholeFamily`:
 
@@ -271,12 +271,12 @@ In `AuthControllerTest`, add `refresh_withReplayedToken_killsTheWholeFamily`:
 
 Step 4 returns 200 today — the thief's token survives. That is the failing assertion.
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [x] **Step 2: Run the test and confirm it fails**
 
 Run: `mvn -f backend/pom.xml test -Dtest=AuthControllerTest#refresh_withReplayedToken_killsTheWholeFamily`
 Expected: FAIL at step 4 with 200.
 
-- [ ] **Step 3: Add the family-revocation query**
+- [x] **Step 3: Add the family-revocation query**
 
 In `RefreshTokenRepository`:
 
@@ -293,7 +293,7 @@ int revokeAllForUser(@Param("userId") Long userId);
 apart from "known token, already spent". Keep `findByTokenHashAndRevokedFalse` — `revoke()` still
 uses it.
 
-- [ ] **Step 4: Branch on reuse in `rotate()`**
+- [x] **Step 4: Branch on reuse in `rotate()`**
 
 Restructure `rotate()` to look the row up with `findByTokenHash`, then:
 
@@ -312,7 +312,7 @@ Note the deliberate cost: a user who replays their own token (a client retrying 
 flaky network) gets signed out of every device. That is the accepted trade for detection, and it
 is the reason revoked rows are retained until expiry rather than deleted on rotation.
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 Run: `mvn -f backend/pom.xml test`
 Expected: all green. `refresh_afterLogout_returns401` must still pass — check it does not now
@@ -330,12 +330,12 @@ JWT flow. F-09 accepts a 15-minute window of validity after deactivation *becaus
 exists. Nothing tests it — delete the filter and the suite stays green while deactivated accounts
 renew their session indefinitely.
 
-- [ ] **Step 1: Write the test**
+- [x] **Step 1: Write the test**
 
 Add `refresh_afterUserDeactivated_returns401`: log in as a fresh user, set `active = false` and
 save, then refresh with the issued token and expect **401**.
 
-- [ ] **Step 2: Prove the test has weight**
+- [x] **Step 2: Prove the test has weight**
 
 Temporarily delete `.filter(User::isActive)` from `RefreshTokenService.rotate()`, run
 `mvn -f backend/pom.xml test -Dtest=AuthControllerTest`, and confirm the new test **fails**.
@@ -346,7 +346,7 @@ was never demonstrated is indistinguishable from one that has none.
 
 ### Task 7: Verify, then commit
 
-- [ ] **Step 1: Full suite on the right JDK**
+- [x] **Step 1: Full suite on the right JDK**
 
 ```bash
 export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"
@@ -354,13 +354,13 @@ mvn -f backend/pom.xml test
 ```
 Expected: all green. Record the exact test count — it should be 16 + 4 new = **20**.
 
-- [ ] **Step 2: Mutation check on every new test**
+- [x] **Step 2: Mutation check on every new test**
 
 For each of the four tests added in tasks 2, 4, 5 and 6, revert its production change, confirm
 the test goes red, then restore. Four reverts, four red runs. Any test that stays green is a test
 that proves nothing — fix it before committing, do not commit it with a note.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add backend/src backend/src/test docs/superpowers/plans docs/reviews
@@ -371,7 +371,7 @@ Commit body must state: which findings are closed, the test count before and aft
 mutation-check results from step 2, whether task 3 step 2 was verified against real Postgres or
 left blocked on Docker, and any deviation from this plan.
 
-- [ ] **Step 4: Update `docs/superpowers/STATUS.md`**
+- [x] **Step 4: Update `docs/superpowers/STATUS.md`**
 
 Move R-01..R-05 and R-07 to done, leave R-06/R-08/R-09/R-10 in the open-findings table, and set
 the next step to plan 04.

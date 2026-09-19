@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.platform.user.Role;
 import com.portfolio.platform.user.User;
 import com.portfolio.platform.user.UserRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -11,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,6 +28,34 @@ class AuthControllerTest {
     @Autowired UserRepository userRepository;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired ObjectMapper objectMapper;
+    @Autowired EntityManager entityManager;
+
+    @Test
+    void login_doesNotChangeUpdatedAt() throws Exception {
+        User user = new User();
+        user.setUsername("touchy");
+        user.setEmail("touchy@portfolio.com");
+        user.setPasswordHash(passwordEncoder.encode("secret123"));
+        user.setRole(Role.ADMIN);
+        userRepository.saveAndFlush(user);
+        entityManager.clear();
+
+        Instant originalUpdatedAt = userRepository.findByUsername("touchy").orElseThrow().getUpdatedAt();
+        Instant beforeLogin = Instant.now();
+
+        Thread.sleep(10);
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(new LoginRequest("touchy", "secret123"))))
+                .andExpect(status().isOk());
+
+        entityManager.clear();
+
+        User reloaded = userRepository.findByUsername("touchy").orElseThrow();
+        assertThat(reloaded.getLastLoginAt()).isNotNull().isAfter(beforeLogin);
+        assertThat(reloaded.getUpdatedAt()).isEqualTo(originalUpdatedAt);
+    }
 
     @Test
     void login_withValidCredentials_returns200AndTokens() throws Exception {
@@ -76,6 +107,16 @@ class AuthControllerTest {
     }
 
     @Test
+    void refresh_withReplayedToken_killsTheWholeFamily() throws Exception {
+        TokenResponse tokenA = login("victim");
+        TokenResponse tokenB = refreshExpectingOk(tokenA.refreshToken());
+
+        refresh(tokenA.refreshToken()).andExpect(status().isUnauthorized());
+
+        refresh(tokenB.refreshToken()).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void refresh_withUnknownToken_returns401() throws Exception {
         refresh("not-a-real-token").andExpect(status().isUnauthorized());
     }
@@ -88,6 +129,17 @@ class AuthControllerTest {
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(new RefreshRequest(issued.refreshToken()))))
                 .andExpect(status().isNoContent());
+
+        refresh(issued.refreshToken()).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void refresh_afterUserDeactivated_returns401() throws Exception {
+        TokenResponse issued = login("deactivated");
+
+        User user = userRepository.findByUsername("deactivated").orElseThrow();
+        user.setActive(false);
+        userRepository.saveAndFlush(user);
 
         refresh(issued.refreshToken()).andExpect(status().isUnauthorized());
     }

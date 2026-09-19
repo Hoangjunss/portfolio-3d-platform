@@ -1,5 +1,8 @@
 package com.portfolio.platform.auth;
 
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,6 +18,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 class RefreshTokenCleanupJobTest {
 
     @Autowired RefreshTokenRepository refreshTokenRepository;
+    @Autowired EntityManagerFactory entityManagerFactory;
+
+    @Test
+    void purgeExpiredTokens_usesBulkDelete() {
+        Statistics stats = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+        stats.clear();
+
+        RefreshToken expired1 = save("expired-bulk-1", Instant.now().minus(1, ChronoUnit.DAYS), false);
+        RefreshToken expired2 = save("expired-bulk-2", Instant.now().minus(2, ChronoUnit.DAYS), false);
+        RefreshToken expired3 = save("expired-bulk-3", Instant.now().minus(3, ChronoUnit.DAYS), false);
+
+        new RefreshTokenCleanupJob(refreshTokenRepository).purgeExpiredTokens();
+
+        assertThat(stats.getEntityDeleteCount()).isEqualTo(0);
+        assertThat(refreshTokenRepository.findById(expired1.getId())).isEmpty();
+        assertThat(refreshTokenRepository.findById(expired2.getId())).isEmpty();
+        assertThat(refreshTokenRepository.findById(expired3.getId())).isEmpty();
+    }
 
     // The job itself is @Profile("!test") so the cron never fires during tests; the delete
     // logic is exercised by driving the component directly.

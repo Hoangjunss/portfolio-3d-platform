@@ -45,20 +45,32 @@ public class RefreshTokenService {
 
     @Transactional
     public Optional<Rotation> rotate(String rawToken) {
-        var stored = refreshTokenRepository.findByTokenHashAndRevokedFalse(sha256(rawToken));
-        if (stored.isEmpty() || stored.get().getExpiresAt().isBefore(Instant.now())) {
+        var storedOpt = refreshTokenRepository.findByTokenHash(sha256(rawToken));
+        if (storedOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        var stored = storedOpt.get();
+        if (stored.isRevoked()) {
+            // Presenting an already-spent token indicates the token leaked, so revoke all
+            // live refresh tokens for this user to protect against an active session hijack.
+            refreshTokenRepository.revokeAllForUser(stored.getUserId());
+            return Optional.empty();
+        }
+
+        if (stored.getExpiresAt().isBefore(Instant.now())) {
             return Optional.empty();
         }
 
         // The only server-side account check in the whole JWT flow: a deactivated user keeps a
         // valid access token until it expires, but must not be able to extend the session.
-        var user = userRepository.findById(stored.get().getUserId()).filter(User::isActive);
+        var user = userRepository.findById(stored.getUserId()).filter(User::isActive);
         if (user.isEmpty()) {
             return Optional.empty();
         }
 
-        stored.get().setRevoked(true);
-        refreshTokenRepository.save(stored.get());
+        stored.setRevoked(true);
+        refreshTokenRepository.save(stored);
 
         return Optional.of(new Rotation(user.get(), issue(user.get().getId())));
     }

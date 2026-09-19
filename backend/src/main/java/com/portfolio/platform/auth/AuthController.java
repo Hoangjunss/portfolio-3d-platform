@@ -34,8 +34,7 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
 
-        user.setLastLoginAt(Instant.now());
-        userRepository.save(user);
+        userRepository.touchLastLoginAt(user.getId(), Instant.now());
 
         String accessToken = jwtService.generateAccessToken(user);
         String rawRefreshToken = refreshTokenService.issue(user.getId());

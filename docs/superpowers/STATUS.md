@@ -1,9 +1,9 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `523f61f` (đã push lên `origin/master`)
+**Commit cuối:** xem `git log -1` — plan 03c vừa được commit
 **Working tree:** sạch
-**Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **16/16 PASS**, đã chạy lại 2026-09-20
+**Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **20/20 PASS**
 
 ---
 
@@ -17,77 +17,53 @@
 | 03b task 1 | Default-deny security chain, `/error` vẫn reachable | `651d46f` |
 | 03b task 2 | Refresh token lifecycle đầy đủ | `d06d235` |
 | 03b task 3 | `updatedAt` / `lastLoginAt` trung thực | `ac1808c` |
-
-**Plan 03b hoàn tất cả 4 task.** Nhưng vòng review 2026-09-20 mở lại 10 finding mới trên chính
-hai commit `d06d235` và `ac1808c` — xem bên dưới.
+| 03c | Đóng R-01, R-02, R-04, R-05, R-07 (R-03 còn treo) | commit này |
 
 Tiến độ tổng: **3/18 task tính năng**. Chưa có luồng nào dùng được đầu-cuối.
+
+**Plan 03c là lần đầu dự án có review độc lập** — Antigravity viết code, Claude review. Năm lượt
+trước đó đều là tự kiểm.
 
 ---
 
 ## Bước kế tiếp
 
-**`docs/superpowers/plans/2026-09-20-03c-auth-review-fixes-round2.md`** — plan mới, đã viết xong,
-chưa implement.
+**`docs/superpowers/plans/2026-09-19-04-audit-error-logging.md`** — đã sửa xong 2026-09-20,
+**sẵn sàng implement**, không còn vướng gì.
 
-Gồm 7 task, đóng 6 finding ưu tiên cao từ review 2026-09-20:
+Bốn vấn đề của plan 04 đã được vá vào chính file plan (mục "Revision log" ở đầu file):
 
-| Task | Finding | Nội dung |
-|---|---|---|
-| 1 | R-05 | Chuyển `application-test.yml` khỏi `main/resources` (bẫy mất dữ liệu ở production) |
-| 2 | R-01 | Login không được làm bẩn `updated_at` |
-| 3 | R-03 | `V2__refresh_token_indexes.sql` — unique index `token_hash`, index `expires_at` |
-| 4 | R-02 | Job dọn token dùng bulk JPQL thay vì derived delete |
-| 5 | R-04 | Token bị replay → revoke toàn bộ token còn sống của user |
-| 6 | R-07 | Test cho nhánh "user bị deactivate thì không refresh được" |
-| 7 | — | Mutation check 4 test mới, rồi commit |
-
-Sau 03c mới tới **plan 04**.
-
-### Plan 04 — ĐÃ SỬA XONG 2026-09-20, sẵn sàng implement
-
-Ba vấn đề ghi trong STATUS hôm qua **đã được vá vào file plan**, cộng thêm một vấn đề thứ tư mới
-phát hiện. Chi tiết trong mục "Revision log" đầu file
-`docs/superpowers/plans/2026-09-19-04-audit-error-logging.md`:
-
-1. Test aspect kiểu tautology (`new SampleService()` né proxy, assert `count() >= 0`) → thay bằng
-   bean do `@TestConfiguration` cấp và assert đúng `before + 1`.
-2. `@ExceptionHandler(Exception.class)` nuốt `AccessDeniedException` → thêm handler riêng
-   *rethrow* để `ExceptionTranslationFilter` trả đúng 403.
-3. F-05 chưa phủ → thêm handler 400 cho `MethodArgumentNotValidException`, và sửa
-   `SecurityConfig` để 401/403 từ filter chain cũng có body `ApiError` (hiện `HttpStatusEntryPoint`
-   trả body rỗng).
-4. **(mới)** `AuditAspect` không bao giờ resolve `user_id` — thân hàm cũ có
-   `if (auth != null) { log.setUserId(null); }`, code chết. `JwtAuthFilter` đặt principal là
-   *username*, nên phải tra `UserRepository`.
+1. Test aspect kiểu tautology → thay bằng bean do `@TestConfiguration` cấp, assert đúng `before + 1`.
+2. `@ExceptionHandler(Exception.class)` nuốt `AccessDeniedException` → thêm handler *rethrow*.
+3. F-05 chưa phủ → thêm handler 400, và sửa `SecurityConfig` để 401/403 cũng có body `ApiError`.
+4. `AuditAspect` không resolve `user_id` (code chết) → phải tra `UserRepository` theo username.
 
 ---
 
 ## Finding còn mở
 
-### Từ review 2026-09-20 (`docs/reviews/2026-09-20-code-review-03b-self-implemented.md`)
-
-| Mã | Mức | Nội dung | Xử lý ở đâu |
+| Mã | Mức | Nội dung | Chặn ở đâu |
 |---|---|---|---|
-| R-01 | MAJOR | `login` gọi `save()` → `@PreUpdate` bắn → `updated_at` bám theo mỗi lần đăng nhập | plan 03c task 2 |
-| R-02 | MAJOR | `deleteByExpiresAtBefore` là derived delete: SELECT rồi DELETE từng row (đã đo SQL) | plan 03c task 4 |
-| R-03 | MAJOR | `refresh_tokens.token_hash` không index, không UNIQUE → full scan mỗi lượt refresh | plan 03c task 3 |
-| R-04 | MAJOR | Token bị replay chỉ bị 401, token của kẻ trộm vẫn sống 7 ngày | plan 03c task 5 |
-| R-05 | MAJOR | `application-test.yml` nằm trong `main/resources` → lọt vào jar production | plan 03c task 1 |
-| R-06 | MINOR | Test dọn token dùng `userId(1L)` vi phạm FK thật; chỉ xanh vì Flyway tắt | thuộc F-01 |
-| R-07 | MINOR | Chưa có test cho `.filter(User::isActive)` trong `rotate()` | plan 03c task 6 |
-| R-08 | MINOR | Không giới hạn số refresh token sống mỗi user | hoãn, gắn plan 09 |
-| R-09 | MINOR | Test job không chứng minh `@EnableScheduling` / cron còn đó | hoãn |
-| R-10 | INFO | H2 sinh `timestamp with time zone`, migration khai `TIMESTAMP` | thuộc F-08 |
+| **R-03** | MAJOR | `V2__refresh_token_indexes.sql` đã viết nhưng **chưa từng chạy** — máy không có Docker (`docker: command not found`), suite thì tắt Flyway. File đúng nội dung, chỉ là chưa kiểm chứng | Cần Postgres thật hoặc Testcontainers. Gắn với F-01 |
+| **V-02** | MINOR | `revoked` gộp hai nguyên nhân khác hẳn nhau: bị rotate (rò rỉ) và bị logout (user chủ động). Refresh sau logout vì vậy kích hoạt family revocation và giết session các thiết bị khác | Cần cột `revoked_reason`. Gộp vào cùng đợt migration với R-03 |
+| R-06 | MINOR | Test dọn token dùng `userId(1L)` vi phạm FK thật; chỉ xanh vì Flyway tắt | Thuộc F-01 |
+| R-08 | MINOR | Không giới hạn số refresh token sống mỗi user | Hoãn, gắn plan 09 |
+| R-09 | MINOR | Test job không chứng minh `@EnableScheduling` / cron còn đó | Hoãn |
+| R-10 | INFO | H2 sinh `timestamp with time zone`, migration khai `TIMESTAMP` | Thuộc F-08 |
+| V-03 | NIT | `UserRepository.java` thừa một dòng trống cuối file | Dọn khi nào chạm file |
+| F-01 | — | Flyway migration và entity chưa từng được đối chiếu | Cần Testcontainers + Docker. **Phải đóng trước plan 15.** R-03, R-06, R-10 đều là ca cụ thể |
+| F-05 | — | Response lỗi chưa đúng shape JSON của spec | Plan 04 |
+| F-08 | — | `TIMESTAMP` vs `Instant` lệch timezone | Chốt trước lần deploy thật |
+| F-09 | — | JWT còn sống tối đa 15 phút sau khi user bị deactivate | Chấp nhận theo spec. Plan 10 phải ghi rõ deactivate không tức thời |
 
-### Từ các vòng trước
+### Đã đóng trong 03c
 
-| Mã | Nội dung | Chặn ở đâu |
-|---|---|---|
-| F-01 | Flyway migration và entity chưa từng được đối chiếu | Cần Testcontainers + Docker daemon. **Phải đóng trước plan 15.** R-06 và R-10 là hai ca cụ thể. |
-| F-05 | Response lỗi chưa đúng shape JSON của spec | Plan 04 (đã sửa plan để phủ đủ 400/401/403/500) |
-| F-08 | `TIMESTAMP` vs `Instant` lệch timezone | Thay đổi toàn schema, nên chốt trước lần deploy thật |
-| F-09 | JWT còn sống tối đa 15 phút sau khi user bị deactivate | Chấp nhận theo spec. Plan 10 phải ghi rõ deactivate không tức thời. |
+R-01 (`login` làm bẩn `updated_at`), R-02 (derived delete nạp từng row), R-04 (replay không bị xử
+lý), R-05 (`application-test.yml` lọt vào jar production), R-07 (thiếu test cho
+`.filter(User::isActive)`).
+
+Cả bốn test mới **đã qua mutation check** — revert đúng thay đổi production tương ứng thì mỗi test
+đỏ đúng một mình. Chi tiết trong `docs/reviews/2026-09-20-code-review-plan-03c.md`.
 
 ---
 
@@ -104,33 +80,21 @@ mvn -f backend/pom.xml test
 
 JDK có sẵn trên máy: `jdk1.8.0_202`, `jdk-11.0.31`, `jdk-21.0.11`.
 
+**Không có Docker trên máy này.** `docker: command not found`. Mọi bước kiểm chứng cần Postgres
+thật đều đang treo, và F-01 không thể đóng cho tới khi có.
+
 **Suite chạy trên H2, Flyway tắt.** `mvn test` xanh **không** nói lên điều gì về
-`V1__init_schema.sql`. Bất kỳ thay đổi schema nào cũng phải kiểm bằng tay với Postgres thật —
-cách làm ghi trong plan 03c task 3 step 2.
+`V1__init_schema.sql` hay `V2__refresh_token_indexes.sql`.
 
 ---
 
 ## Tình trạng công cụ
 
-**Antigravity không dùng được.** Hai lượt bàn giao đều trả:
+**Antigravity đã dùng lại được, từ 2026-09-20.** Lượt bàn giao plan 03c chạy thành công và trả về
+code đầy đủ cho cả 6 task code. Dự đoán trước đó là quota reset khoảng 2026-09-26 — **sai**, nó
+mở sớm hơn. Hai lượt hỏng ngày 2026-09-19 (`RESOURCE_EXHAUSTED`, đếm ngược ~164h) vẫn chưa có lời
+giải thích, nhưng không còn chặn việc gì nữa.
 
-```
-exit code 3
-RESOURCE_EXHAUSTED (code 429): Individual quota reached.
-Resets in 164h48m16s.   retryable: true
-```
-
-Lượt thứ hai đếm ngược `164h34m29s`, ít hơn lượt đầu đúng `13m47s` — bằng khoảng thời gian thật
-giữa hai lần gọi. Nghĩa là **mốc reset là một thời điểm cố định phía server; lỗi này thật và ổn
-định, không phải trục trặc ngẫu nhiên.** Cờ `retryable: true` gây hiểu nhầm.
-
-App GUI của người dùng vẫn hiển thị quota 100% — hai nguồn tin mâu thuẫn. Nhiều khả năng CLI
-headless xác thực bằng credential khác với account đang login GUI. Cần kiểm tra ngoài workspace,
-Claude không có quyền đọc chỗ đó.
-
-**Mốc reset ước tính: 2026-09-26.**
-
-Vì Antigravity chặn, task 2 và 3 của plan 03b do Claude tự implement **có sự cho phép của người
-dùng**. Review 2026-09-20 vẫn là cùng một tác nhân, nên vẫn **chưa phải review độc lập** — 10
-finding ở trên là những gì một lượt rà lại kỹ hơn tìm ra, không phải là bằng chứng rằng code đã
-sạch.
+Một lưu ý về bàn giao: Antigravity làm đúng 6 task code nhưng **bỏ qua task 7 step 2
+(mutation check) và step 3 (commit)**. Claude chạy mutation check thay và commit. Lần bàn giao
+sau nên kiểm lại hai bước cuối thay vì mặc định là đã xong.

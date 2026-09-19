@@ -20,6 +20,6 @@ public class RefreshTokenCleanupJob {
     // refresh token fail instead of silently looking unknown.
     @Scheduled(cron = "0 30 3 * * *")
     public void purgeExpiredTokens() {
-        refreshTokenRepository.deleteByExpiresAtBefore(Instant.now());
+        refreshTokenRepository.deleteExpiredBefore(Instant.now());
     }
 }

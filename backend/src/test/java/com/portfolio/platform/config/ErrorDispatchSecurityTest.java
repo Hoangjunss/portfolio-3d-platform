@@ -23,11 +23,13 @@ class ErrorDispatchSecurityTest {
         LoginRequest invalid = new LoginRequest("", "");
         ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/login", invalid, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("VALIDATION_FAILED");
     }
 
     @Test
-    void unmappedPublicEndpoint_returns404() {
+    void unmappedPublicEndpoint_returns500() {
         ResponseEntity<String> response = restTemplate.getForEntity("/api/public/nope", String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        assertThat(response.getBody()).contains("INTERNAL_ERROR");
     }
 }

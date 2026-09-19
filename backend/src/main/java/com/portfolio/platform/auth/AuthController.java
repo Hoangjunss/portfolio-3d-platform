@@ -1,7 +1,9 @@
 package com.portfolio.platform.auth;
 
+import com.portfolio.platform.error.ApiError;
 import com.portfolio.platform.user.UserRepository;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -26,12 +28,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         var user = userRepository.findByUsername(request.username())
                 .filter(u -> u.isActive() && passwordEncoder.matches(request.password(), u.getPasswordHash()))
                 .orElse(null);
         if (user == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiError("INVALID_CREDENTIALS", "Invalid credentials", null));
         }
 
         userRepository.touchLastLoginAt(user.getId(), Instant.now());
@@ -43,12 +46,13 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request) {
+    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshRequest request) {
         return refreshTokenService.rotate(request.refreshToken())
-                .map(rotation -> ResponseEntity.ok(new TokenResponse(
+                .<ResponseEntity<?>>map(rotation -> ResponseEntity.ok(new TokenResponse(
                         jwtService.generateAccessToken(rotation.user()),
                         rotation.rawRefreshToken())))
-                .orElseGet(() -> ResponseEntity.status(401).build());
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiError("INVALID_CREDENTIALS", "Invalid credentials", null)));
     }
 
     // Always 204: telling the caller whether a row matched would turn this into a

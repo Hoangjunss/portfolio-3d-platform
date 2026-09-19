@@ -6,29 +6,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.MessageDigest;
-import java.security.SecureRandom;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Base64;
-
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final JwtProperties jwtProperties;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthController(UserRepository userRepository, RefreshTokenRepository refreshTokenRepository,
-                          PasswordEncoder passwordEncoder, JwtService jwtService, JwtProperties jwtProperties) {
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                          JwtService jwtService, RefreshTokenService refreshTokenService) {
         this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
-        this.jwtProperties = jwtProperties;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/login")
@@ -41,29 +33,25 @@ public class AuthController {
         }
 
         String accessToken = jwtService.generateAccessToken(user);
-        String rawRefreshToken = generateRawToken();
-
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUserId(user.getId());
-        refreshToken.setTokenHash(sha256(rawRefreshToken));
-        refreshToken.setExpiresAt(Instant.now().plus(jwtProperties.refreshTtlDays(), ChronoUnit.DAYS));
-        refreshTokenRepository.save(refreshToken);
+        String rawRefreshToken = refreshTokenService.issue(user.getId());
 
         return ResponseEntity.ok(new TokenResponse(accessToken, rawRefreshToken));
     }
 
-    private String generateRawToken() {
-        byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request) {
+        return refreshTokenService.rotate(request.refreshToken())
+                .map(rotation -> ResponseEntity.ok(new TokenResponse(
+                        jwtService.generateAccessToken(rotation.user()),
+                        rotation.rawRefreshToken())))
+                .orElseGet(() -> ResponseEntity.status(401).build());
     }
 
-    private String sha256(String value) {
-        try {
-            var digest = MessageDigest.getInstance("SHA-256");
-            return Base64.getEncoder().encodeToString(digest.digest(value.getBytes()));
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
-        }
+    // Always 204: telling the caller whether a row matched would turn this into a
+    // token-validity oracle.
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
+        refreshTokenService.revoke(request.refreshToken());
+        return ResponseEntity.noContent().build();
     }
 }

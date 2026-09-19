@@ -24,6 +24,5 @@ spring:
 
 jwt:
   access-secret: ${JWT_ACCESS_SECRET:dev-only-access-secret-change-me-32bytes}
-  refresh-secret: ${JWT_REFRESH_SECRET:dev-only-refresh-secret-change-me-32b}
   access-ttl-minutes: 15
   refresh-ttl-days: 7

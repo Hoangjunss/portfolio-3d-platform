@@ -38,16 +38,16 @@
 
 **Why:** the chain currently ends in `.anyRequest().permitAll()`. Only paths matching `/api/admin/**` are protected. Plans 05–10 add many controllers; one placed outside that prefix becomes publicly writable with nothing to signal it.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `SecurityConfigTest` — `@SpringBootTest`, `@AutoConfigureMockMvc`, `@ActiveProfiles("test")`. Assert that an unauthenticated `GET /api/some-unmapped-path` returns **401**, not 200/404. Under `permitAll()` the request reaches the dispatcher and returns 404, so this test fails today.
 
-- [ ] **Step 2: Run the test and confirm it fails**
+- [x] **Step 2: Run the test and confirm it fails**
 
 Run: `mvn -f backend/pom.xml test -Dtest=SecurityConfigTest`
 Expected: FAIL — gets 404 instead of 401.
 
-- [ ] **Step 3: Flip the catch-all**
+- [x] **Step 3: Flip the catch-all**
 
 In `SecurityConfig.filterChain`, replace `.anyRequest().permitAll()` with `.anyRequest().authenticated()`.
 
@@ -55,7 +55,7 @@ Keep the existing explicit matchers and their current order — `/api/auth/**`, 
 
 Add to the `permitAll()` matcher list only what genuinely must be anonymous: `/actuator/health`. Do **not** open `/actuator/**` wholesale.
 
-- [ ] **Step 4: Run the full suite**
+- [x] **Step 4: Run the full suite**
 
 Run: `mvn -f backend/pom.xml test`
 Expected: PASS. If `AuthControllerTest` breaks, the cause is a real one — a test was relying on the open default. Fix the matcher list explicitly rather than reverting this step.
@@ -82,7 +82,7 @@ Expected: PASS. If `AuthControllerTest` breaks, the cause is a real one — a te
 **Interfaces:**
 - Produces: `POST /api/auth/refresh` and `POST /api/auth/logout` — plan 13's frontend auth middleware calls both.
 
-- [ ] **Step 1: Settle the `refreshSecret` question first**
+- [x] **Step 1: Settle the `refreshSecret` question first**
 
 `JwtProperties.refreshSecret` is declared and never used. Pick one answer and apply it consistently — do not leave it dangling a second time:
 
@@ -90,7 +90,7 @@ Expected: PASS. If `AuthControllerTest` breaks, the cause is a real one — a te
 - Therefore **remove `refreshSecret` from `JwtProperties`** and remove the `jwt.refresh-secret` key from `application.yml`.
 - Keep `jwt.refresh-ttl-days`; it is genuinely used.
 
-- [ ] **Step 2: Extract token handling out of the controller**
+- [x] **Step 2: Extract token handling out of the controller**
 
 Move `generateRawToken()` and `sha256()` from `AuthController` into a new `RefreshTokenService`. The controller should not own crypto helpers, and `/refresh` + `/logout` both need them.
 
@@ -101,7 +101,7 @@ While moving `sha256()`, fix **F-07**: `value.getBytes()` must become `value.get
 - `rotate(rawToken)` → validates and returns the owning user id, or empty; see Step 5 for the rules.
 - `revoke(rawToken)` → marks the matching row revoked; silent no-op if nothing matches.
 
-- [ ] **Step 3: Write the failing tests**
+- [x] **Step 3: Write the failing tests**
 
 Extend `AuthControllerTest` with four cases:
 
@@ -113,13 +113,13 @@ Extend `AuthControllerTest` with four cases:
 Run: `mvn -f backend/pom.xml test -Dtest=AuthControllerTest`
 Expected: FAIL — the endpoints do not exist (404).
 
-- [ ] **Step 4: Add the repository queries**
+- [x] **Step 4: Add the repository queries**
 
 `RefreshTokenRepository` needs:
 - `findByTokenHashAndRevokedFalse(String tokenHash)` — already present, now actually called.
 - a delete-by-expiry method for the cleanup job, e.g. `deleteByExpiresAtBefore(Instant cutoff)`. Spring Data requires `@Modifying` + `@Transactional` on derived delete methods.
 
-- [ ] **Step 5: Implement `POST /api/auth/refresh`**
+- [x] **Step 5: Implement `POST /api/auth/refresh`**
 
 Request body: `RefreshRequest(String refreshToken)`, field `@NotBlank`.
 
@@ -132,11 +132,11 @@ Rules, in order:
 
 Rotation-on-use is deliberate: a stolen refresh token is usable at most once, and the legitimate client's next refresh failing is the detection signal.
 
-- [ ] **Step 6: Implement `POST /api/auth/logout`**
+- [x] **Step 6: Implement `POST /api/auth/logout`**
 
 Same `RefreshRequest` body. Revoke the matching row. Return **204** whether or not a row matched — an endpoint that distinguishes the two cases is a token-validity oracle.
 
-- [ ] **Step 7: Implement the cleanup job (F-06)**
+- [x] **Step 7: Implement the cleanup job (F-06)**
 
 `RefreshTokenCleanupJob` — a `@Component` whose `@Scheduled(cron = "0 30 3 * * *")` method deletes rows whose `expiresAt` is before `now()`. Revoked-but-unexpired rows stay until they expire; they are what makes Step 5's replay check work.
 
@@ -144,7 +144,7 @@ Add `@EnableScheduling` to `PortfolioPlatformApplication`.
 
 Keep the schedule from firing during tests: put the component behind `@Profile("!test")` and test the delete logic by calling the method directly.
 
-- [ ] **Step 8: Run the tests**
+- [x] **Step 8: Run the tests**
 
 Run: `mvn -f backend/pom.xml test`
 Expected: PASS, all four cases from Step 3 green.

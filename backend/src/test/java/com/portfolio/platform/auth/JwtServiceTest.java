@@ -9,9 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class JwtServiceTest {
 
     private final JwtProperties props = new JwtProperties(
-            "test-access-secret-must-be-32-bytes-min",
-            "test-refresh-secret-must-be-32-bytes-min",
-            15, 7);
+            "test-access-secret-must-be-32-bytes-min", 15, 7);
     private final JwtService jwtService = new JwtService(props);
 
     @Test

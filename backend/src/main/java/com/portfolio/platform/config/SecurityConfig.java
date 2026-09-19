@@ -1,9 +1,9 @@
 package com.portfolio.platform.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.portfolio.platform.auth.JwtAuthFilter;
-import com.portfolio.platform.auth.JwtService;
 import com.portfolio.platform.dto.ApiErrorDto;
+import com.portfolio.platform.filter.JwtAuthFilter;
+import com.portfolio.platform.service.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;

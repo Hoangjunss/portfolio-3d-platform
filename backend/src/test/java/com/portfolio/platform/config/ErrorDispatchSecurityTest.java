@@ -1,6 +1,7 @@
 package com.portfolio.platform.config;
 
 import com.portfolio.platform.form.LoginForm;
+import com.portfolio.platform.repository.SystemErrorLogRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,6 +19,9 @@ class ErrorDispatchSecurityTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Autowired
+    private SystemErrorLogRepository systemErrorLogRepository;
+
     @Test
     void validationFailureOnLogin_returns400() {
         LoginForm invalid = new LoginForm("", "");
@@ -27,9 +31,12 @@ class ErrorDispatchSecurityTest {
     }
 
     @Test
-    void unmappedPublicEndpoint_returns500() {
+    void unmappedPublicEndpoint_returns404() {
+        long before = systemErrorLogRepository.count();
+
         ResponseEntity<String> response = restTemplate.getForEntity("/api/public/nope", String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response.getBody()).contains("INTERNAL_ERROR");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).contains("NOT_FOUND");
+        assertThat(systemErrorLogRepository.count()).isEqualTo(before);
     }
 }

@@ -79,9 +79,17 @@ RESOURCE_EXHAUSTED (code 429): Individual quota reached.
 Resets in 164h48m16s.   retryable: true
 ```
 
-Người dùng kiểm tra phía app thì thấy quota **vẫn còn 100%** — hai nguồn tin mâu thuẫn, chưa phân
-xử được. Giả thuyết: CLI headless dùng credential khác với app GUI, hoặc khác bucket quota, hoặc
-lỗi server báo sai. Cờ `retryable: true` nghĩa là **đáng thử lại**, chưa nên coi là chết 7 ngày.
+Người dùng kiểm tra phía app thì thấy quota **vẫn còn 100%** — hai nguồn tin mâu thuẫn.
+
+**Lượt thử thứ hai đã phân xử được một phần.** Cùng lỗi, nhưng đồng hồ đếm ngược là
+`164h34m29s`, ít hơn lần đầu đúng `13m47s` — bằng đúng khoảng thời gian thật giữa hai lần gọi.
+Nghĩa là **thời điểm reset là một mốc cố định phía server, và lỗi này là thật, ổn định, không
+phải trục trặc ngẫu nhiên.** Cờ `retryable: true` gây hiểu nhầm: thử lại vẫn hỏng y hệt.
+
+Kết luận: quota mà CLI đụng phải **không phải** quota mà app GUI hiển thị. Nhiều khả năng CLI
+headless xác thực bằng credential khác (API key trong biến môi trường, hoặc profile khác với
+account đang login GUI). Cần kiểm tra phía ngoài workspace — Claude không có quyền đọc chỗ đó.
+Mốc reset rơi vào khoảng **2026-09-26**.
 
 Vì Antigravity chặn, task 2 và task 3 của plan 03b do Claude tự implement, **có sự cho phép của
 người dùng**. Hệ quả cần biết: review vòng 3 là **tự kiểm, không độc lập** — nên có một lượt

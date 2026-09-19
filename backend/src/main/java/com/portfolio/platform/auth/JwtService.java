@@ -1,7 +1,7 @@
 package com.portfolio.platform.auth;
 
-import com.portfolio.platform.user.Role;
-import com.portfolio.platform.user.User;
+import com.portfolio.platform.enums.Role;
+import com.portfolio.platform.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;

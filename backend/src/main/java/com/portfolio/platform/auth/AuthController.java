@@ -1,6 +1,9 @@
 package com.portfolio.platform.auth;
 
-import com.portfolio.platform.error.ApiError;
+import com.portfolio.platform.dto.ApiErrorDto;
+import com.portfolio.platform.dto.TokenDto;
+import com.portfolio.platform.form.LoginForm;
+import com.portfolio.platform.form.RefreshTokenForm;
 import com.portfolio.platform.user.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,13 +31,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginForm request) {
         var user = userRepository.findByUsername(request.username())
                 .filter(u -> u.isActive() && passwordEncoder.matches(request.password(), u.getPasswordHash()))
                 .orElse(null);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiError("INVALID_CREDENTIALS", "Invalid credentials", null));
+                    .body(new ApiErrorDto("INVALID_CREDENTIALS", "Invalid credentials", null));
         }
 
         userRepository.touchLastLoginAt(user.getId(), Instant.now());
@@ -42,23 +45,23 @@ public class AuthController {
         String accessToken = jwtService.generateAccessToken(user);
         String rawRefreshToken = refreshTokenService.issue(user.getId());
 
-        return ResponseEntity.ok(new TokenResponse(accessToken, rawRefreshToken));
+        return ResponseEntity.ok(new TokenDto(accessToken, rawRefreshToken));
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshRequest request) {
+    public ResponseEntity<?> refresh(@Valid @RequestBody RefreshTokenForm request) {
         return refreshTokenService.rotate(request.refreshToken())
-                .<ResponseEntity<?>>map(rotation -> ResponseEntity.ok(new TokenResponse(
+                .<ResponseEntity<?>>map(rotation -> ResponseEntity.ok(new TokenDto(
                         jwtService.generateAccessToken(rotation.user()),
                         rotation.rawRefreshToken())))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiError("INVALID_CREDENTIALS", "Invalid credentials", null)));
+                        .body(new ApiErrorDto("INVALID_CREDENTIALS", "Invalid credentials", null)));
     }
 
     // Always 204: telling the caller whether a row matched would turn this into a
     // token-validity oracle.
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request) {
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenForm request) {
         refreshTokenService.revoke(request.refreshToken());
         return ResponseEntity.noContent().build();
     }

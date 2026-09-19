@@ -1,4 +1,4 @@
-package com.portfolio.platform.user;
+package com.portfolio.platform.enums;
 
 public enum Role {
     ADMIN,

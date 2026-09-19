@@ -1,6 +1,8 @@
 package com.portfolio.platform.auth;
 
-import com.portfolio.platform.user.User;
+import com.portfolio.platform.dto.RotationDto;
+import com.portfolio.platform.model.RefreshToken;
+import com.portfolio.platform.model.User;
 import com.portfolio.platform.user.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,9 +17,6 @@ import java.util.Optional;
 
 @Service
 public class RefreshTokenService {
-
-    public record Rotation(User user, String rawRefreshToken) {
-    }
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
@@ -44,7 +43,7 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public Optional<Rotation> rotate(String rawToken) {
+    public Optional<RotationDto> rotate(String rawToken) {
         var storedOpt = refreshTokenRepository.findByTokenHash(sha256(rawToken));
         if (storedOpt.isEmpty()) {
             return Optional.empty();
@@ -72,7 +71,7 @@ public class RefreshTokenService {
         stored.setRevoked(true);
         refreshTokenRepository.save(stored);
 
-        return Optional.of(new Rotation(user.get(), issue(user.get().getId())));
+        return Optional.of(new RotationDto(user.get(), issue(user.get().getId())));
     }
 
     @Transactional

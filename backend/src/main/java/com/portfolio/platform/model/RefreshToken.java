@@ -1,4 +1,4 @@
-package com.portfolio.platform.auth;
+package com.portfolio.platform.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;

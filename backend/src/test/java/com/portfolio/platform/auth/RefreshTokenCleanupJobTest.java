@@ -1,5 +1,6 @@
 package com.portfolio.platform.auth;
 
+import com.portfolio.platform.model.RefreshToken;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;

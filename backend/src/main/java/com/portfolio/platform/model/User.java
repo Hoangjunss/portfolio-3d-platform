@@ -1,5 +1,6 @@
-package com.portfolio.platform.user;
+package com.portfolio.platform.model;
 
+import com.portfolio.platform.enums.Role;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;

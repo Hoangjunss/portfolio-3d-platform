@@ -1,7 +1,7 @@
 package com.portfolio.platform.auth;
 
-import com.portfolio.platform.user.Role;
-import com.portfolio.platform.user.User;
+import com.portfolio.platform.enums.Role;
+import com.portfolio.platform.model.User;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

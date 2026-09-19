@@ -1,5 +1,7 @@
 package com.portfolio.platform.user;
 
+import com.portfolio.platform.enums.Role;
+import com.portfolio.platform.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;

@@ -1,6 +1,7 @@
 package com.portfolio.platform.audit;
 
-import com.portfolio.platform.user.User;
+import com.portfolio.platform.model.AuditLog;
+import com.portfolio.platform.model.User;
 import com.portfolio.platform.user.UserRepository;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;

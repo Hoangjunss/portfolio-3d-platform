@@ -1,8 +1,9 @@
 package com.portfolio.platform.error;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.portfolio.platform.audit.SystemErrorLog;
 import com.portfolio.platform.audit.SystemErrorLogRepository;
+import com.portfolio.platform.dto.ApiErrorDto;
+import com.portfolio.platform.model.SystemErrorLog;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -67,7 +68,7 @@ class GlobalExceptionHandlerTest {
 
         assertThat(systemErrorLogRepository.count()).isEqualTo(before + 1);
 
-        ApiError error = objectMapper.readValue(responseBody, ApiError.class);
+        ApiErrorDto error = objectMapper.readValue(responseBody, ApiErrorDto.class);
         assertThat(error.requestId()).isNotBlank();
 
         SystemErrorLog lastLog = systemErrorLogRepository.findAll().get((int) before);

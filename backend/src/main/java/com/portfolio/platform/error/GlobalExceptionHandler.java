@@ -1,7 +1,8 @@
 package com.portfolio.platform.error;
 
-import com.portfolio.platform.audit.SystemErrorLog;
 import com.portfolio.platform.audit.SystemErrorLogRepository;
+import com.portfolio.platform.dto.ApiErrorDto;
+import com.portfolio.platform.model.SystemErrorLog;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiErrorDto> handleValidation(MethodArgumentNotValidException ex) {
         // 400 is the caller's fault, not a system fault — no system_error_logs row.
         String message = ex.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getField)
@@ -44,11 +45,11 @@ public class GlobalExceptionHandler {
             message = "Validation failed";
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiError("VALIDATION_FAILED", message, null));
+                .body(new ApiErrorDto("VALIDATION_FAILED", message, null));
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleUnexpected(Exception ex, HttpServletRequest request) {
+    public ResponseEntity<ApiErrorDto> handleUnexpected(Exception ex, HttpServletRequest request) {
         String requestId = UUID.randomUUID().toString();
 
         String endpoint = request.getRequestURI();
@@ -76,6 +77,6 @@ public class GlobalExceptionHandler {
         systemErrorLogRepository.save(log);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ApiError("INTERNAL_ERROR", "Something went wrong", requestId));
+                .body(new ApiErrorDto("INTERNAL_ERROR", "Something went wrong", requestId));
     }
 }

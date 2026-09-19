@@ -1,6 +1,6 @@
 package com.portfolio.platform.config;
 
-import com.portfolio.platform.auth.LoginRequest;
+import com.portfolio.platform.form.LoginForm;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,7 +20,7 @@ class ErrorDispatchSecurityTest {
 
     @Test
     void validationFailureOnLogin_returns400() {
-        LoginRequest invalid = new LoginRequest("", "");
+        LoginForm invalid = new LoginForm("", "");
         ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/login", invalid, String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).contains("VALIDATION_FAILED");

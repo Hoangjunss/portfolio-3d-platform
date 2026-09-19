@@ -1,8 +1,11 @@
 package com.portfolio.platform.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.portfolio.platform.user.Role;
-import com.portfolio.platform.user.User;
+import com.portfolio.platform.dto.TokenDto;
+import com.portfolio.platform.enums.Role;
+import com.portfolio.platform.form.LoginForm;
+import com.portfolio.platform.form.RefreshTokenForm;
+import com.portfolio.platform.model.User;
 import com.portfolio.platform.user.UserRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
@@ -47,7 +50,7 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new LoginRequest("touchy", "secret123"))))
+                        .content(objectMapper.writeValueAsString(new LoginForm("touchy", "secret123"))))
                 .andExpect(status().isOk());
 
         entityManager.clear();
@@ -68,7 +71,7 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new LoginRequest("admin", "secret123"))))
+                        .content(objectMapper.writeValueAsString(new LoginForm("admin", "secret123"))))
                 .andExpect(status().isOk());
     }
 
@@ -83,15 +86,15 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new LoginRequest("admin2", "wrong"))))
+                        .content(objectMapper.writeValueAsString(new LoginForm("admin2", "wrong"))))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     void refresh_withValidToken_returnsNewAccessAndRefreshTokens() throws Exception {
-        TokenResponse issued = login("refresher");
+        TokenDto issued = login("refresher");
 
-        TokenResponse rotated = refreshExpectingOk(issued.refreshToken());
+        TokenDto rotated = refreshExpectingOk(issued.refreshToken());
 
         assertThat(rotated.accessToken()).isNotBlank();
         assertThat(rotated.refreshToken()).isNotBlank();
@@ -100,7 +103,7 @@ class AuthControllerTest {
 
     @Test
     void refresh_withAlreadyRotatedToken_returns401() throws Exception {
-        TokenResponse issued = login("replayer");
+        TokenDto issued = login("replayer");
         refreshExpectingOk(issued.refreshToken());
 
         refresh(issued.refreshToken()).andExpect(status().isUnauthorized());
@@ -108,8 +111,8 @@ class AuthControllerTest {
 
     @Test
     void refresh_withReplayedToken_killsTheWholeFamily() throws Exception {
-        TokenResponse tokenA = login("victim");
-        TokenResponse tokenB = refreshExpectingOk(tokenA.refreshToken());
+        TokenDto tokenA = login("victim");
+        TokenDto tokenB = refreshExpectingOk(tokenA.refreshToken());
 
         refresh(tokenA.refreshToken()).andExpect(status().isUnauthorized());
 
@@ -123,11 +126,11 @@ class AuthControllerTest {
 
     @Test
     void refresh_afterLogout_returns401() throws Exception {
-        TokenResponse issued = login("quitter");
+        TokenDto issued = login("quitter");
 
         mockMvc.perform(post("/api/auth/logout")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new RefreshRequest(issued.refreshToken()))))
+                        .content(objectMapper.writeValueAsString(new RefreshTokenForm(issued.refreshToken()))))
                 .andExpect(status().isNoContent());
 
         refresh(issued.refreshToken()).andExpect(status().isUnauthorized());
@@ -135,7 +138,7 @@ class AuthControllerTest {
 
     @Test
     void refresh_afterUserDeactivated_returns401() throws Exception {
-        TokenResponse issued = login("deactivated");
+        TokenDto issued = login("deactivated");
 
         User user = userRepository.findByUsername("deactivated").orElseThrow();
         user.setActive(false);
@@ -152,7 +155,7 @@ class AuthControllerTest {
         assertThat(user.getLastLoginAt()).isNotNull();
     }
 
-    private TokenResponse login(String username) throws Exception {
+    private TokenDto login(String username) throws Exception {
         User user = new User();
         user.setUsername(username);
         user.setEmail(username + "@portfolio.com");
@@ -162,22 +165,22 @@ class AuthControllerTest {
 
         String body = mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(new LoginRequest(username, "secret123"))))
+                        .content(objectMapper.writeValueAsString(new LoginForm(username, "secret123"))))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readValue(body, TokenResponse.class);
+        return objectMapper.readValue(body, TokenDto.class);
     }
 
     private org.springframework.test.web.servlet.ResultActions refresh(String refreshToken) throws Exception {
         return mockMvc.perform(post("/api/auth/refresh")
                 .contentType("application/json")
-                .content(objectMapper.writeValueAsString(new RefreshRequest(refreshToken))));
+                .content(objectMapper.writeValueAsString(new RefreshTokenForm(refreshToken))));
     }
 
-    private TokenResponse refreshExpectingOk(String refreshToken) throws Exception {
+    private TokenDto refreshExpectingOk(String refreshToken) throws Exception {
         String body = refresh(refreshToken)
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readValue(body, TokenResponse.class);
+        return objectMapper.readValue(body, TokenDto.class);
     }
 }

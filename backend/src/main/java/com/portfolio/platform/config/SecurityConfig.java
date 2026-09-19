@@ -3,7 +3,7 @@ package com.portfolio.platform.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.platform.auth.JwtAuthFilter;
 import com.portfolio.platform.auth.JwtService;
-import com.portfolio.platform.error.ApiError;
+import com.portfolio.platform.dto.ApiErrorDto;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -33,13 +33,13 @@ public class SecurityConfig {
                             response.setStatus(HttpStatus.UNAUTHORIZED.value());
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             objectMapper.writeValue(response.getOutputStream(),
-                                    new ApiError("UNAUTHORIZED", "Authentication required", null));
+                                    new ApiErrorDto("UNAUTHORIZED", "Authentication required", null));
                         })
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setStatus(HttpStatus.FORBIDDEN.value());
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             objectMapper.writeValue(response.getOutputStream(),
-                                    new ApiError("FORBIDDEN", "Not allowed", null));
+                                    new ApiErrorDto("FORBIDDEN", "Not allowed", null));
                         }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/public/**", "/api/analytics/events", "/actuator/health", "/error").permitAll()

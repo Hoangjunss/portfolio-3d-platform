@@ -184,3 +184,64 @@ và bằng test.
 
 **Vẫn chưa ship được.** Task 1 giờ đã vững và có test bảo vệ, nhưng lý do chặn không đổi: 2/3
 task của plan 03b chưa làm, F-02/F-04/F-06/F-07 còn mở, và tổng thể dự án vẫn 3/18 task tính năng.
+
+---
+
+## Vòng 3 — 2026-09-19, plan 03b hoàn tất
+
+**Phạm vi:** commit `d06d235` (Task 2) và `ac1808c` (Task 3).
+
+**Lưu ý về độ tin cậy của vòng này:** Antigravity hết quota (HTTP 429, reset sau ~165h) nên
+không thể bàn giao. Người dùng cho phép tự implement. Code vòng này do chính bên review viết,
+nên mục dưới đây là **tự kiểm, không phải review độc lập**. Cần một lượt review độc lập trước
+khi plan 04 bắt đầu.
+
+### R-01 — đã đóng
+
+| Plan 03b yêu cầu | Trạng thái |
+|---|---|
+| `RefreshTokenService` / `RefreshRequest` / `RefreshTokenCleanupJob` | đã tạo |
+| `POST /api/auth/refresh`, `POST /api/auth/logout` | đã có |
+| `deleteByExpiresAtBefore` | đã có (`@Modifying` + `@Transactional`) |
+| `JwtProperties.refreshSecret` + khoá `jwt.refresh-secret` | đã gỡ cả hai |
+| `@EnableScheduling` | đã có |
+| `@PreUpdate` trong `User` | đã có |
+| `lastLoginAt` được set khi login | đã có |
+
+F-02, F-04, F-06, F-07 đóng. `mvn -f backend/pom.xml test` (JDK 21.0.11): **16/16 PASS**.
+
+### Sức nặng của test
+
+4 test mới của Task 2 đã được chạy **trước** khi implement: cả 4 đỏ với 404 (không phải đỏ do
+lỗi biên dịch — `RefreshRequest` được tạo trước để phần đỏ có nghĩa). 2 test mới của Task 3 cũng
+chạy đỏ trước khi sửa `User` và `AuthController`. Đây là điều R-03 vòng 1 đòi hỏi.
+
+`RefreshTokenCleanupJobTest` khẳng định row hết hạn bị xoá còn row **đã revoke nhưng chưa hết
+hạn** thì ở lại — đúng thứ làm cho kiểm tra replay ở Step 5 hoạt động.
+
+### Điểm cần người review độc lập soi kỹ
+
+1. `RefreshTokenService.rotate()` lệch plan: trả `Rotation(User, String)` thay vì user id trần,
+   để giữ đúng thứ tự "kiểm `isActive` trước khi revoke" trong một transaction. Đã ghi vào commit
+   body của `d06d235`, nhưng cần xác nhận đây là lệch đúng.
+2. Hai endpoint mới trả 401/204 với body rỗng. F-05 vẫn mở — plan 04 phải phủ cả 401 của
+   `/refresh`, không chỉ 5xx.
+3. Chưa có test cho nhánh "user bị deactivate thì không refresh được" (Step 5 rule 3). Logic có
+   trong code nhưng không có test bảo vệ. **Nên bổ sung** trước khi plan 10 dựa vào nó.
+4. `RefreshTokenCleanupJob` là `@Profile("!test")`, nên không có gì kiểm chứng rằng cron thật sự
+   được đăng ký khi chạy production. `@EnableScheduling` có mặt, nhưng đó là suy luận chứ không
+   phải kiểm chứng.
+
+### Môi trường
+
+`JAVA_HOME` mặc định của máy trỏ `C:\Program Files\Java\jdk1.8.0_202`; Maven chạy với JDK 8 sẽ
+báo "class, interface, or enum expected" trên mọi `record`. Phải export
+`C:/Program Files/Java/jdk-21.0.11` trước khi build. Ghi lại để lượt sau không mất thời gian.
+
+### Kết luận về việc ship
+
+Plan 03b **đã hoàn tất cả 4 task**. Các finding chặn của review tasks 01–03 đã đóng, trừ F-01
+(chờ Docker), F-05 (thuộc plan 04), F-08 và F-09 (ngoài phạm vi, đã ghi rõ).
+
+Vẫn **chưa ship được sản phẩm**: dự án ở mức 3/18 task tính năng, chưa có luồng nào dùng được
+đầu-cuối. Bước kế tiếp theo đúng thứ tự là `2026-09-19-04-audit-error-logging.md`.

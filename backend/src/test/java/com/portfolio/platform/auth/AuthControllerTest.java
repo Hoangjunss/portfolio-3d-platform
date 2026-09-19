@@ -92,6 +92,14 @@ class AuthControllerTest {
         refresh(issued.refreshToken()).andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void login_withValidCredentials_recordsLastLoginAt() throws Exception {
+        login("stamped");
+
+        var user = userRepository.findByUsername("stamped").orElseThrow();
+        assertThat(user.getLastLoginAt()).isNotNull();
+    }
+
     private TokenResponse login(String username) throws Exception {
         User user = new User();
         user.setUsername(username);

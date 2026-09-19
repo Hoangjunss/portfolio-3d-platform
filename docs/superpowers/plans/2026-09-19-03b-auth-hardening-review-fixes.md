@@ -163,24 +163,24 @@ Expected: PASS, all four cases from Step 3 green.
 
 **Why:** `updated_at` is assigned once at field initialisation and never moves, so it permanently reads as the creation time. `last_login_at` exists in the schema and in spec section 6 but nothing ever writes it. Plan 10 (user management) surfaces both columns in the admin UI and would display falsehoods.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 - In `UserRepositoryTest`: save a user, capture `updatedAt`, modify a field, `saveAndFlush`, re-read → `updatedAt` must be strictly later than the captured value. Fails today.
 - In `AuthControllerTest`: after a successful login, re-read the user → `lastLoginAt` is non-null. Fails today.
 
-- [ ] **Step 2: Add the JPA lifecycle callback**
+- [x] **Step 2: Add the JPA lifecycle callback**
 
 In `User`, add an `@PreUpdate` method that sets `updatedAt = Instant.now()`. Prefer this over `@EntityListeners(AuditingEntityListener.class)` — auditing would additionally require `@EnableJpaAuditing`, and `createdAt` is already correct as a field initialiser.
 
 Leave `createdAt` as `updatable = false`.
 
-- [ ] **Step 3: Set `lastLoginAt` on successful login**
+- [x] **Step 3: Set `lastLoginAt` on successful login**
 
 In `AuthController.login`, after the password check passes and before minting tokens, set `lastLoginAt = Instant.now()` and save the user.
 
 On success only. A failed attempt must not move it, or the column becomes useless for spotting account misuse.
 
-- [ ] **Step 4: Run the tests**
+- [x] **Step 4: Run the tests**
 
 Run: `mvn -f backend/pom.xml test`
 Expected: PASS.
@@ -189,12 +189,12 @@ Expected: PASS.
 
 ### Task 4: Commit
 
-- [ ] **Step 1: Confirm the full suite is green**
+- [x] **Step 1: Confirm the full suite is green**
 
 Run: `mvn -f backend/pom.xml test`
 Expected: every test PASSES, including the 6 pre-existing ones.
 
-- [ ] **Step 2: Commit and push**
+- [x] **Step 2: Commit and push**
 
 ```
 git add backend docs/superpowers/plans/2026-09-19-03b-auth-hardening-review-fixes.md

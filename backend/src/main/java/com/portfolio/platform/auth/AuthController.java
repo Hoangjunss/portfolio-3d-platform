@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -31,6 +33,9 @@ public class AuthController {
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
+
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
 
         String accessToken = jwtService.generateAccessToken(user);
         String rawRefreshToken = refreshTokenService.issue(user.getId());

@@ -40,4 +40,9 @@ public class User {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
+
+    @PreUpdate
+    void touchUpdatedAt() {
+        updatedAt = Instant.now();
+    }
 }

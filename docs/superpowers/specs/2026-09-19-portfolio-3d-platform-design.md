@@ -141,6 +141,99 @@ container, saving RAM.
   capture for 5xx responses
 - `settings` — key/value site configuration
 
+> The list above is a **domain** decomposition, not a package layout. Domains
+> are cut across the layered packages defined in 5.1 — there is no
+> `com.portfolio.platform.auth` package holding a controller, a service, an
+> entity and a repository together. See 5.1.
+
+### 5.1 Backend code structure (MANDATORY)
+
+Source of truth: the `coding-backend-java` skill. Code is organised **by
+layer, not by feature**. Every class placement below is derived from that
+skill's class-placement table and dependency rules.
+
+**Package tree** (`com.portfolio.platform`):
+
+```
+com/portfolio/platform/
+├── annotation      # custom annotations (@Audited)
+├── aspect          # AOP advice (AuditAspect)
+├── config          # *Config — Spring configuration, no business logic
+├── constant        # global constants
+├── controller      # *Controller — HTTP only, no business logic
+├── converter       # *Converter — Model <-> Dto/Form, hand-written
+│   └── impl
+├── dto             # *Dto — contracts WE own (responses to our FE, inter-layer)
+├── enums           # Role, LeadStatus, ...
+├── exception       # custom exceptions + @RestControllerAdvice handler
+├── facade          # *ServiceFacade — orchestration only, OPTIONAL
+│   └── impl
+├── filter          # servlet filters (JwtAuthFilter)
+├── form            # *Form — contracts SOMEONE ELSE owns (client requests)
+├── helper          # *Helper — reusable logic with repository access
+├── model           # JPA entities, NO suffix (User, RefreshToken, AuditLog)
+├── repository      # *Repository — data access only
+├── scheduler       # scheduled jobs (RefreshTokenCleanupJob)
+├── service         # *Service interface
+│   └── impl        # *ServiceImpl
+├── specification   # *Specification — dynamic queries
+└── util            # stateless utilities
+```
+
+`model`, not `entity` — matching the skill's stated convention.
+
+**Dependency rules (STRICT — a violation is a CRITICAL review finding):**
+
+```
+Controller  → Facade, Service
+Scheduler   → Facade, Service
+Facade      → Service, Converter, Helper, Util
+Service     → Repository, Converter, Helper, Util
+Converter   → Util, Helper
+Helper      → Repository
+```
+
+Never allowed: Controller → Repository, Controller → Converter, Service →
+Facade, Converter → Service, Converter → Repository, Helper → Service, or any
+circular dependency.
+
+**Facade is optional.** Use one only where a flow genuinely orchestrates more
+than one service. `AuthServiceFacade` is justified (login touches user
+lookup + password verification + JWT minting + refresh-token issuing). A
+plain CRUD controller calls its Service directly — do not add an empty
+pass-through Facade.
+
+**Form vs Dto — decided by who owns the contract:**
+
+| Boundary | Type |
+|---|---|
+| Request body from the admin FE or a public client | `Form` |
+| Response body we define for our own FE | `Dto` |
+| Data passed between internal layers | `Dto` |
+
+So `LoginForm` / `RefreshTokenForm` (their request shape) but `TokenDto` /
+`ApiErrorDto` (our response shape).
+
+**Naming:** class suffix must match the package — `Controller`, `ServiceFacade`
+/ `ServiceFacadeImpl`, `Service` / `ServiceImpl`, `Repository`, `Converter`,
+`Helper`, `Config`, `Specification`, `Form`, `Dto`. Entities in `model` take no
+suffix. Service naming is entity-based (`UserServiceImpl`) for CRUD and
+action-based (`RotateRefreshTokenServiceImpl`) for a specific business
+operation.
+
+**Transactions:** `@Transactional` on Service write methods,
+`@Transactional(readOnly = true)` on read flows. Never on Controller or
+Converter.
+
+**Dependency injection:** this project uses **constructor injection**
+throughout. The skill notes field `@Autowired` is dominant in its reference
+repositories but instructs matching the module's existing style — ours is
+constructor injection, and it stays that way. Do not "correct" it.
+
+**Comments:** default to none. Only a one-line WHY for a non-obvious business
+rule or a deliberate choice a future reader would otherwise revert. Never a
+comment restating what the code does.
+
 **Auth:** Spring Security + JWT (access token short-lived, refresh token
 stored hashed in DB, revocable). Role-based authorization on all
 `/admin/**` and mutating endpoints. Public endpoints: template listing

@@ -22,17 +22,24 @@
 - `analytics_events.ip_hash` stores a hash of the IP, never the raw IP (spec section 6).
 - Templates are static-exported Next.js sites served by Nginx on `<slug>.portfolio.com`, no per-template runtime process (spec sections 4, 7).
 - No comments restating what code does; only comments explaining non-obvious "why".
+- **Package layout follows spec section 5.1 (layered), not feature packages.** Read 5.1 before
+  creating any class. A `service/XService.java` entry in a file list always means the pair
+  `service/XService.java` (interface) + `service/impl/XServiceImpl.java` (implementation).
+- **Controllers never touch a Repository or a Converter**, schedulers and the `@RestControllerAdvice`
+  never touch a Repository. `LayerDependencyTest` enforces this and will fail the build.
+- Request bodies are `form/*Form`, response bodies and inter-layer data are `dto/*Dto`
+  (spec 5.1, Form vs Dto ownership). Entities live in `model/` with no suffix.
 
 ---
 
 ### Task: User management module (admin-only)
 
 **Files:**
-- Create: `backend/src/main/java/com/portfolio/platform/user/UserCreateRequest.java`
-- Create: `backend/src/main/java/com/portfolio/platform/user/UserDto.java`
-- Create: `backend/src/main/java/com/portfolio/platform/user/UserManagementService.java`
-- Create: `backend/src/main/java/com/portfolio/platform/user/UserManagementController.java`
-- Test: `backend/src/test/java/com/portfolio/platform/user/UserManagementServiceTest.java`
+- Create: `backend/src/main/java/com/portfolio/platform/form/UserCreateForm.java`
+- Create: `backend/src/main/java/com/portfolio/platform/dto/UserDto.java`
+- Create: `backend/src/main/java/com/portfolio/platform/service/UserManagementService.java`
+- Create: `backend/src/main/java/com/portfolio/platform/controller/UserManagementController.java`
+- Test: `backend/src/test/java/com/portfolio/platform/service/UserManagementServiceTest.java`
 
 **Interfaces:**
 - Consumes: `User`, `UserRepository`, `Role` (plan 02); `Audited` (plan 04); `PasswordEncoder` bean (plan 03).
@@ -66,7 +73,7 @@ class UserManagementServiceTest {
         when(passwordEncoder.encode("plain")).thenReturn("hashed");
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.create(new UserCreateRequest("editor1", "editor1@portfolio.com", "plain", Role.EDITOR));
+        service.create(new UserCreateForm("editor1", "editor1@portfolio.com", "plain", Role.EDITOR));
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -94,7 +101,7 @@ class UserManagementServiceTest {
 Run: `mvn -f backend/pom.xml test -Dtest=UserManagementServiceTest`
 Expected: FAIL — classes do not exist.
 
-- [ ] **Step 3: Create `UserCreateRequest`, `UserDto`, `UserManagementService`, `UserManagementController`**
+- [ ] **Step 3: Create `UserCreateForm`, `UserDto`, `UserManagementService`, `UserManagementController`**
 
 ```java
 package com.portfolio.platform.user;
@@ -103,7 +110,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record UserCreateRequest(
+public record UserCreateForm(
         @NotBlank String username, @Email @NotBlank String email,
         @NotBlank String password, @NotNull Role role) {
 }
@@ -147,7 +154,7 @@ public class UserManagementService {
 
     @Audited(entityType = "User", action = "CREATE")
     @Transactional
-    public Long create(UserCreateRequest request) {
+    public Long create(UserCreateForm request) {
         User user = new User();
         user.setUsername(request.username());
         user.setEmail(request.email());
@@ -191,7 +198,7 @@ public class UserManagementController {
     }
 
     @PostMapping
-    public Long create(@Valid @RequestBody UserCreateRequest request) {
+    public Long create(@Valid @RequestBody UserCreateForm request) {
         return service.create(request);
     }
 
@@ -210,7 +217,7 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add backend/src/main/java/com/portfolio/platform/user backend/src/test/java/com/portfolio/platform/user/UserManagementServiceTest.java
+git add backend/src
 git commit -m "feat: add admin-only user management module"
 ```
 

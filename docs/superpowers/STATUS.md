@@ -1,9 +1,19 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** xem `git log -1` — plan 03c vừa được commit
-**Working tree:** sạch
-**Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **20/20 PASS**
+**Commit cuối:** `a95f958` — **CHƯA PUSH**, đang giữ ở local có chủ đích (xem bên dưới)
+**Đã push tới:** `f292ae2`
+**Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **25/25 PASS**, ổn định qua 3 lần chạy
+
+---
+
+## Vì sao `a95f958` chưa push
+
+Plan 04 chạy đúng, test có trọng lượng thật (5/5 mutation đỏ), nhưng review phát hiện một hồi quy
+hành vi: **mọi 404 giờ trả 500 và ghi một dòng `system_error_logs`**. Chi tiết R-01 trong
+`docs/reviews/2026-09-20-code-review-plan-04.md`.
+
+Kế hoạch: làm plan 04b (đã bao gồm bản vá R-01 ở task 7), rồi push cả hai commit cùng lúc.
 
 ---
 
@@ -14,87 +24,98 @@
 | 01 | Scaffold Spring Boot + Flyway baseline | `d73d13a` |
 | 02 | `User` entity, `Role`, `UserRepository` | `ba63aa8` |
 | 03 | JWT login + security config | `6cd2521` |
-| 03b task 1 | Default-deny security chain, `/error` vẫn reachable | `651d46f` |
-| 03b task 2 | Refresh token lifecycle đầy đủ | `d06d235` |
-| 03b task 3 | `updatedAt` / `lastLoginAt` trung thực | `ac1808c` |
-| 03c | Đóng R-01, R-02, R-04, R-05, R-07 (R-03 còn treo) | commit này |
+| 03b | Auth hardening (4 task) | `651d46f`, `d06d235`, `ac1808c` |
+| 03c | Đóng R-01…R-07 vòng 2 | `f292ae2` |
+| 04 | Audit AOP + một shape lỗi cho mọi response | `a95f958` (local, NEEDS_REVISION) |
 
-Tiến độ tổng: **3/18 task tính năng**. Chưa có luồng nào dùng được đầu-cuối.
-
-**Plan 03c là lần đầu dự án có review độc lập** — Antigravity viết code, Claude review. Năm lượt
-trước đó đều là tự kiểm.
+Tiến độ: **4/18 task tính năng**. Chưa có luồng nào dùng được đầu-cuối.
 
 ---
 
-## Bước kế tiếp
+## Bước kế tiếp — plan 04b, ưu tiên cao nhất
 
-**`docs/superpowers/plans/2026-09-19-04-audit-error-logging.md`** — đã sửa xong 2026-09-20,
-**sẵn sàng implement**, không còn vướng gì.
+**`docs/superpowers/plans/2026-09-20-04b-layered-architecture-restructure.md`**
 
-Bốn vấn đề của plan 04 đã được vá vào chính file plan (mục "Revision log" ở đầu file):
+Chuyển backend từ chia theo **feature** (`auth/`, `user/`, `audit/`, `error/`) sang chia theo
+**layer** đúng skill `coding-backend-java`, nay đã được viết thành **spec section 5.1**.
 
-1. Test aspect kiểu tautology → thay bằng bean do `@TestConfiguration` cấp, assert đúng `before + 1`.
-2. `@ExceptionHandler(Exception.class)` nuốt `AccessDeniedException` → thêm handler *rethrow*.
-3. F-05 chưa phủ → thêm handler 400, và sửa `SecurityConfig` để 401/403 cũng có body `ApiError`.
-4. `AuditAspect` không resolve `user_id` (code chết) → phải tra `UserRepository` theo username.
+**Chặn plan 05–18.** Mỗi plan sau đều tạo class mới; để càng lâu thì cuộc dọn càng lớn.
+
+Đây không phải việc đổi tên thư mục cho đẹp. Cách chia theo feature đang **che giấu 4 vi phạm
+phụ thuộc mức CRITICAL** — nằm trong cùng một package nên nhìn như gọi nội bộ:
+
+| # | Vi phạm | Ở đâu |
+|---|---|---|
+| V-1 | `AuthController` inject `UserRepository` và tự kiểm mật khẩu | `auth/AuthController.java` |
+| V-2 | `RefreshTokenCleanupJob` inject `RefreshTokenRepository` | `auth/RefreshTokenCleanupJob.java` |
+| V-3 | `GlobalExceptionHandler` inject `SystemErrorLogRepository` | `error/GlobalExceptionHandler.java` |
+| V-4 | `AuditAspect` inject `AuditLogRepository` + `UserRepository` | `audit/AuditAspect.java` |
+
+Ngoài ra: chưa có tách interface/impl cho service, chưa có tầng converter, và
+`LoginRequest`/`TokenResponse` không theo quy tắc Form-vs-Dto.
+
+Plan 04b gồm 8 task, và deliverable quan trọng nhất là **`LayerDependencyTest`** — một test đọc
+các dòng `import` và fail build nếu có class ở `controller`/`scheduler`/`aspect`/`exception` gọi
+thẳng `repository`. Không có nó thì cuộc tái cấu trúc sẽ mục lại sau vài plan.
+
+---
+
+## Tài liệu đã cập nhật hôm nay
+
+- **Spec mục 5.1 (mới)** — cây package bắt buộc, bảng phụ thuộc giữa các tầng, quy tắc Form vs
+  Dto, quy ước hậu tố tên class, ranh giới `@Transactional`, và ghi rõ dự án dùng **constructor
+  injection** (skill nói field `@Autowired` phổ biến ở repo tham chiếu của nó, nhưng chính skill
+  yêu cầu theo style sẵn có của module — của ta là constructor injection, **không được "sửa lại"**).
+- **Plan 05, 06, 07, 08, 09, 10, 14** — toàn bộ đường dẫn class đã đổi sang package theo layer,
+  `*Request` đổi thành `*Form`, và mỗi plan được thêm ràng buộc trỏ về spec 5.1.
+- **Plan 01–04 giữ nguyên** đường dẫn cũ. Chúng là hồ sơ lịch sử của những gì đã implement trước
+  khi có 5.1; plan 04b là thứ dời code sang layout mới, không phải sửa ngược các plan đó.
 
 ---
 
 ## Finding còn mở
 
-| Mã | Mức | Nội dung | Chặn ở đâu |
+| Mã | Mức | Nội dung | Xử lý ở đâu |
 |---|---|---|---|
-| **R-03** | MAJOR | `V2__refresh_token_indexes.sql` đã viết nhưng **chưa từng chạy** — máy không có Docker (`docker: command not found`), suite thì tắt Flyway. File đúng nội dung, chỉ là chưa kiểm chứng | Cần Postgres thật hoặc Testcontainers. Gắn với F-01 |
-| **V-02** | MINOR | `revoked` gộp hai nguyên nhân khác hẳn nhau: bị rotate (rò rỉ) và bị logout (user chủ động). Refresh sau logout vì vậy kích hoạt family revocation và giết session các thiết bị khác | Cần cột `revoked_reason`. Gộp vào cùng đợt migration với R-03 |
-| R-06 | MINOR | Test dọn token dùng `userId(1L)` vi phạm FK thật; chỉ xanh vì Flyway tắt | Thuộc F-01 |
-| R-08 | MINOR | Không giới hạn số refresh token sống mỗi user | Hoãn, gắn plan 09 |
-| R-09 | MINOR | Test job không chứng minh `@EnableScheduling` / cron còn đó | Hoãn |
-| R-10 | INFO | H2 sinh `timestamp with time zone`, migration khai `TIMESTAMP` | Thuộc F-08 |
-| V-03 | NIT | `UserRepository.java` thừa một dòng trống cuối file | Dọn khi nào chạm file |
-| F-01 | — | Flyway migration và entity chưa từng được đối chiếu | Cần Testcontainers + Docker. **Phải đóng trước plan 15.** R-03, R-06, R-10 đều là ca cụ thể |
-| F-05 | — | Response lỗi chưa đúng shape JSON của spec | Plan 04 |
-| F-08 | — | `TIMESTAMP` vs `Instant` lệch timezone | Chốt trước lần deploy thật |
-| F-09 | — | JWT còn sống tối đa 15 phút sau khi user bị deactivate | Chấp nhận theo spec. Plan 10 phải ghi rõ deactivate không tức thời |
-
-### Đã đóng trong 03c
-
-R-01 (`login` làm bẩn `updated_at`), R-02 (derived delete nạp từng row), R-04 (replay không bị xử
-lý), R-05 (`application-test.yml` lọt vào jar production), R-07 (thiếu test cho
-`.filter(User::isActive)`).
-
-Cả bốn test mới **đã qua mutation check** — revert đúng thay đổi production tương ứng thì mỗi test
-đỏ đúng một mình. Chi tiết trong `docs/reviews/2026-09-20-code-review-plan-03c.md`.
+| **R-01 (p04)** | MAJOR | 404 trả 500 và ghi `system_error_logs`; bot quét URL bơm bảng vô hạn | plan 04b task 7 |
+| **R-04 (p04)** | MINOR | `ResponseEntity<?>` làm mất kiểu trả về của `AuthController` | plan 04b task 5 |
+| **R-03 (p03c)** | MAJOR | `V2__refresh_token_indexes.sql` chưa từng chạy — máy không có Docker | Cần Postgres thật / Testcontainers |
+| **V-02 (p03c)** | MINOR | `revoked` gộp hai nguyên nhân; refresh sau logout giết session mọi thiết bị | Cần cột `revoked_reason`, gộp với R-03 |
+| R-02 (p04) | INFO | `@Audited` chưa có call site production nào | plan 05, test đầu tiên phải assert audit row |
+| R-03 (p04) | MINOR | Mỗi audit row tốn thêm một SELECT `users` | Hoãn; cân nhắc nhét `userId` vào JWT claim |
+| R-06 (p03b) | MINOR | Test dọn token dùng `userId(1L)` vi phạm FK thật | Thuộc F-01 |
+| R-08 (p03b) | MINOR | Không giới hạn số refresh token sống mỗi user | Hoãn, gắn plan 09 |
+| R-09 (p03b) | MINOR | Test job không chứng minh `@EnableScheduling` còn đó | Hoãn |
+| R-10 (p03b) | INFO | H2 sinh `timestamp with time zone`, migration khai `TIMESTAMP` | Thuộc F-08 |
+| F-01 | — | Migration và entity chưa từng được đối chiếu | Cần Docker. **Phải đóng trước plan 15** |
+| F-05 | — | Shape lỗi JSON | **Chưa đóng hẳn** — thiếu 404, xem R-01 |
+| F-08 | — | `TIMESTAMP` vs `Instant` lệch timezone | Chốt trước deploy thật |
+| F-09 | — | JWT sống thêm tối đa 15 phút sau khi deactivate | Chấp nhận theo spec |
 
 ---
 
 ## Bẫy môi trường
 
-**`JAVA_HOME` mặc định của máy trỏ `C:\Program Files\Java\jdk1.8.0_202`.** Maven chạy với JDK 8
-sẽ báo `class, interface, or enum expected` trên mọi `record` — trông như lỗi cú pháp nhưng thực
-ra là sai JDK. Luôn export trước khi build:
+**`JAVA_HOME` mặc định trỏ `C:\Program Files\Java\jdk1.8.0_202`.** Maven dưới JDK 8 báo
+`class, interface, or enum expected` trên mọi `record` — trông như lỗi cú pháp, thực ra sai JDK.
 
 ```bash
 export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"
 mvn -f backend/pom.xml test
 ```
 
-JDK có sẵn trên máy: `jdk1.8.0_202`, `jdk-11.0.31`, `jdk-21.0.11`.
+**Không có Docker trên máy này** (`docker: command not found`). Mọi bước cần Postgres thật đều
+treo; F-01 không đóng được.
 
-**Không có Docker trên máy này.** `docker: command not found`. Mọi bước kiểm chứng cần Postgres
-thật đều đang treo, và F-01 không thể đóng cho tới khi có.
-
-**Suite chạy trên H2, Flyway tắt.** `mvn test` xanh **không** nói lên điều gì về
-`V1__init_schema.sql` hay `V2__refresh_token_indexes.sql`.
+**Suite chạy H2, Flyway tắt.** `mvn test` xanh **không** nói gì về `V1__`/`V2__`.
 
 ---
 
 ## Tình trạng công cụ
 
-**Antigravity đã dùng lại được, từ 2026-09-20.** Lượt bàn giao plan 03c chạy thành công và trả về
-code đầy đủ cho cả 6 task code. Dự đoán trước đó là quota reset khoảng 2026-09-26 — **sai**, nó
-mở sớm hơn. Hai lượt hỏng ngày 2026-09-19 (`RESOURCE_EXHAUSTED`, đếm ngược ~164h) vẫn chưa có lời
-giải thích, nhưng không còn chặn việc gì nữa.
+**Antigravity dùng tốt.** Lượt plan 04 làm đủ cả task verify (mutation check) lẫn commit — khác
+lượt 03c vốn bỏ qua hai bước cuối. Kết quả mutation Antigravity tự báo đã được Claude chạy lại
+độc lập và **khớp từng dòng**, kể cả thông điệp lỗi.
 
-Một lưu ý về bàn giao: Antigravity làm đúng 6 task code nhưng **bỏ qua task 7 step 2
-(mutation check) và step 3 (commit)**. Claude chạy mutation check thay và commit. Lần bàn giao
-sau nên kiểm lại hai bước cuối thay vì mặc định là đã xong.
+Vẫn nên kiểm lại bước verify cuối mỗi lượt thay vì mặc định là đã xong — hai lượt vừa rồi cho hai
+kết quả khác nhau.

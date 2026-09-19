@@ -22,6 +22,13 @@
 - `analytics_events.ip_hash` stores a hash of the IP, never the raw IP (spec section 6).
 - Templates are static-exported Next.js sites served by Nginx on `<slug>.portfolio.com`, no per-template runtime process (spec sections 4, 7).
 - No comments restating what code does; only comments explaining non-obvious "why".
+- **Package layout follows spec section 5.1 (layered), not feature packages.** Read 5.1 before
+  creating any class. A `service/XService.java` entry in a file list always means the pair
+  `service/XService.java` (interface) + `service/impl/XServiceImpl.java` (implementation).
+- **Controllers never touch a Repository or a Converter**, schedulers and the `@RestControllerAdvice`
+  never touch a Repository. `LayerDependencyTest` enforces this and will fail the build.
+- Request bodies are `form/*Form`, response bodies and inter-layer data are `dto/*Dto`
+  (spec 5.1, Form vs Dto ownership). Entities live in `model/` with no suffix.
 
 ---
 
@@ -34,8 +41,8 @@
 - Create: `frontend/app/admin/leads/page.tsx`
 - Create: `frontend/lib/adminApiClient.ts`
 - Test: `frontend/lib/adminApiClient.test.ts`
-- Modify: `backend/src/main/java/com/portfolio/platform/lead/LeadRepository.java` — add `findAllByOrderByCreatedAtDesc()`.
-- Modify: `backend/src/main/java/com/portfolio/platform/lead/LeadController.java` — add `GET` list endpoint.
+- Modify: `backend/src/main/java/com/portfolio/platform/repository/LeadRepository.java` — add `findAllByOrderByCreatedAtDesc()`.
+- Modify: `backend/src/main/java/com/portfolio/platform/controller/LeadController.java` — add `GET` list endpoint.
 
 **Interfaces:**
 - Consumes: `/api/admin/templates` (plan 05), `/api/admin/leads` (added here as a `LeadController` follow-up), `/api/admin/analytics/summary` (plan 08).
@@ -224,7 +231,7 @@ Expected: dashboard shows analytics numbers, templates/leads tables populate fro
 - [ ] **Step 9: Commit**
 
 ```bash
-git add frontend/app/admin backend/src/main/java/com/portfolio/platform/lead/LeadController.java backend/src/main/java/com/portfolio/platform/lead/LeadRepository.java frontend/lib/adminApiClient.ts frontend/lib/adminApiClient.test.ts
+git add frontend/app/admin backend/src/main/java/com/portfolio/platform/controller/LeadController.java backend/src/main/java/com/portfolio/platform/repository/LeadRepository.java frontend/lib/adminApiClient.ts frontend/lib/adminApiClient.test.ts
 git commit -m "feat: add admin dashboard home, templates, and leads screens"
 ```
 

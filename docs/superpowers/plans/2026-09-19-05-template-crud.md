@@ -22,21 +22,28 @@
 - `analytics_events.ip_hash` stores a hash of the IP, never the raw IP (spec section 6).
 - Templates are static-exported Next.js sites served by Nginx on `<slug>.portfolio.com`, no per-template runtime process (spec sections 4, 7).
 - No comments restating what code does; only comments explaining non-obvious "why".
+- **Package layout follows spec section 5.1 (layered), not feature packages.** Read 5.1 before
+  creating any class. A `service/XService.java` entry in a file list always means the pair
+  `service/XService.java` (interface) + `service/impl/XServiceImpl.java` (implementation).
+- **Controllers never touch a Repository or a Converter**, schedulers and the `@RestControllerAdvice`
+  never touch a Repository. `LayerDependencyTest` enforces this and will fail the build.
+- Request bodies are `form/*Form`, response bodies and inter-layer data are `dto/*Dto`
+  (spec 5.1, Form vs Dto ownership). Entities live in `model/` with no suffix.
 
 ---
 
 ### Task: Template CRUD module (entity, repository, service, controller)
 
 **Files:**
-- Create: `backend/src/main/java/com/portfolio/platform/template/Template.java`
-- Create: `backend/src/main/java/com/portfolio/platform/template/TemplateRepository.java`
-- Create: `backend/src/main/java/com/portfolio/platform/template/TemplateDto.java`
-- Create: `backend/src/main/java/com/portfolio/platform/template/TemplateUpsertRequest.java`
-- Create: `backend/src/main/java/com/portfolio/platform/template/TemplateService.java`
-- Create: `backend/src/main/java/com/portfolio/platform/template/PublicTemplateController.java`
-- Create: `backend/src/main/java/com/portfolio/platform/template/AdminTemplateController.java`
-- Test: `backend/src/test/java/com/portfolio/platform/template/TemplateServiceTest.java`
-- Test: `backend/src/test/java/com/portfolio/platform/template/PublicTemplateControllerTest.java`
+- Create: `backend/src/main/java/com/portfolio/platform/model/Template.java`
+- Create: `backend/src/main/java/com/portfolio/platform/repository/TemplateRepository.java`
+- Create: `backend/src/main/java/com/portfolio/platform/dto/TemplateDto.java`
+- Create: `backend/src/main/java/com/portfolio/platform/form/TemplateUpsertForm.java`
+- Create: `backend/src/main/java/com/portfolio/platform/service/TemplateService.java`
+- Create: `backend/src/main/java/com/portfolio/platform/controller/PublicTemplateController.java`
+- Create: `backend/src/main/java/com/portfolio/platform/controller/AdminTemplateController.java`
+- Test: `backend/src/test/java/com/portfolio/platform/service/TemplateServiceTest.java`
+- Test: `backend/src/test/java/com/portfolio/platform/controller/PublicTemplateControllerTest.java`
 
 **Interfaces:**
 - Consumes: `Audited` from plan 04; `Role` from plan 02.
@@ -166,7 +173,7 @@ public class Template {
 }
 ```
 
-- [ ] **Step 4: Create `TemplateRepository`, `TemplateDto`, `TemplateUpsertRequest`**
+- [ ] **Step 4: Create `TemplateRepository`, `TemplateDto`, `TemplateUpsertForm`**
 
 ```java
 package com.portfolio.platform.template;
@@ -202,7 +209,7 @@ package com.portfolio.platform.template;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record TemplateUpsertRequest(
+public record TemplateUpsertForm(
         @NotBlank String name, @NotBlank String slug, @NotBlank String subdomain,
         Long thumbnailMediaId, String description, String category, String techTags,
         int displayOrder, boolean active) {
@@ -249,7 +256,7 @@ public class TemplateService {
     @Audited(entityType = "Template", action = "CREATE")
     @CacheEvict(value = "public-templates", allEntries = true)
     @Transactional
-    public Long create(TemplateUpsertRequest request, Long createdBy) {
+    public Long create(TemplateUpsertForm request, Long createdBy) {
         Template template = new Template();
         applyRequest(template, request);
         template.setCreatedBy(createdBy);
@@ -259,7 +266,7 @@ public class TemplateService {
     @Audited(entityType = "Template", action = "UPDATE")
     @CacheEvict(value = "public-templates", allEntries = true)
     @Transactional
-    public Long update(Long id, TemplateUpsertRequest request) {
+    public Long update(Long id, TemplateUpsertForm request) {
         Template template = templateRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Template " + id + " not found"));
         applyRequest(template, request);
@@ -287,7 +294,7 @@ public class TemplateService {
         });
     }
 
-    private void applyRequest(Template template, TemplateUpsertRequest request) {
+    private void applyRequest(Template template, TemplateUpsertForm request) {
         template.setName(request.name());
         template.setSlug(request.slug());
         template.setSubdomain(request.subdomain());
@@ -354,12 +361,12 @@ public class AdminTemplateController {
     }
 
     @PostMapping
-    public Long create(@Valid @RequestBody TemplateUpsertRequest request, Authentication auth) {
+    public Long create(@Valid @RequestBody TemplateUpsertForm request, Authentication auth) {
         return templateService.create(request, null);
     }
 
     @PutMapping("/{id}")
-    public Long update(@PathVariable Long id, @Valid @RequestBody TemplateUpsertRequest request) {
+    public Long update(@PathVariable Long id, @Valid @RequestBody TemplateUpsertForm request) {
         return templateService.update(id, request);
     }
 
@@ -411,7 +418,7 @@ Expected: PASS
 - [ ] **Step 9: Commit**
 
 ```bash
-git add backend/src/main/java/com/portfolio/platform/template backend/src/test/java/com/portfolio/platform/template
+git add backend/src
 git commit -m "feat: add Template CRUD module with public/admin endpoints and caching"
 ```
 

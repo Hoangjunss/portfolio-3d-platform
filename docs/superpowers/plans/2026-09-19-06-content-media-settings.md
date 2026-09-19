@@ -22,26 +22,33 @@
 - `analytics_events.ip_hash` stores a hash of the IP, never the raw IP (spec section 6).
 - Templates are static-exported Next.js sites served by Nginx on `<slug>.portfolio.com`, no per-template runtime process (spec sections 4, 7).
 - No comments restating what code does; only comments explaining non-obvious "why".
+- **Package layout follows spec section 5.1 (layered), not feature packages.** Read 5.1 before
+  creating any class. A `service/XService.java` entry in a file list always means the pair
+  `service/XService.java` (interface) + `service/impl/XServiceImpl.java` (implementation).
+- **Controllers never touch a Repository or a Converter**, schedulers and the `@RestControllerAdvice`
+  never touch a Repository. `LayerDependencyTest` enforces this and will fail the build.
+- Request bodies are `form/*Form`, response bodies and inter-layer data are `dto/*Dto`
+  (spec 5.1, Form vs Dto ownership). Entities live in `model/` with no suffix.
 
 ---
 
 ### Task: Content section, media, and settings modules
 
 **Files:**
-- Create: `backend/src/main/java/com/portfolio/platform/content/ContentSection.java`
-- Create: `backend/src/main/java/com/portfolio/platform/content/ContentSectionRepository.java`
-- Create: `backend/src/main/java/com/portfolio/platform/content/ContentSectionService.java`
-- Create: `backend/src/main/java/com/portfolio/platform/content/ContentSectionController.java`
-- Create: `backend/src/main/java/com/portfolio/platform/media/Media.java`
-- Create: `backend/src/main/java/com/portfolio/platform/media/MediaRepository.java`
-- Create: `backend/src/main/java/com/portfolio/platform/media/MediaService.java`
-- Create: `backend/src/main/java/com/portfolio/platform/media/MediaController.java`
-- Create: `backend/src/main/java/com/portfolio/platform/settings/Setting.java`
-- Create: `backend/src/main/java/com/portfolio/platform/settings/SettingRepository.java`
-- Create: `backend/src/main/java/com/portfolio/platform/settings/SettingsService.java`
-- Create: `backend/src/main/java/com/portfolio/platform/settings/SettingsController.java`
-- Test: `backend/src/test/java/com/portfolio/platform/content/ContentSectionServiceTest.java`
-- Test: `backend/src/test/java/com/portfolio/platform/settings/SettingsServiceTest.java`
+- Create: `backend/src/main/java/com/portfolio/platform/model/ContentSection.java`
+- Create: `backend/src/main/java/com/portfolio/platform/repository/ContentSectionRepository.java`
+- Create: `backend/src/main/java/com/portfolio/platform/service/ContentSectionService.java`
+- Create: `backend/src/main/java/com/portfolio/platform/controller/ContentSectionController.java`
+- Create: `backend/src/main/java/com/portfolio/platform/model/Media.java`
+- Create: `backend/src/main/java/com/portfolio/platform/repository/MediaRepository.java`
+- Create: `backend/src/main/java/com/portfolio/platform/service/MediaService.java`
+- Create: `backend/src/main/java/com/portfolio/platform/controller/MediaController.java`
+- Create: `backend/src/main/java/com/portfolio/platform/model/Setting.java`
+- Create: `backend/src/main/java/com/portfolio/platform/repository/SettingRepository.java`
+- Create: `backend/src/main/java/com/portfolio/platform/service/SettingsService.java`
+- Create: `backend/src/main/java/com/portfolio/platform/controller/SettingsController.java`
+- Test: `backend/src/test/java/com/portfolio/platform/service/ContentSectionServiceTest.java`
+- Test: `backend/src/test/java/com/portfolio/platform/service/SettingsServiceTest.java`
 
 **Interfaces:**
 - Consumes: `Audited` from plan 04.
@@ -498,7 +505,7 @@ Expected: PASS
 - [ ] **Step 9: Commit**
 
 ```bash
-git add backend/src/main/java/com/portfolio/platform/content backend/src/main/java/com/portfolio/platform/media backend/src/main/java/com/portfolio/platform/settings backend/src/test/java/com/portfolio/platform/content backend/src/test/java/com/portfolio/platform/settings
+git add backend/src
 git commit -m "feat: add content section, media upload, and settings modules"
 ```
 

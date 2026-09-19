@@ -22,20 +22,27 @@
 - `analytics_events.ip_hash` stores a hash of the IP, never the raw IP (spec section 6).
 - Templates are static-exported Next.js sites served by Nginx on `<slug>.portfolio.com`, no per-template runtime process (spec sections 4, 7).
 - No comments restating what code does; only comments explaining non-obvious "why".
+- **Package layout follows spec section 5.1 (layered), not feature packages.** Read 5.1 before
+  creating any class. A `service/XService.java` entry in a file list always means the pair
+  `service/XService.java` (interface) + `service/impl/XServiceImpl.java` (implementation).
+- **Controllers never touch a Repository or a Converter**, schedulers and the `@RestControllerAdvice`
+  never touch a Repository. `LayerDependencyTest` enforces this and will fail the build.
+- Request bodies are `form/*Form`, response bodies and inter-layer data are `dto/*Dto`
+  (spec 5.1, Form vs Dto ownership). Entities live in `model/` with no suffix.
 
 ---
 
 ### Task: Lead module + email notification
 
 **Files:**
-- Create: `backend/src/main/java/com/portfolio/platform/lead/Lead.java`
-- Create: `backend/src/main/java/com/portfolio/platform/lead/LeadStatus.java`
-- Create: `backend/src/main/java/com/portfolio/platform/lead/LeadRepository.java`
-- Create: `backend/src/main/java/com/portfolio/platform/lead/LeadCreateRequest.java`
-- Create: `backend/src/main/java/com/portfolio/platform/lead/LeadService.java`
-- Create: `backend/src/main/java/com/portfolio/platform/lead/LeadController.java`
-- Create: `backend/src/main/java/com/portfolio/platform/notification/NotificationService.java`
-- Test: `backend/src/test/java/com/portfolio/platform/lead/LeadServiceTest.java`
+- Create: `backend/src/main/java/com/portfolio/platform/model/Lead.java`
+- Create: `backend/src/main/java/com/portfolio/platform/enums/LeadStatus.java`
+- Create: `backend/src/main/java/com/portfolio/platform/repository/LeadRepository.java`
+- Create: `backend/src/main/java/com/portfolio/platform/form/LeadCreateForm.java`
+- Create: `backend/src/main/java/com/portfolio/platform/service/LeadService.java`
+- Create: `backend/src/main/java/com/portfolio/platform/controller/LeadController.java`
+- Create: `backend/src/main/java/com/portfolio/platform/service/NotificationService.java`
+- Test: `backend/src/test/java/com/portfolio/platform/service/LeadServiceTest.java`
 
 **Interfaces:**
 - Consumes: `Audited` from plan 04.
@@ -66,7 +73,7 @@ class LeadServiceTest {
 
     @Test
     void submit_savesLeadWithNewStatusAndNotifies() {
-        LeadCreateRequest request = new LeadCreateRequest("Jane", "jane@example.com", "0900000000", "Hi", null);
+        LeadCreateForm request = new LeadCreateForm("Jane", "jane@example.com", "0900000000", "Hi", null);
         when(leadRepository.save(any(Lead.class))).thenAnswer(inv -> inv.getArgument(0));
 
         leadService.submit(request);
@@ -84,7 +91,7 @@ class LeadServiceTest {
 Run: `mvn -f backend/pom.xml test -Dtest=LeadServiceTest`
 Expected: FAIL — classes do not exist.
 
-- [ ] **Step 3: Create `LeadStatus`, `Lead`, `LeadRepository`, `LeadCreateRequest`**
+- [ ] **Step 3: Create `LeadStatus`, `Lead`, `LeadRepository`, `LeadCreateForm`**
 
 ```java
 package com.portfolio.platform.lead;
@@ -160,7 +167,7 @@ package com.portfolio.platform.lead;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public record LeadCreateRequest(
+public record LeadCreateForm(
         @NotBlank String name, @Email @NotBlank String email, String phone,
         String message, Long sourceTemplateId) {
 }
@@ -216,7 +223,7 @@ public class LeadService {
 
     @Audited(entityType = "Lead", action = "CREATE")
     @Transactional
-    public Long submit(LeadCreateRequest request) {
+    public Long submit(LeadCreateForm request) {
         Lead lead = new Lead();
         lead.setName(request.name());
         lead.setEmail(request.email());
@@ -252,7 +259,7 @@ public class LeadController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> submit(@Valid @RequestBody LeadCreateRequest request) {
+    public ResponseEntity<Void> submit(@Valid @RequestBody LeadCreateForm request) {
         leadService.submit(request);
         return ResponseEntity.accepted().build();
     }
@@ -267,7 +274,7 @@ Expected: PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add backend/src/main/java/com/portfolio/platform/lead backend/src/main/java/com/portfolio/platform/notification backend/src/test/java/com/portfolio/platform/lead
+git add backend/src
 git commit -m "feat: add lead capture module with new-lead email notification"
 ```
 

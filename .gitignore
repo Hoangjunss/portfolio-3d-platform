@@ -1,0 +1,19 @@
+# Java / Maven
+target/
+*.class
+
+# Node
+node_modules/
+.next/
+out/
+
+# Env
+.env
+.env.local
+*.local
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store

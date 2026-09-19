@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:portfolio}
+    username: ${DB_USER:portfolio}
+    password: ${DB_PASSWORD:portfolio}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASSWORD:}
+  flyway:
+    locations: classpath:db/migration
+
+jwt:
+  access-secret: ${JWT_ACCESS_SECRET:dev-only-access-secret-change-me-32bytes}
+  refresh-secret: ${JWT_REFRESH_SECRET:dev-only-refresh-secret-change-me-32b}
+  access-ttl-minutes: 15
+  refresh-ttl-days: 7

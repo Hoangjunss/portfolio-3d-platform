@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `f21dfaf` — **đã push**
-**Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **26/26 PASS**, ổn định qua 3 lần chạy
+**Commit cuối:** `0795459` + review — **đã push**
+**Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **34/34 PASS**, ổn định qua 3 lần chạy
 
 ---
 
@@ -22,20 +22,22 @@ Tiến độ: **5/19 task tính năng & refactor**. Suite 26/26 PASS.
 
 ---
 
-## Bước kế tiếp — plan 05 (Template CRUD)
+## Bước kế tiếp — plan 06 (content / media / settings)
 
-**`docs/superpowers/plans/2026-09-19-05-template-crud.md`** — đã viết lại hoàn toàn hôm nay.
+**`docs/superpowers/plans/2026-09-19-06-content-media-settings.md`**
 
-**Trước khi bắt đầu plan 05, phải làm A-01:** `LayerDependencyTest` hiện mới phủ 2 trong 8 luật
-phụ thuộc. Nó bắt đúng bốn vi phạm đang có, nhưng **chưa** bắt được Service → Facade,
-Converter → Service, Converter → Repository, Helper → Service — đều là NEVER ALLOWED theo skill.
-Plan 06–18 mỗi plan đều thêm service và converter mới; test này là thứ duy nhất ngăn chúng đi sai.
-Chi tiết trong `docs/reviews/2026-09-20-code-review-plan-04b.md`.
+**Plan 06 CẦN RÀ LẠI TRƯỚC KHI IMPLEMENT.** Các khối code trong file vẫn còn dạng
+`package com.portfolio.platform.content;` từ trước khi có spec 5.1 — đường dẫn trong mục "Files"
+đã sửa nhưng code block thì chưa. Plan 05 khi rà lại đã lòi ra 6 lỗi ngoài chuyện package; plan 06
+nhiều khả năng cũng vậy, nên đừng giao thẳng.
 
-Plan 05 đã sửa 6 lỗi ngoài chuyện package (xem Revision log trong file), đáng chú ý:
-`AdminTemplateController.create` nhận `Authentication` rồi truyền `null` làm `createdBy` khiến
-`created_by` null vĩnh viễn; và `incrementClickCount` đọc-sửa-ghi nên mất lượt khi hai click đồng
-thời, trong khi plan 08 gọi nó từ endpoint công khai.
+Ba việc phải gộp vào plan 06:
+
+| Việc | Vì sao |
+|---|---|
+| T-01 — xoá overload `create(form, Long)` chết trong `TemplateService` | `TemplateService` là khuôn plan 06–10 sẽ sao chép; và `create(form, null)` hiện không biên dịch được vì nhập nhằng |
+| T-04 — tạo **một** `CacheConfig` với TTL tường minh | Plan 06 thêm cache thứ hai; để mỗi plan tự nghĩ TTL là hỏng |
+| Rà toàn bộ code block của plan 06 về spec 5.1 | Như plan 05 |
 
 ---
 
@@ -61,12 +63,11 @@ thời, trong khi plan 08 gọi nó từ endpoint công khai.
 | ~~**F-05**~~ | — | Shape lỗi JSON (404 trả đúng format và không ghi error log) | **Đã đóng** — plan 04b task 7 (`382f0e6`) |
 | **R-03 (p03c)** | MAJOR | `V2__refresh_token_indexes.sql` chưa từng chạy — máy không có Docker | Cần Postgres thật / Testcontainers |
 | **V-02 (p03c)** | MINOR | `revoked` gộp hai nguyên nhân; refresh sau logout giết session mọi thiết bị | Cần cột `revoked_reason`, gộp với R-03 |
-| **A-01 (p04b)** | MAJOR | `LayerDependencyTest` mới phủ 2/8 luật; chưa bắt Service→Facade, Converter→Service, Converter→Repository, Helper→Service | **Làm trước plan 05** |
-| **A-02 (p04b)** | MINOR | `AuthServiceFacadeImpl.login` còn giữ quyết định nghiệp vụ; nên gộp vào `UserService.authenticate` | plan 05 hoặc lần sau chạm `UserService` |
-| A-03 (p04b) | NIT | Comment "token-validity oracle" nhân đôi ở controller và facade | Bỏ bản ở controller |
 | A-04 (p04b) | INFO | `LayerDependencyTest` mù với tham chiếu fully-qualified | ArchUnit nếu dự án chịu thêm dependency |
 | A-05 (p04b) | INFO | `RotationDto` mang entity `User` nên `dto` phụ thuộc `model` | Cân nhắc khi chạm lần sau |
-| R-02 (p04) | INFO | `@Audited` chưa có call site production nào | plan 05, test đầu tiên phải assert audit row |
+| **T-02 (p05)** | MINOR | `view_count` có trong schema, entity và `TemplateDto` nhưng không code nào ghi — FE plan 12 sẽ vẽ số 0 vĩnh viễn | **Plan 08 phải quyết**: wire hoặc bỏ khỏi DTO |
+| T-03 (p05) | INFO | Handler 404 trả `ex.getMessage()`; chỉ an toàn vì exception là của ta | Ghi nhận |
+| T-05 (p05) | INFO | `config` và `filter` miễn trắng khỏi allow-list | Siết lại nếu `config/` phình |
 | R-03 (p04) | MINOR | Mỗi audit row tốn thêm một SELECT `users` | Hoãn; cân nhắc nhét `userId` vào JWT claim |
 | R-06 (p03b) | MINOR | Test dọn token dùng `userId(1L)` vi phạm FK thật | Thuộc F-01 |
 | R-08 (p03b) | MINOR | Không giới hạn số refresh token sống mỗi user | Hoãn, gắn plan 09 |

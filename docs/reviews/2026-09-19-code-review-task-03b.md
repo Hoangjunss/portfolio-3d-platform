@@ -135,3 +135,52 @@ và không nhắc tới `/error`. Đã bổ sung vào phần sửa bên dưới.
 
 **Việc cần làm tiếp:** hoàn tất Task 2 và Task 3 của plan 03b, kèm sửa R-02 và bổ sung test R-03,
 rồi chạy Task 4.
+
+---
+
+## Vòng 2 — 2026-09-19, sau lượt bàn giao thứ hai
+
+**Phạm vi:** commit `651d46f`.
+
+### Đã đóng
+
+| Mã | Nội dung | Kiểm chứng |
+|---|---|---|
+| R-02 | `"/error"` đã được thêm vào `permitAll()` | Trên Tomcat thật: validation trên `/api/auth/login` trả 400, `/api/public/nope` trả 404 |
+| R-03 | `ErrorDispatchSecurityTest` dùng `RANDOM_PORT` + `TestRestTemplate` | 2/2 xanh; và **2/2 đỏ khi gỡ `"/error"`** — test có sức nặng thật, không phải test rỗng |
+| R-05 | Hai điểm lệch so với plan | Đã ghi vào commit body của `651d46f` |
+| R-06 | Công việc Task 1 chưa commit | Đã commit và push |
+
+`mvn -f backend/pom.xml test` (JDK 21.0.11): **9/9 PASS**.
+
+### Còn mở
+
+**R-01 vẫn nguyên.** Lượt bàn giao thứ hai làm mục (1) và (2), bỏ mục (3) và (4) — đúng kiểu
+lượt đầu tiên: phần đầu của yêu cầu được làm, phần sau bị bỏ.
+
+Kiểm lại từng dấu hiệu:
+
+| Plan 03b yêu cầu | Trạng thái |
+|---|---|
+| `RefreshTokenService` / `RefreshRequest` / `RefreshTokenCleanupJob` | vẫn không tồn tại |
+| `POST /api/auth/refresh`, `POST /api/auth/logout` | vẫn không có |
+| `deleteByExpiresAtBefore` | vẫn không có |
+| `JwtProperties.refreshSecret` + khoá `jwt.refresh-secret` | vẫn còn nguyên cả hai |
+| `@EnableScheduling` | vẫn không có |
+| `@PreUpdate` trong `User` | vẫn không có |
+| `lastLoginAt` được set khi login | vẫn không có |
+
+Nghĩa là **F-02, F-04, F-06, F-07 vẫn mở** sau hai lượt. Task 2 và Task 3 của plan 03b chưa
+được động tới dòng nào.
+
+### Nhận xét về cách chia việc
+
+Hai lượt liên tiếp đều dừng lại sau phần đầu của yêu cầu. Bàn giao lần sau nên tách nhỏ: **một
+lượt chỉ làm Task 2, một lượt chỉ làm Task 3**, thay vì gộp bốn mục vào một yêu cầu. Việc xác
+nhận "đã hoàn tất" từ phía công cụ thực thi không đáng tin, phải kiểm bằng sự tồn tại của file
+và bằng test.
+
+### Kết luận về việc ship
+
+**Vẫn chưa ship được.** Task 1 giờ đã vững và có test bảo vệ, nhưng lý do chặn không đổi: 2/3
+task của plan 03b chưa làm, F-02/F-04/F-06/F-07 còn mở, và tổng thể dự án vẫn 3/18 task tính năng.

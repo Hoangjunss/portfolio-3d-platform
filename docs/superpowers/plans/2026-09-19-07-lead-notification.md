@@ -373,6 +373,15 @@ surface as a `DataIntegrityViolationException` → 500 + log row. Validate it in
 `templateRepository.existsById` and throw `InvalidRequestException` — this is the reuse task 1's
 exception was created for.
 
+**(h) Carry finding D-02 from the task 1 review.** `spring.servlet.multipart.max-file-size` and
+`media.max-size-bytes` must move together — raising one without the other silently brings back
+the 500 + `system_error_logs` bug that task 1 fixed, and no existing test can see it (MockMvc
+never runs multipart parsing). Add
+`backend/src/test/java/com/portfolio/platform/config/MultipartLimitTest.java`: a `@SpringBootTest`
+that injects `MediaStorageProperties` and `@Value("${spring.servlet.multipart.max-file-size}") DataSize`,
+and asserts `maxFileSize.toBytes() >= mediaStorageProperties.getMaxSizeBytes()`. Three lines, and
+it pins the pairing the YAML comment currently only states in prose.
+
 **(g) Audit the public submit.** `@Audited(entityType = "Lead", action = "CREATE")` on
 `submit`. `AuditAspect` already resolves an anonymous caller to `userId = null` and
 `audit_logs.user_id` is nullable, so the row records the IP with no user — which is the useful

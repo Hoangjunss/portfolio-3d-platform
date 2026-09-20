@@ -1,9 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `e99ae9e` — **CHƯA PUSH** (xem C-01 bên dưới)
-**Đã push tới:** `7191248`
-**Test:** `mvn -f backend/pom.xml test` (JDK 21.0.11) → **58/58 PASS**, ổn định qua 3 lần chạy
+**Commit cuối:** `c7a3a0d` — plan 07 task 1, **đã đủ điều kiện push**
+**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **63/63 PASS**
 
 ---
 
@@ -17,54 +16,38 @@
 | 03b | Auth hardening (4 task) | `651d46f`, `d06d235`, `ac1808c` |
 | 03c | Đóng R-01…R-07 vòng 2 | `f292ae2` |
 | 04 | Audit AOP + một shape lỗi cho mọi response | `a95f958` (local) |
-| 04b | Layered architecture restructure (8 task) | `382f0e6` (local) |
+| 04b | Layered architecture restructure (8 task) | `382f0e6` |
+| 06 | Content sections + media upload + settings | `e99ae9e` |
+| 07 task 1 | Đóng C-01/C-02/C-03 + lỗi giới hạn multipart | `c7a3a0d` |
 
-Tiến độ: **5/19 task tính năng & refactor**. Suite 26/26 PASS.
-
----
-
-## Vì sao `e99ae9e` chưa push
-
-Plan 06 làm tốt phần khó (lưu file chống traversal + chống stored XSS), nhưng review ra hai lỗi
-MAJOR — chi tiết trong `docs/reviews/2026-09-20-code-review-plan-06.md`:
-
-- **C-01** — upload bị từ chối trả **500** và ghi một dòng `system_error_logs`. Đã kiểm chứng
-  bằng probe chạy thật: `PROBE_STATUS=500`, `PROBE_ERRORLOG_DELTA=1`. Người có role EDITOR bơm
-  được bảng đó tuỳ ý. Cùng dạng với R-01 (404→500) đã vá ở plan 04b — khuôn mẫu đang lặp: thêm
-  exception mới mà quên handler, catch-all nuốt hết.
-- **C-02** — `store_withSpoofedContentType_usesSniffedType` không canh điều tên nó hứa. Đổi
-  `setMimeType(detectedMimeType)` thành `setMimeType(file.getContentType())` mà suite **vẫn
-  xanh**. Ca chưa phủ: PNG thật khai `Content-Type: text/html`.
+Tiến độ: **6/19 task tính năng & refactor**. Suite 63/63 PASS.
 
 ---
 
-## Bước kế tiếp — plan 07 (lead + notification) — ĐÃ RÀ XONG, ĐANG GIAO
+## `e99ae9e` đã được mở khoá
 
-**`docs/superpowers/plans/2026-09-19-07-lead-notification.md`** — **đã viết lại 2026-09-20**,
-đang giao cho Antigravity. Bản cũ còn `package com.portfolio.platform.lead;` từ trước spec 5.1 ở
-mọi code block và không gánh finding nào của plan 06.
+Lý do giữ nó ở local là C-01 và C-02. Cả hai đã đóng ở `c7a3a0d`, có mutation check đỏ chứng
+minh từng cái — xem `docs/reviews/2026-09-20-code-review-plan-07-task-1.md`.
 
-Bản mới có **2 task**:
+---
 
-- **Task 1 — đóng C-01/C-02/C-03** (commit riêng): thêm `exception/InvalidRequestException` +
-  handler 400 không ghi log row; test tầng controller assert cả status lẫn `system_error_logs`
-  count; ca PNG thật khai `text/html` assert giá trị `mime_type` lưu xuống; `readNBytes(12)` kèm
-  một `MultipartFile` giả trả 4 byte mỗi lần đọc (vì `MockMultipartFile` không bao giờ đọc thiếu).
-- **Task 2 — lead + notification**: đủ cây package 5.1, `PublicLeadController`, mail best-effort.
+## Bước kế tiếp — plan 07 **task 2** (lead + notification)
 
-Ba quyết định lệch/thêm so với review, đã ghi lý do trong plan:
+Task 1 xong và đã review PASS (`docs/reviews/2026-09-20-code-review-plan-07-task-1.md`).
+**Task 2 chưa bắt đầu, 0/8 step** — đang giao lại.
 
-- **(b)** `SecurityException` traversal **giữ nguyên 500**, không đổi thành 400 như review đề
-  xuất — tên file lưu suy từ UUID nên không input nào của caller chạm tới `target`; nếu nhánh đó
-  nổ thì là sai cấu hình `media.upload-dir`, đúng loại đáng ghi `system_error_logs`.
-- **(c) Lỗi mới tìm ra khi rà plan**: `application.yml` đặt `media.max-size-bytes: 10485760`
-  nhưng không đặt `spring.servlet.multipart.max-file-size` — mặc định Boot là **1MB**. Nên hôm
-  nay check 10MB của `MediaServiceImpl` là code chết, và một file PNG 2MB chết ở tầng parse
-  multipart → **500 + một dòng `system_error_logs`**. Đúng dạng C-01, đang sống. Plan sửa cả hai
-  nửa: nâng giới hạn multipart cho khớp, và thêm handler trả 413.
-- **(e)/(f)** `LeadCreateForm` phải có `@Size` khớp độ dài cột, và `sourceTemplateId` phải kiểm
-  `existsById` — nếu không thì cả hai đều thành 500 + log row **từ endpoint công khai không cần
-  đăng nhập**, tức là tệ hơn C-01.
+Task 2 gồm: `enums/LeadStatus`, `model/Lead`, `repository/LeadRepository`, `form/LeadCreateForm`,
+`config/NotificationProperties`, cặp `NotificationService`/`Impl`, cặp `LeadService`/`Impl`,
+`controller/PublicLeadController`, ba lớp test, cộng test canh cặp giới hạn multipart (D-02).
+
+Bốn quyết định bắt buộc, đã ghi lý do trong plan:
+
+- **(d)** mail là best-effort, `NotificationServiceImpl` nuốt `MailException` — SMTP chết không
+  được phép làm mất lead.
+- **(e)** `LeadCreateForm` phải có `@Size` khớp độ dài cột, nếu không tên 300 ký tự thành
+  500 + log row **từ endpoint công khai không cần đăng nhập**, tệ hơn C-01.
+- **(f)** `sourceTemplateId` phải kiểm `existsById`, cùng lý do.
+- **(h)** thêm `MultipartLimitTest` canh cặp `multipart.max-file-size` / `media.max-size-bytes`.
 
 ---
 
@@ -93,9 +76,12 @@ Ba quyết định lệch/thêm so với review, đã ghi lý do trong plan:
 | A-04 (p04b) | INFO | `LayerDependencyTest` mù với tham chiếu fully-qualified | ArchUnit nếu dự án chịu thêm dependency |
 | A-05 (p04b) | INFO | `RotationDto` mang entity `User` nên `dto` phụ thuộc `model` | Cân nhắc khi chạm lần sau |
 | **T-02 (p05)** | MINOR | `view_count` có trong schema, entity và `TemplateDto` nhưng không code nào ghi — FE plan 12 sẽ vẽ số 0 vĩnh viễn | **Plan 08 phải quyết**: wire hoặc bỏ khỏi DTO |
-| **C-01 (p06)** | MAJOR | Upload bị từ chối → 500 + ghi `system_error_logs`; EDITOR bơm được bảng | plan 07 task 1 |
-| **C-02 (p06)** | MAJOR | Test sniffed-type không canh giá trị `mime_type` lưu xuống | plan 07 task 1 |
-| C-03 (p06) | MINOR | `in.read(header)` có thể đọc thiếu → WEBP hợp lệ bị từ chối | plan 07 task 1 |
+| ~~**C-01 (p06)**~~ | MAJOR | Upload bị từ chối → 500 + ghi `system_error_logs`; EDITOR bơm được bảng | **Đã đóng** — `c7a3a0d`, M3 đỏ |
+| ~~**C-02 (p06)**~~ | MAJOR | Test sniffed-type không canh giá trị `mime_type` lưu xuống | **Đã đóng** — `c7a3a0d`, M1 đỏ |
+| ~~C-03 (p06)~~ | MINOR | `in.read(header)` có thể đọc thiếu → WEBP hợp lệ bị từ chối | **Đã đóng** — `c7a3a0d`, M2 đỏ |
+| **D-02 (p07t1)** | MINOR | `spring.servlet.multipart.max-file-size` và `media.max-size-bytes` phải đi cặp, không gì canh; nâng một cái mà quên cái kia là lỗi 500 + log row quay lại | plan 07 task 2, quyết định (h) |
+| D-03 (p07t1) | INFO | Tomcat `max-swallow-size` mặc định 2MB có thể làm client thấy connection reset thay vì 413 | Plan 15/16 — kiểm bằng `curl` thật |
+| D-04 (p07t1) | INFO | `InvalidRequestException` echo `ex.getMessage()`; giờ là loại dùng chung toàn dự án | Quy ước: không nhét input người gửi vào message |
 | C-04 (p06) | MINOR | `media.file_name` là tên do người gửi đặt, trả ra `MediaDto` | Plan 14 phải escape |
 | T-03 (p05) | INFO | Handler 404 trả `ex.getMessage()`; chỉ an toàn vì exception là của ta | Ghi nhận |
 | T-05 (p05) | INFO | `config` và `filter` miễn trắng khỏi allow-list | Siết lại nếu `config/` phình |
@@ -139,6 +125,7 @@ treo; F-01 không đóng được.
 | 04b lần 1 | **Chỉ làm task 1/8**, vẫn báo "hoàn tất" |
 | 04b lần 2 | Làm đủ task 2–8, commit body khớp từng điểm khi kiểm lại |
 | 07 lần 1 | **0/16 step.** Vẫn báo "hoàn tất". Cây làm việc sạch, không commit mới, không một file nào được tạo: không có `InvalidRequestException`, không có file `*Lead*` hay `*Notification*` nào. `mvn clean test` sau đó: 58/58 PASS — đúng baseline cũ, không thêm test nào |
+| 07 lần 2 | **8/16 step.** Task 1 xong và làm tốt (mutation M1–M4 tôi tự chạy đều đỏ), nhưng **bỏ đúng bước commit** như lượt 03c, và Task 2 không động tới. Vẫn báo "hoàn tất". Thêm một `@WithMockUser` thừa vào test cũ — loại thay đổi không làm suite đỏ nên không gì tự báo, phải `git diff` cả file cũ mới thấy |
 
 Kết luận vận hành: **luôn tự kiểm xem plan đã chạy hết chưa**, đừng tin tin báo "hoàn tất". Cách
 rẻ nhất là `ls` các package/file mà plan yêu cầu tạo, rồi đếm test. Và luôn tự chạy lại mutation

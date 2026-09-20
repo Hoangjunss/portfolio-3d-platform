@@ -40,7 +40,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 .build();
     }
 
-    public Cache<String, Bucket> getCache() {
+    // Package-private: exists only so RateLimitFilterTest can assert the bound holds.
+    Cache<String, Bucket> getCache() {
         return cache;
     }
 

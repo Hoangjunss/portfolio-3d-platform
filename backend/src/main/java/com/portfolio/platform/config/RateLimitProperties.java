@@ -28,10 +28,9 @@ public class RateLimitProperties {
         String normalized = servletPath.length() > 1 && servletPath.endsWith("/")
                 ? servletPath.substring(0, servletPath.length() - 1)
                 : servletPath;
-        LimitSpec spec = paths.get(normalized);
-        if (spec == null) {
-            spec = paths.get("[" + normalized + "]");
-        }
-        return spec;
+        // No "[path]" fallback: Spring's relaxed binding already strips the brackets the YAML
+        // keys need, so the bracketed lookup never fired. Measured by deleting it — the
+        // integration test, which reads the real application.yml, stayed green.
+        return paths.get(normalized);
     }
 }

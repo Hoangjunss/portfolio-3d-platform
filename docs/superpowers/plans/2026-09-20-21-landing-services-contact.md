@@ -204,7 +204,7 @@ git commit -m "feat: add leadClient with typed rate-limit/validation/server-erro
 
 **Interfaces:**
 - Consumes: `submitLead` (Task 2).
-- Produces: `<ContactForm />`, mounted inside a `Contact` section wrapper on `app/page.tsx`.
+- Produces: `<ContactForm />`, mounted inside a `Contact` section wrapper on `app/(public)/page.tsx`.
 
 - [ ] **Step 1: Write the failing tests — one per required behaviour**
 
@@ -390,20 +390,38 @@ export function ContactForm() {
 Run: `cd frontend && npx vitest run components/ContactForm.test.tsx`
 Expected: PASS
 
-- [ ] **Step 5: Mount inside a `Contact` section wrapper on `app/page.tsx`, after `ServicesSection`**
+- [ ] **Step 5: Mount inside a `Contact` section wrapper on `app/(public)/page.tsx`, after `ServicesSection`**
+
+**Path and preservation — same two corrections as plan 20 Step 5.** The file is
+`frontend/app/(public)/page.tsx` (plan 18b moved it); creating `app/page.tsx` gives Next.js two
+pages resolving to `/` and breaks the build. And plan 12 is already live, so the carousel and its
+`getTemplates()` fetch must be **kept**, not commented out. By the time this plan runs, plan 20 has
+already wrapped the carousel in `<section id="templates">` — leave that wrapper in place, it is the
+target of `SiteNav`'s only CTA.
 
 ```tsx
+import { getTemplates, type Template } from "@/lib/apiClient";
+import { TemplateCarousel } from "@/components/TemplateCarousel";
 import { HeroSection } from "@/components/HeroSection";
 import { AboutSection } from "@/components/AboutSection";
 import { ServicesSection } from "@/components/ServicesSection";
 import { ContactForm } from "@/components/ContactForm";
-// import { TemplateCarousel } from "@/components/TemplateCarousel"; // plan 12
 
 export default async function HomePage() {
+  let templates: Template[] = [];
+  try {
+    templates = await getTemplates();
+  } catch {
+    // Decision (j): Backend down must not blank the page; render shell and empty state
+    templates = [];
+  }
+
   return (
     <main>
       <HeroSection />
-      {/* <TemplateCarousel /> -- wired by plan 12 */}
+      <section id="templates">
+        <TemplateCarousel templates={templates} />
+      </section>
       <AboutSection />
       <ServicesSection />
       <section id="contact" className="px-[clamp(1rem,4vw,1.5rem)] py-[var(--space-3xl)] md:grid md:grid-cols-[minmax(0,40ch)_minmax(0,480px)] md:gap-[var(--space-2xl)]">
@@ -430,7 +448,7 @@ Expected: all tests PASS (including the 4 new `ContactForm` cases); `next build`
 - [ ] **Step 7: Commit**
 
 ```bash
-git add frontend/components/ContactForm.tsx frontend/components/ContactForm.test.tsx frontend/app/page.tsx
+git add frontend/components/ContactForm.tsx frontend/components/ContactForm.test.tsx "frontend/app/(public)/page.tsx"
 git commit -m "feat: add ContactForm with full 8-state coverage and mount landing page sections"
 ```
 

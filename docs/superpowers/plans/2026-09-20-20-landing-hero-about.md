@@ -296,7 +296,7 @@ git commit -m "feat: add HeroSection (Hallmark Marquee, CMS-driven with honest f
 
 **Interfaces:**
 - Consumes: `getContentSection("about")` (Task 2's helper).
-- Produces: `<AboutSection />`, mounted on `app/page.tsx` after the 3D carousel (plan 12).
+- Produces: `<AboutSection />`, mounted on `app/(public)/page.tsx` after the 3D carousel (plan 12, already live).
 
 - [ ] **Step 1: Write the failing test**
 
@@ -380,33 +380,75 @@ export async function AboutSection() {
 Run: `cd frontend && npx vitest run components/AboutSection.test.tsx`
 Expected: PASS
 
-- [ ] **Step 5: Mount `HeroSection` and `AboutSection` on `app/page.tsx`, placed around the (already-planned) 3D carousel component from plan 12**
+- [ ] **Step 5: Mount `HeroSection` and `AboutSection` into the EXISTING `app/(public)/page.tsx`**
+
+**Read this before touching the file.** Three corrections to what an earlier draft of this step said
+(see `docs/reviews/2026-09-20-code-review-plan-19-tasks-2-4.md`):
+
+1. **The path is `frontend/app/(public)/page.tsx`**, not `app/page.tsx`. Plan 18b moved it. If you
+   create `app/page.tsx`, Next.js gets two pages resolving to `/` and the build dies with
+   "You cannot have two parallel pages that resolve to the same path".
+2. **Plan 12 has already run.** The carousel is live in that file, with a `getTemplates()` call and
+   a try/catch that keeps the page up when the backend is down. The earlier draft showed the
+   carousel commented out with `// plan 12` — following that would **delete working code**. Keep
+   the data fetch and the carousel exactly as they are.
+3. **Delete the page's own `<footer>` and its `bg-slate-950` shell.** Plan 19 mounted `SiteFooter`
+   in `app/(public)/layout.tsx`, so the page-level footer is now a **second** footer on `/`, and
+   the dark-slate `<main>` fights the warm paper chrome. Removing them here is what makes the
+   landing page one design instead of two.
+
+This step also adds **`id="templates"`** (C-01): `SiteNav`'s only CTA is `href="#templates"` and
+nothing in the repo defines that id, so today the landing page's most prominent control is a dead
+link. The carousel section is its natural target.
 
 ```tsx
+import { getTemplates, type Template } from "@/lib/apiClient";
+import { TemplateCarousel } from "@/components/TemplateCarousel";
 import { HeroSection } from "@/components/HeroSection";
 import { AboutSection } from "@/components/AboutSection";
-// import { TemplateCarousel } from "@/components/TemplateCarousel"; // plan 12
 
 export default async function HomePage() {
+  let templates: Template[] = [];
+  try {
+    templates = await getTemplates();
+  } catch {
+    // Decision (j): Backend down must not blank the page; render shell and empty state
+    templates = [];
+  }
+
   return (
     <main>
       <HeroSection />
-      {/* <TemplateCarousel /> -- wired by plan 12 */}
+      <section id="templates">
+        <TemplateCarousel templates={templates} />
+      </section>
       <AboutSection />
     </main>
   );
 }
 ```
 
-- [ ] **Step 6: Run full suite + build as final self-check**
+- [ ] **Step 6: Run full suite + build, then verify the three corrections landed**
 
 Run: `cd frontend && npx vitest run && npm run build`
-Expected: all tests PASS; `next build` succeeds.
+Expected: all tests PASS; `next build` succeeds; the route table still lists `/` exactly once.
+
+```bash
+cd frontend
+npm start & SERVER_PID=$!
+for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 1; done
+echo "footers: $(curl -s http://localhost:3000/ | grep -o '<footer' | wc -l)   # expect 1"
+echo "anchor:  $(curl -s http://localhost:3000/ | grep -c 'id=\"templates\"')  # expect 1"
+echo "dark:    $(curl -s http://localhost:3000/ | grep -c 'bg-slate-950')     # expect 0"
+kill $SERVER_PID
+```
+
+Expect `1`, `1`, `0`. Anything else means one of the three corrections above was skipped.
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add frontend/components/AboutSection.tsx frontend/components/AboutSection.test.tsx frontend/app/page.tsx
+git add frontend/components/AboutSection.tsx frontend/components/AboutSection.test.tsx "frontend/app/(public)/page.tsx"
 git commit -m "feat: add AboutSection and mount Hero/About on the landing page"
 ```
 
@@ -415,5 +457,5 @@ git commit -m "feat: add AboutSection and mount Hero/About on the landing page"
 - **Spec coverage:** implements design spec §4.2 (Hero) and §4.4 (About) exactly — left-biased headline, rule divider, no invented metrics in About, caption-only left margin (not a numbered eyebrow — gate 54 respected).
 - **Honest copy:** every fallback string is the literal text approved in the design spec; nothing invented in this plan.
 - **Token discipline:** zero hard-coded colours/fonts.
-- **Placement note:** `app/page.tsx`'s carousel import is commented out because plan 12 owns that component; whichever plan lands second must uncomment and wire it — flagged for the operator running plans out of order.
+- **Placement note (corrected 2026-09-20):** plan 12 has already landed, so the carousel in `app/(public)/page.tsx` is live, not a placeholder. Step 5 keeps it and its `getTemplates()` fetch untouched and wraps it in `<section id="templates">`. It also removes the page's own `<footer>` and `bg-slate-950` shell, both superseded by the chrome plan 19 mounted in the `(public)` layout.
 - **Next plan:** `2026-09-20-21-landing-services-contact.md`.

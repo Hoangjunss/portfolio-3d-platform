@@ -94,3 +94,62 @@ Phải xử trước khi giao plan 20:
 1. Vá 7 chỗ `app/page.tsx` → `app/(public)/page.tsx` trong plan 20 và 21 (C-03).
 2. Giao cho plan 20 việc xoá `<footer>` và shell `bg-slate-950` trong `(public)/page.tsx` (C-02).
 3. Quyết ai tạo `id="templates"` (C-01) — hợp lý nhất là plan 20, khi nó bọc lại carousel.
+
+---
+
+# Phụ lục — vá plan 20 và 21 (2026-09-20)
+
+Lúc vá C-03 thì lòi ra một lỗi nặng hơn, không thấy được nếu chỉ `grep` đường dẫn.
+
+## C-04 (BLOCKER) — Step 5 của cả plan 20 lẫn 21 xoá code đang chạy
+
+Code block mount của cả hai plan viết:
+
+```tsx
+export default async function HomePage() {
+  return (
+    <main>
+      <HeroSection />
+      {/* <TemplateCarousel /> -- wired by plan 12 */}
+      <AboutSection />
+    </main>
+  );
+}
+```
+
+Carousel bị comment out kèm ghi chú "plan 12 owns that component", và Self-Review Notes của plan 20
+nói rõ "whichever plan lands second must uncomment and wire it".
+
+**Nhưng plan 12 đã chạy xong từ lâu** (`1428981`). File thật đang có carousel sống, kèm
+`getTemplates()` và một try/catch có chủ đích:
+
+```tsx
+} catch {
+  // Decision (j): Backend down must not blank the page; render shell and empty state
+  templates = [];
+}
+```
+
+Làm theo Step 5 như viết là **xoá sạch**: mất carousel, mất fetch, mất luôn quyết định (j) —
+cái bảo đảm backend chết thì trang vẫn lên. Và vì code block là một file hoàn chỉnh, lượt giao sẽ
+ghi đè chứ không merge. Test suite không bắt được: không test nào assert trang chủ có carousel.
+
+Đây là lỗi "plan viết theo trí nhớ về trạng thái repo, không phải theo repo". Cùng họ với M1 của
+plan 18b, nhưng hậu quả nặng hơn: 18b làm bước kiểm sai, cái này làm mất tính năng.
+
+## Đã vá những gì
+
+| Mã | Sửa ở đâu |
+|---|---|
+| C-01 | Plan 20 Step 5 bọc carousel trong `<section id="templates">` — CTA của `SiteNav` có đích |
+| C-02 | Plan 20 Step 5 xoá `<footer>` và shell `bg-slate-950` khỏi `(public)/page.tsx` |
+| C-03 | 7 chỗ `app/page.tsx` → `app/(public)/page.tsx` (plan 20: 4, plan 21: 3) |
+| C-04 | Code block Step 5 của cả hai plan giữ nguyên `getTemplates()`, try/catch và carousel |
+
+Thêm vào plan 20 Step 6 ba phép kiểm runtime, vì cả ba lỗi này đều **build xanh**:
+
+```
+footers: 1    anchor: 1    dark: 0
+```
+
+Lệch con số nào là biết bước nào bị bỏ. Plan 22–28 vẫn chưa rà.

@@ -1,7 +1,7 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `874bab2` — plan 14 xong cả ba task, review PASS, **chưa push**
+**Commit cuối:** `900714b` — plan 14 shipped. **Plan 15 giao lượt 1: 0/8 step, không file nào**
 **Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
 
 ---
@@ -106,38 +106,31 @@ vẫn là thư mục anh em độc lập, không cần route group riêng vì n�
 
 ---
 
-## Bước kế tiếp — cần anh quyết: hạ tầng (15–17) hay roadmap frontend (18b–28)
+## Bước kế tiếp — plan 15, giao lại (lượt 1 cho ra 0/8 step)
 
-Plan 14 **xong cả ba task**, review PASS (`docs/reviews/2026-09-20-code-review-plan-14.md`).
-**Bộ 18 plan gốc giờ chỉ còn phần hạ tầng.**
+Plan 14 shipped, review PASS (`docs/reviews/2026-09-20-code-review-plan-14.md`).
+**Bộ 18 plan gốc chỉ còn phần hạ tầng.**
 
-Kiểm chứng đã làm ngoài test suite:
+Plan 15 đã rà và viết lại (`docs/reviews/2026-09-20-plan-review-14-to-17.md`), giao lượt 1 lúc
+~15:00 và **không file nào được tạo**. Không có code để review. Chi tiết ở bảng theo dõi
+Antigravity bên dưới.
 
-- **6/6 mutation tự chạy lại đều ĐỎ**, khớp báo cáo của Antigravity.
-- **Z-02 xác nhận bằng HTML render thật**, không phải bằng cấu trúc thư mục: `/admin/login`
-  không cookie trả **0 link nav** và có form đăng nhập; `/admin` và `/admin/leads` với token hợp
-  lệ đều có nav. Build chỉ nói 4 route đúng URL — nó không nói gì về layout lồng, mà đó mới là
-  nội dung của Z-02.
+**Điều chỉnh cho lượt 2:** dấu vết cho thấy nó khởi động `mvn test` (suite đầy đủ, hơn 1 phút)
+rồi bị cắt ngang. Plan 15 Step 6 không cần chạy cả suite để biết test đỏ/xanh —
+`mvn -Dtest=SecretsGuardTest test` chạy trong vài giây. Chỉ cần chạy đủ suite **một lần** ở cuối.
+Đã ghi điều này vào lượt giao.
 
-### Plan 15–17 đã rà và viết lại, nhưng **không verify được ở máy này**
+### Phạm vi verify được ở máy này
 
-| Plan | Bước verify | Chạy được? |
-|---|---|---|
-| 15 | `docker compose up --build -d` | **Không** — không có Docker |
-| 16 | cần stack của plan 15 | **Không** |
-| 17 | `act` hoặc VPS staging | **Không** — cần VPS + secrets |
+| Bước plan 15 | Chạy được? |
+|---|---|
+| 1–5 (Dockerfile, compose, `.env.example`, `.dockerignore`) | Viết được; `npm run build` kiểm được `output: "standalone"` |
+| **6 (`SecretsGuard` + 4 test Java)** | **Được** — `mvn test`, đóng **A-08** thật |
+| 7 (`docker compose up`) | **Không** — không có Docker |
+| 8 (commit) | Được |
 
-**Plan 15 Step 7 kiểm chứng 3 là chỗ đóng F-01, R-03 và A-11** — lần đầu tiên trong lịch sử dự
-án Flyway gặp Postgres thật thay vì H2. Ba finding đó treo từ đầu dự án đúng vì lý do này.
-
-**Ba lựa chọn:**
-
-1. **Cài Docker Desktop lên máy này** — mở khoá cả F-01/R-03/A-11 lẫn verify của 15/16. Đề xuất
-   của tôi, trả nợ nhiều nhất.
-2. **Ship 15/16/17 đánh dấu "chưa verify"** — rủi ro: ba tầng hạ tầng chưa chạy chồng lên nhau,
-   lỗi lộ hết một lần ở lần deploy đầu.
-3. **Làm roadmap frontend 18b–28 trước** — verify được hết ở máy này. Nhưng **10 plan 19–28 chưa
-   ai rà**, và rà bốn plan 14–17 vừa rồi ra 14 MAJOR.
+**F-01, R-03, A-11 chỉ mở khoá ở Step 7** — lần đầu Flyway gặp Postgres thật thay vì H2. Còn
+treo cho tới khi có Docker.
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -283,6 +276,7 @@ treo; F-01 không đóng được.
 
 | Lượt | Kết quả |
 |---|---|
+| 15 lần 1 | **0/8 step.** Vẫn báo "hoàn tất". Không một file nào: không `Dockerfile`, không `docker-compose.yml`, không `SecretsGuard`, `next.config.mjs` không có `output: "standalone"`. Cây sạch, HEAD không đổi, không stash, không branch khác. **Khác các lượt 0/N trước ở một điểm:** lần này Maven *có* khởi động lúc 15:01, nhưng chỉ **3/32** surefire report mang dấu thời gian mới — `architecture` → `aspect` → `config`, đúng thứ tự alphabet theo package — rồi dừng giữa chừng. Không có report của `SecretsGuardTest`. Tức nó chạy suite baseline sẵn có, bị cắt ngang, và không viết gì |
 | 14 lần 1 | **23/23 step, cả ba task, hai commit đúng ranh giới plan chia.** 12 file, **0 file backend**, không đẻ thêm gì. Sáu mutation báo đủ, tôi chạy lại khớp cả sáu. Dùng `unwrapPage` cho **cả hai** màn danh sách kể cả màn endpoint đã trả mảng phẳng — plan không bắt buộc, nhưng đúng. Lệch plan duy nhất là `findLast` thay `find` trong `readCookie`, và đó là code bị bẻ cho vừa một stub sai (AA-01) |
 | 13 lần 1 | **20/20 step, cả hai task, hai commit riêng đúng ranh giới plan chia.** 9 file, **0 file backend**, không đẻ thêm plan/spec — lượt đầu tiên phạm vi khớp tuyệt đối. Báo cáo bốn mutation kèm số test đỏ ở từng file; tôi chạy lại cả bốn, khớp từng con số (4/1/4/2). Và **tự sửa plan cho đúng**: `shouldRenderTexture` trả type predicate chứ không phải `boolean` như plan viết — chữ ký của plan sẽ làm type-check đỏ. Lỗ duy nhất là Y-01, và đó là lỗi của plan chứ không phải của nó |
 | 03c | Làm 6/7 task, **bỏ mutation check và commit**, không báo |

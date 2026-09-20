@@ -40,7 +40,7 @@
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **còn plan 18 (debug SSH)**. Backend 137/137, frontend 42/42. Plan 15, 16, 17 đều ở trạng thái **"code đã viết, chưa vận hành"**.
+Tiến độ: **plan 18b XONG** (`d134096`, review PASS 7/7 — `docs/reviews/2026-09-20-code-review-plan-18b.md`). Kế tiếp: **plan 19** (đã rà, đã vá 4 chỗ mount sai — `docs/reviews/2026-09-20-plan-review-18b-19.md`). Plan 20–28 **chưa rà**. Backend 137/137, frontend 42/42. Plan 15, 16, 17 đều ở trạng thái **"code đã viết, chưa vận hành"**.
 
 ---
 

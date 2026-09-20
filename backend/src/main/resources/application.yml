@@ -42,6 +42,9 @@ jwt:
   access-ttl-minutes: 15
   refresh-ttl-days: 7
 
+auth:
+  max-refresh-tokens-per-user: 5
+
 media:
   upload-dir: ${MEDIA_UPLOAD_DIR:/data/media}
   max-size-bytes: 10485760

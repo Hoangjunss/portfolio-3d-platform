@@ -53,6 +53,8 @@ class PublicLeadControllerTest {
     @MockBean
     private NotificationService notificationService;
 
+    private static final java.util.concurrent.atomic.AtomicInteger IP_COUNTER = new java.util.concurrent.atomic.AtomicInteger(1);
+
     @BeforeEach
     void setUp() {
         leadRepository.deleteAll();
@@ -72,6 +74,7 @@ class PublicLeadControllerTest {
         );
 
         mockMvc.perform(post("/api/public/leads")
+                        .with(req -> { req.setRemoteAddr("10.0.1." + IP_COUNTER.incrementAndGet()); return req; })
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(form)))
                 .andExpect(status().isAccepted());
@@ -108,6 +111,31 @@ class PublicLeadControllerTest {
         );
 
         mockMvc.perform(post("/api/public/leads")
+                        .with(req -> { req.setRemoteAddr("10.0.1." + IP_COUNTER.incrementAndGet()); return req; })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(form)))
+                .andExpect(status().isAccepted());
+
+        List<Lead> leads = leadRepository.findAll();
+        assertThat(leads).hasSize(1);
+        assertThat(leads.get(0).getName()).isEqualTo("Jane Doe");
+        verify(notificationService).notifyNewLead(any());
+    }
+
+    @Test
+    void submit_whenNotificationThrowsRuntimeException_stillPersistsLead() throws Exception {
+        doThrow(new RuntimeException("Mail server crashed")).when(notificationService).notifyNewLead(any());
+
+        LeadCreateForm form = new LeadCreateForm(
+                "Jane Doe",
+                "jane@example.com",
+                "0123456789",
+                "Hello, I need a portfolio",
+                null
+        );
+
+        mockMvc.perform(post("/api/public/leads")
+                        .with(req -> { req.setRemoteAddr("10.0.1." + IP_COUNTER.incrementAndGet()); return req; })
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(form)))
                 .andExpect(status().isAccepted());
@@ -131,6 +159,7 @@ class PublicLeadControllerTest {
         );
 
         mockMvc.perform(post("/api/public/leads")
+                        .with(req -> { req.setRemoteAddr("10.0.1." + IP_COUNTER.incrementAndGet()); return req; })
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(form)))
                 .andExpect(status().isBadRequest())
@@ -153,6 +182,7 @@ class PublicLeadControllerTest {
         );
 
         mockMvc.perform(post("/api/public/leads")
+                        .with(req -> { req.setRemoteAddr("10.0.1." + IP_COUNTER.incrementAndGet()); return req; })
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(form)))
                 .andExpect(status().isBadRequest())
@@ -174,6 +204,7 @@ class PublicLeadControllerTest {
         );
 
         mockMvc.perform(post("/api/public/leads")
+                        .with(req -> { req.setRemoteAddr("10.0.1." + IP_COUNTER.incrementAndGet()); return req; })
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(form)))
                 .andExpect(status().isBadRequest())

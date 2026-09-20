@@ -1,5 +1,6 @@
 package com.portfolio.platform.service.impl;
 
+import com.portfolio.platform.config.AuthProperties;
 import com.portfolio.platform.config.JwtProperties;
 import com.portfolio.platform.dto.RotationDto;
 import com.portfolio.platform.model.RefreshToken;
@@ -16,6 +17,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,16 +26,19 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final JwtProperties jwtProperties;
+    private final AuthProperties authProperties;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public RefreshTokenServiceImpl(RefreshTokenRepository refreshTokenRepository, UserRepository userRepository,
-                                   JwtProperties jwtProperties) {
+                                   JwtProperties jwtProperties, AuthProperties authProperties) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;
         this.jwtProperties = jwtProperties;
+        this.authProperties = authProperties;
     }
 
     @Override
+    @Transactional
     public String issue(Long userId) {
         String rawToken = generateRawToken();
 
@@ -43,7 +48,24 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         refreshToken.setExpiresAt(Instant.now().plus(jwtProperties.refreshTtlDays(), ChronoUnit.DAYS));
         refreshTokenRepository.save(refreshToken);
 
+        evictExcessTokens(userId);
+
         return rawToken;
+    }
+
+    private void evictExcessTokens(Long userId) {
+        int cap = authProperties != null && authProperties.maxRefreshTokensPerUser() > 0
+                ? authProperties.maxRefreshTokensPerUser()
+                : 5;
+        List<RefreshToken> liveTokens = refreshTokenRepository.findAllByUserIdAndRevokedFalseOrderByCreatedAtAscIdAsc(userId);
+        int excess = liveTokens.size() - cap;
+        if (excess > 0) {
+            for (int i = 0; i < excess; i++) {
+                RefreshToken oldToken = liveTokens.get(i);
+                oldToken.setRevoked(true);
+                refreshTokenRepository.save(oldToken);
+            }
+        }
     }
 
     @Override

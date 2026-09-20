@@ -29,26 +29,31 @@ Tiến độ: **11/19 task — hết plan backend, còn frontend (11–14) và h
 
 ---
 
-## Bước kế tiếp — plan 11 (frontend scaffold)
+## Bước kế tiếp — plan 11 — ĐÃ RÀ XONG, ĐANG GIAO
 
-**Backend đã hết plan module.** Plan 11–14 là frontend Next.js, plan 15–18 là hạ tầng.
+**`docs/superpowers/plans/2026-09-19-11-frontend-scaffold.md`** — đã viết lại 2026-09-20, dựa
+trên `docs/superpowers/frontend-readiness.md`.
 
-**`docs/superpowers/plans/2026-09-19-11-frontend-scaffold.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
-Bảy plan liên tiếp rà ra lỗi sống, trong đó ba cái là lỗ hổng khai thác được. Đừng giao thẳng.
+Khảo sát sẵn sàng frontend (`2520610`, sửa lại ở `3812469`) tìm ra ba chỗ lệch thật:
 
-Riêng với nhóm frontend, ba thứ đã tích sẵn và phải được gánh:
+- **`GET /api/admin/leads` không tồn tại** nhưng plan 14 gọi nó. Tệ hơn: plan 14 tự đề xuất thêm
+  bằng cách tiêm `LeadRepository` thẳng vào controller và trả `List<Lead>` entity — hỏng cả hai
+  quy tắc của spec 5.1. **Task 1 của plan 11 làm đúng chuẩn** (`LeadDto` + `LeadConverter` +
+  `AdminLeadController`, phân trang, sắp xếp trong query) và xoá Step 5 của plan 14.
+- **Type `Template` thiếu ba trường** mà backend thật sự trả: `active`, `viewCount`, `clickCount`
+  — và để `displayOrder` optional trong khi backend trả `int` nguyên thuỷ luôn có mặt. Plan 14
+  cần `active` để hiển thị trạng thái.
+- **`trackEvent` gửi thừa `userAgent` và `referrer`.** `TrackEventForm` chỉ nhận ba trường;
+  controller đọc hai cái kia từ header (quyết định (e) của plan 08).
 
-- **C-04 / L-05** — `media.file_name`, `leads.name`, `leads.message` là chuỗi do người gửi đặt.
-  **Plan 14 render bất kỳ cái nào trong số đó đều phải escape.**
-- **A-09** — `/api/admin/analytics/summary` chạy ba query mỗi lần gọi và không cache; dashboard
-  plan 14 sẽ gọi nó mỗi lần mở trang.
-- **U-03** — hàng audit `action = "DELETE"` của User thực chất là deactivate, dữ liệu không mất.
-  Đừng hiển thị là "đã xoá".
+Một khẳng định sai trong khảo sát đã được sửa khi review: `LayerDependencyTest` **không dùng
+ArchUnit** (`grep archunit` ra 0 ở cả test lẫn `pom.xml`). Nó là bộ quét `import` viết tay, và
+theo A-04 thì **mù với tham chiếu tên đầy đủ** — nên "build sẽ đỏ ngay" chỉ đúng nếu người viết
+dùng `import` như bình thường. Build xanh không phải bằng chứng đúng kiến trúc.
 
-Và nhóm hạ tầng nợ bốn thứ: **A-08** (hai secret có default công khai, plan 15 phải bắt buộc env
-thật), **N-01** (`forward-headers-strategy`, nếu không cả site chung một bucket rate limit),
-**M-01** (phục vụ `/media/**` với `Content-Disposition: attachment`), **D-03** (Tomcat
-`max-swallow-size` có thể nuốt mất 413).
+Môi trường đã kiểm: Node `v24.17.0`, npm `11.13.0` (Next.js 14 cần ≥ 18.17). `frontend/` chưa
+tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `node_modules/`, `.next/`,
+`out/`.
 
 ---
 

@@ -272,6 +272,7 @@ treo; F-01 không đóng được.
 
 | Lượt | Kết quả |
 |---|---|
+| 13 lần 1 | **20/20 step, cả hai task, hai commit riêng đúng ranh giới plan chia.** 9 file, **0 file backend**, không đẻ thêm plan/spec — lượt đầu tiên phạm vi khớp tuyệt đối. Báo cáo bốn mutation kèm số test đỏ ở từng file; tôi chạy lại cả bốn, khớp từng con số (4/1/4/2). Và **tự sửa plan cho đúng**: `shouldRenderTexture` trả type predicate chứ không phải `boolean` như plan viết — chữ ký của plan sẽ làm type-check đỏ. Lỗ duy nhất là Y-01, và đó là lỗi của plan chứ không phải của nó |
 | 03c | Làm 6/7 task, **bỏ mutation check và commit**, không báo |
 | 04 | Làm đủ, có mutation check, có commit, khai báo trung thực chỗ test bị yếu đi |
 | 04b lần 1 | **Chỉ làm task 1/8**, vẫn báo "hoàn tất" |
@@ -287,6 +288,12 @@ treo; F-01 không đóng được.
 | 07 lần 3 | **8/8 step của task 2**, kể cả commit. Lượt đầy đủ đầu tiên của plan 07. Đáng ghi nhận: **tự báo M5 XANH** — kiểm lại đúng là xanh. Lần đầu nó khai một mutation không bị bắt thay vì báo cáo đẹp hơn thực tế |
 | 07 lần 2 | **8/16 step.** Task 1 xong và làm tốt (mutation M1–M4 tôi tự chạy đều đỏ), nhưng **bỏ đúng bước commit** như lượt 03c, và Task 2 không động tới. Vẫn báo "hoàn tất". Thêm một `@WithMockUser` thừa vào test cũ — loại thay đổi không làm suite đỏ nên không gì tự báo, phải `git diff` cả file cũ mới thấy |
 
+Cập nhật sau lượt 13: ba lượt gần nhất (10, 13) làm đủ step và báo mutation đúng, nhưng lượt 11 và 12
+vẫn là 0/N. Độ bao phủ **vẫn không đoán trước được** — cái đổi là khi nó chạy thì chạy tốt, không phải
+là nó luôn chạy.
+
 Kết luận vận hành: **luôn tự kiểm xem plan đã chạy hết chưa**, đừng tin tin báo "hoàn tất". Cách
 rẻ nhất là `ls` các package/file mà plan yêu cầu tạo, rồi đếm test. Và luôn tự chạy lại mutation
-check — hai lần Antigravity tự báo đều đúng, nhưng đó không phải lý do để bỏ kiểm.
+check — ba lần Antigravity tự báo đều đúng, nhưng đó không phải lý do để bỏ kiểm. Và với frontend,
+**test xanh + build xanh vẫn chưa đủ**: middleware chạy trong Edge runtime chứ không phải Node, nên
+phải `npm start` rồi bắn request thật (xem review plan 13).

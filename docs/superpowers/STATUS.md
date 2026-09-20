@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `d39d384` — plan 12 xong cả hai task; plan 13 đã rà, **chưa implement**
-**Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **15/15 PASS**; `npm run build` xanh
+**Commit cuối:** `9ed973b` — plan 13 xong cả hai task, review PASS, **chưa push**
+**Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **29/29 PASS**; `npm run build` xanh
 
 ---
 
@@ -29,8 +29,10 @@
 | — | Nâng toolchain: Next 15.5.25 / React 19 / R3F 9 / drei 10 (đóng V-02) | `b33d7da` |
 | 12 task 1 | `thumbnailUrl` trong `TemplateDto`, resolve một truy vấn cho cả trang | `a181faf`, `d72f715` |
 | 12 task 2 | Carousel 3D + fallback 2D + modal preview; `PAGE_VIEW` gửi đúng một lần | `1428981` |
+| 13 task 1 | `shouldRenderTexture` hàm thuần + test — đóng W-01 | `77ede20` |
+| 13 task 2 | Login page + middleware guard đọc `exp`; lưu cả hai token | `9ed973b` |
 
-Tiến độ: **15/19 task — còn plan 13–14 (frontend) và 15–18 (hạ tầng)**. Backend 131/131, frontend 15/15.
+Tiến độ: **17/19 task — còn plan 14 (frontend) và 15–18 (hạ tầng)**. Backend 131/131, frontend 29/29.
 
 ---
 
@@ -102,33 +104,43 @@ vẫn là thư mục anh em độc lập, không cần route group riêng vì n�
 
 ---
 
-## Bước kế tiếp — plan 13 (admin login + middleware), ĐÃ RÀ, SẴN SÀNG GIAO
+## Bước kế tiếp — plan 14 (admin dashboard CRUD), **CHƯA RÀ**
 
-Plan 12 **xong cả hai task**, review PASS (`docs/reviews/2026-09-20-code-review-plan-12-task-2.md`).
+Plan 13 **xong cả hai task**, review PASS (`docs/reviews/2026-09-20-code-review-plan-13.md`).
+Lượt Antigravity tốt nhất từ trước tới nay: đủ 20 step, hai commit đúng ranh giới plan chia,
+0 file backend, báo cáo mutation khớp tuyệt đối khi tôi chạy lại cả bốn.
 
-Plan 13 đã rà — `docs/reviews/2026-09-20-plan-review-13.md`. **4 MAJOR, 3 MINOR, 1 INFO và một
-task bị bỏ sót**; plan đã được viết lại, giờ có 2 task / 20 step. Ba cái nặng nhất:
+Kiểm chứng đã làm, ngoài test suite:
 
-- **X-01** — bản cũ vứt `refreshToken` đi. Access token sống 15 phút, `POST /api/auth/logout`
-  **bắt buộc** có refresh token trong body → không nút logout nào gọi được, và mỗi lần login đẻ
-  một token 7 ngày không bao giờ bị thu hồi. Quyết định (a): lưu cả hai làm cookie.
-- **X-02** — `hasValidSession` cũ là `Boolean(x)` đội tên khác, không đọc `exp`. Token hết hạn
-  vẫn qua cửa → "đăng nhập giả": middleware nói ok, backend trả 401. Giờ decode `exp`, **không**
-  verify chữ ký (quyết định (c): secret không được ra Edge runtime).
-- **X-03** — bản cũ không có một dòng test nào chạm `middleware.ts`. Đảo dấu `!` của guard →
-  suite **XANH**. Đúng khuôn C-02 (plan 06) và W-01 (plan 12 task 2). Đã thêm
-  `middleware.test.ts`, 5 ca, trong đó ca miễn trừ `/admin/login` chặn vòng lặp redirect vô hạn.
+- **4/4 mutation tự chạy lại đều ĐỎ**, số test đỏ khớp từng con số Antigravity báo (4/1/4/2).
+- **7 request thật vào `npm start`** — vì build xanh không nói gì về Edge runtime, nơi
+  middleware thật sự chạy. Plan cảnh báo `Buffer` có thể không tồn tại ở đó và cho sẵn đường lui
+  `atob`; Antigravity giữ `Buffer`, và **kiểm thật thì nó chạy đúng**, kể cả với payload
+  base64url chứa ký tự `-`. Token hợp lệ → 404 (đúng, `/admin` là của plan 14); hết hạn / rác /
+  thiếu `exp` → 307 về login; `/admin/login` → 200 (không vòng lặp); `/administrator` → 404
+  (matcher không rò).
 
-Còn **X-04** (`process.env.NEXT_PUBLIC_API_BASE_URL` trần, mất fallback của `apiClient.ts` → URL
-thành `undefined/api/auth/login` vì repo không có `.env.local`) và **X-09**: W-01 của review plan
-12 được giao cho "plan 13 task 1" nhưng plan 13 không hề có task đó — nay là Task 1
-(`shouldRenderTexture` + 3 test).
+**Trước khi giao plan 14, phải rà nó** — bảy plan gần đây rà cái nào cũng ra lỗi sống, và bản
+thân plan 13 ra 4 MAJOR. Hai thứ đã biết trước sẽ phải vào plan 14:
 
-Bốn mutation bắt buộc: M1 (đảo guard), M2 (bỏ miễn trừ login), M3 (bỏ so `exp`), M4
-(`shouldRenderTexture` luôn `true`) — **cả bốn phải ĐỎ**.
+1. **Y-01 (MAJOR, từ review plan 13).** `app/admin/login/page.tsx` không có một dòng test nào.
+   Tôi tự chạy thêm hai mutation: bỏ nhánh 429 → **XANH**; bỏ dòng lưu refresh token cookie →
+   **XANH**. Nghĩa là bản vá X-01 — finding nặng nhất của vòng rà plan 13 — không có gì canh.
+   Đây là lần thứ **tư** dự án gặp khuôn này (C-02 → W-01 → X-03 → Y-01), và lần này lỗi là của
+   plan: plan 13 liệt kê file test cho `auth.ts`/`middleware.ts`/`templateTexture.ts` rồi quên
+   login page. Sửa theo đúng công thức đã dùng cho W-01: tách `loginErrorMessage(status)` và
+   `persistSession(tokens)` thành hàm thuần rồi test.
+2. **Plan 14 phải import `ACCESS_TOKEN_COOKIE`/`REFRESH_TOKEN_COOKIE` từ `lib/auth.ts`**, không
+   gõ lại chuỗi. Và theo quyết định (b) của plan 13, **auto-refresh chưa tồn tại** — `adminFetch`
+   là nơi phải làm, plan 14 không được giả định đã có.
 
-**Thứ tự chạy:** 13 không bị 18b chặn. Nhưng **19 không được chạy trước 18b**, nếu không
-`SiteNav`/`SiteFooter` mount vào root layout và rò sang `/admin/login`. An toàn: `13 → 14 → 18b → 19`.
+Ngoài ra plan 14 còn nợ sẵn từ các vòng trước: **A-09** (cache TTL ngắn cho
+`/api/admin/analytics/summary`), **U-03** (render đúng nhãn cho soft-delete ghi `action=DELETE`),
+**C-04** (escape `media.file_name` — tên do người gửi đặt), **L-03** (test audit row đang lấy
+`findAll().get(size-1)`, phải lọc theo `entityType`).
+
+**Thứ tự chạy:** 14 → 18b → 19. **19 không được chạy trước 18b**, nếu không `SiteNav`/`SiteFooter`
+mount vào root layout và rò sang `/admin/**`.
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -225,11 +237,14 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | F-01 | — | Migration và entity chưa từng được đối chiếu | Cần Docker. **Phải đóng trước plan 15** |
 | F-08 | — | `TIMESTAMP` vs `Instant` lệch timezone | Chốt trước deploy thật |
 | F-09 | — | JWT sống thêm tối đa 15 phút sau khi deactivate | Chấp nhận theo spec |
-| **W-01 (p12t2)** | MAJOR | `TemplateCarousel3D` không có test nào chạm tới (jsdom không có WebGL); M8 xanh | **Plan 13 Task 1** — tách `shouldRenderTexture` thành hàm thuần |
-| **X-01 (rà plan 13)** | MAJOR | Bản cũ của plan 13 vứt `refreshToken`; phiên chết sau 15 phút, logout không gọi được, token 7 ngày không thu hồi được | **Plan 13 Task 2**, quyết định (a)(b) |
-| **X-02 (rà plan 13)** | MAJOR | `hasValidSession` không đọc `exp` → middleware cho qua token hết hạn | **Plan 13 Task 2**, quyết định (c)(d) |
-| **X-03 (rà plan 13)** | MAJOR | Không test nào chạm `middleware.ts`; đảo dấu `!` của guard vẫn xanh | **Plan 13 Task 2**, M1/M2 |
-| X-06 (rà plan 13) | MINOR | Cookie không `HttpOnly` được vì `JwtAuthFilter` chỉ đọc header `Authorization`; XSS trên `/admin/**` lấy được token | Đánh đổi có chủ đích, đã ghi vào plan 13 quyết định (f) |
+| ~~**W-01 (p12t2)**~~ | MAJOR | `TemplateCarousel3D` không có test nào chạm tới (jsdom không có WebGL); M8 xanh | **Đã đóng** — `77ede20`, M4 đỏ |
+| **Y-01 (p13)** | MAJOR | `app/admin/login/page.tsx` không có test nào; M5 (bỏ nhánh 429) và M6 (bỏ lưu refresh token) đều **XANH** — bản vá X-01 không có gì canh | **Plan 14** — tách `loginErrorMessage` + `persistSession` thành hàm thuần |
+| Y-02 (p13) | MINOR | `res.json()` không kiểm gì; response thiếu trường → cookie `"undefined"` → login thành công nhưng bị đá về login, không thông báo | Gộp vào lượt sửa Y-01 |
+| Y-03 (p13) | INFO | `15 * 60` chép tay từ `jwt.access-ttl-minutes`; khuôn D-02. Tự giới hạn vì `hasValidSession` đọc `exp` thật | Ghi nhận |
+| ~~**X-01 (rà plan 13)**~~ | MAJOR | Bản cũ của plan 13 vứt `refreshToken`; phiên chết sau 15 phút, logout không gọi được, token 7 ngày không thu hồi được | **Đã đóng** — `9ed973b` lưu cả hai cookie (nhưng xem Y-01) |
+| ~~**X-02 (rà plan 13)**~~ | MAJOR | `hasValidSession` không đọc `exp` → middleware cho qua token hết hạn | **Đã đóng** — `9ed973b`, M3 đỏ + kiểm bằng request thật |
+| ~~**X-03 (rà plan 13)**~~ | MAJOR | Không test nào chạm `middleware.ts`; đảo dấu `!` của guard vẫn xanh | **Đã đóng** — `middleware.test.ts` 5 ca, M1/M2 đỏ |
+| ~~X-06 (rà plan 13)~~ | MINOR | Cookie không `HttpOnly` được vì `JwtAuthFilter` chỉ đọc header `Authorization`; XSS trên `/admin/**` lấy được token | **Đã đóng** — `9ed973b`, đánh đổi ghi thành comment trong login page |
 | **M-01 (p06)** | INFO | Đường dẫn `/media/<name>` chưa có endpoint/static resource mapping | Plan 16 (nginx) quản lý phục vụ path này; phải phục vụ với `Content-Disposition: attachment` hoặc từ origin riêng nếu allow-list mở rộng |
 
 ---

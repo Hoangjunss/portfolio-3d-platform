@@ -6,7 +6,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/${{ github.repository }}
 
 jobs:
   test:
@@ -52,6 +51,14 @@ jobs:
         # catch "". An unset secret therefore builds green and ships a landing page whose every
         # request is a relative URL against portfolio.com (AD-04).
         run: test -n "$PUBLIC_API_BASE_URL" || { echo "PUBLIC_API_BASE_URL secret is empty" >&2; exit 1; }
+
+      # github.repository keeps the owner's original capitalisation (Hoangjunss), and Docker
+      # rejects an uppercase letter anywhere in a repository name -- so every build-push step
+      # failed with "repository name must be lowercase" before a single layer was built (AF-01).
+      # docker-compose.yml hardcodes the lowercase form, so lowercasing here is also what makes
+      # the pushed tags match what the VPS pulls.
+      - name: Resolve the lowercase image prefix
+        run: echo "IMAGE_PREFIX=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - uses: docker/login-action@v3
         with:

@@ -1,7 +1,7 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `ea20cad` — review plan 17. **Plan 18 đã rà xong và viết lại (Task 0 + Task 1), chưa implement**
+**Commit cuối:** `feb74a9` — plan 18 Task 0 + Task 1 đã implement. **Pipeline đã chạy thật lần đầu và job `build` đỏ — AF-01**
 **Test:** backend `mvn clean test` → **137/137 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
 
 ---
@@ -290,6 +290,7 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | AE-06 (rà p18) | MINOR | `useradd` không idempotent (exit 9 dưới `set -e`), `authorized_keys` nối thêm khi xoay key | **Plan 18 Task 1 Step 1.2** |
 | AE-07 (rà p18) | INFO | Global Constraints của plan 18 là boilerplate backend trong một plan infra | **Plan 18** — đã thay bằng ràng buộc thật |
 | AE-08 (rà p18) | MINOR | `permitAll` cho `/actuator/health` là config chết, và chính nó làm tôi tin có health endpoint (AE-01) | **Plan 18 Task 0 Step 0.3** — xoá matcher |
+| **AF-01 (CI run thật)** | MAJOR | `IMAGE_PREFIX: ghcr.io/${{ github.repository }}` giữ nguyên chữ hoa của owner (`Hoangjunss`); Docker từ chối chữ hoa trong repository name — job `build` đỏ ngay trước khi build layer nào. Và `docker-compose.yml` hardcode bản chữ thường, nên có build được thì tag cũng lệch với cái VPS pull | **Đã đóng** — step `Resolve the lowercase image prefix` (`tr [:upper:] [:lower:]`) |
 | AC-03 (p16) | INFO | Không block 443 nào khai `default_server`; HTTPS không khớp host rơi vào `api.conf` theo thứ tự alphabet của conf.d | Khai có chủ đích |
 | AC-04 (p16) | INFO | Không có HSTS, dù toàn bộ bản vá Z-18 dựa trên HTTPS | Quyết định của plan deploy |
 | AB-03 (p15) | INFO | `@PostConstruct` trên method trả `boolean`; JSR-250 đòi `void`, Spring dễ dãi nên chạy được | Tách `void` gọi `verify()` khi chạm lại |

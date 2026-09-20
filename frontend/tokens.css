@@ -1,0 +1,103 @@
+/* Hallmark · genre: editorial · macrostructure: Marquee Hero · theme: custom (Atelier-warm)
+ * enrichment: none (typography only) · nav: N9 Edge-aligned minimal · footer: Ft1 Mast-headed
+ * vibe: "warm atelier, premium, unhurried" · paper oklch(97% 0.010 70) · accent oklch(58% 0.15 55) warm-bronze
+ * display: Fraunces · body: EB Garamond · outlier: Geist Mono (wordmark only, 2 slots)
+ * pre-emit critique: P4 H4 E4 S4 R4 V4
+ */
+
+:root {
+  /* Colour — warm-bronze anchor, hue 55-70 */
+  --color-paper:    oklch(97% 0.010 70);
+  --color-paper-2:  oklch(94% 0.012 70);
+  --color-rule:     oklch(85% 0.010 68);
+  --color-neutral:  oklch(58% 0.010 65);
+  --color-muted:    oklch(42% 0.010 60);
+  --color-ink:      oklch(20% 0.012 55);
+  --color-accent:   oklch(58% 0.150 55);
+  --color-focus:    oklch(60% 0.180 55);
+
+  /* Dark mode values applied under prefers-color-scheme / [data-theme="dark"] below */
+
+  /* Typography */
+  --font-display:  "Fraunces", ui-serif, Georgia, serif;
+  --font-body:     "EB Garamond", ui-serif, Georgia, serif;
+  --font-wordmark: "Geist Mono", ui-monospace, monospace;
+
+  --text-xs:   0.64rem;
+  --text-sm:   0.8rem;
+  --text-base: 1rem;
+  --text-md:   1.25rem;
+  --text-lg:   1.5625rem;
+  --text-xl:   1.9531rem;
+  --text-2xl:  2.4414rem;
+  --text-3xl:  3.0518rem;
+  --text-display:   clamp(2.75rem, 5vw + 1rem, 5.25rem);
+  --text-display-s: clamp(2.25rem, 4vw + 1rem, 3.75rem);
+
+  /* Spacing — 4pt scale */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+  --space-4xl: 9rem;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long:  420ms;
+
+  /* Z-index scale */
+  --z-base:     1;
+  --z-raised:   10;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-modal:    400;
+  --z-toast:    500;
+  --z-tooltip:  600;
+
+  /* Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-paper:    oklch(15% 0.010 55);
+    --color-paper-2:  oklch(19% 0.012 55);
+    --color-rule:     oklch(30% 0.010 55);
+    --color-neutral:  oklch(60% 0.010 60);
+    --color-muted:    oklch(74% 0.008 62);
+    --color-ink:      oklch(94% 0.008 70);
+    --color-accent:   oklch(66% 0.130 55);
+    --color-focus:    oklch(70% 0.160 55);
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-paper:    oklch(15% 0.010 55);
+  --color-paper-2:  oklch(19% 0.012 55);
+  --color-rule:     oklch(30% 0.010 55);
+  --color-neutral:  oklch(60% 0.010 60);
+  --color-muted:    oklch(74% 0.008 62);
+  --color-ink:      oklch(94% 0.008 70);
+  --color-accent:   oklch(66% 0.130 55);
+  --color-focus:    oklch(70% 0.160 55);
+}
+
+html, body { overflow-x: clip; background: var(--color-paper); color: var(--color-ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 150ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 150ms !important;
+  }
+}

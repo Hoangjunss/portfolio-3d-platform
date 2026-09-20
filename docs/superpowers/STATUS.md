@@ -33,6 +33,56 @@ Tiến độ: **14/19 task — còn plan 12 task 2, plan 13–14 (frontend) và 
 
 ---
 
+## Roadmap mở rộng 2026-09-20 — plan 19–28 (**CHƯA REVIEW, CHƯA DUYỆT**)
+
+> **Ghi chú khi review (bắt buộc đọc trước khi dùng mục này).** Toàn bộ mục này và 10 file plan
+> 19–28 do lượt giao Task 2 của plan 12 tự sinh ra, **ngoài phạm vi được yêu cầu**. Nội dung có
+> giá trị và ba khẳng định về endpoint thiếu đã được kiểm là **đúng**. Nhưng **một khẳng định
+> sai**: điểm chặn số 1 nói `frontend/app/admin/` "hiện là thư mục con thường" — thư mục đó
+> **không tồn tại**, plan 14 chưa được implement, `frontend/app/` mới chỉ có `globals.css`,
+> `layout.tsx`, `page.tsx`. Mối lo bên dưới (nav công khai rò sang `/admin/**`) vẫn hợp lệ cho
+> lúc plan 14 đáp xuống, nhưng là chuyện tương lai chứ không phải hiện trạng.
+>
+> **Không plan nào trong 19–28 được giao đi trước khi rà từng cái**, như mọi plan khác. Bảy plan
+> gần đây rà cái nào cũng ra lỗi sống. Và việc mở rộng 18 → 28 plan là **quyết định phạm vi của
+> người chủ dự án**, chưa ai duyệt.
+
+Rà lại spec mục 4 phát hiện: bộ 18 plan gốc chỉ có **4 plan FE** (11–14), và plan 14 tự thú trong
+Self-Review Notes của nó là chỉ dựng 3/9 màn admin (templates, leads, analytics) — 6 màn còn lại
+(content editor, media library, user management UI, audit log viewer, error log viewer, settings)
+**không có plan nào** dù backend đã sẵn (plan 04/06/10). Landing page UI/UX (Hero/About/Services/
+Contact) và Sub-project 2 (Template Design System cho 20 demo web) cũng chưa từng được thiết kế.
+
+Đã bổ sung — thiết kế qua Hallmark (`docs/superpowers/specs/2026-09-20-landing-page-ui-design.md`,
+`docs/superpowers/specs/2026-09-20-template-design-system-design.md`) rồi viết plan chi tiết:
+
+| Plan | Nội dung | Endpoint backend mới cần thêm |
+|---|---|---|
+| 19 | Landing — SiteNav + SiteFooter + wire `tokens.css` | không |
+| 20 | Landing — Hero (Marquee) + About | không |
+| 21 | Landing — Services (step sequence) + Contact form | không |
+| 22 | Admin — Content section editor | `GET /api/admin/content-sections` (list all — chưa có) |
+| 23 | Admin — Media library (list/delete) | `GET /api/admin/media`, `DELETE /api/admin/media/{id}` (chưa có, hiện chỉ có POST) |
+| 24 | Admin — User management UI | không (API đã đủ) |
+| 25 | Admin — Audit log viewer | `GET /api/admin/audit-logs` — **tạo mới hoàn toàn**, chưa từng có controller |
+| 26 | Admin — System error log viewer | `GET /api/admin/error-logs` — **tạo mới hoàn toàn**, chưa từng có controller |
+| 27 | Admin — Settings page | `GET /api/admin/settings` (list all — chưa có, hiện chỉ có GET/PUT theo từng key) |
+| 28 | Sub-project 2 — Template Design System: seed 20 dòng `templates` (Flyway) + package `template-kit/` (9 component dùng chung: Hero, ItemGrid, PricedItemGrid, PeopleGrid, Timeline, PhotoGallery, InquiryForm, StatBlock, Footer) | migration mới (không phải REST) |
+
+### 3 điểm cần quyết định trước khi giao plan 19–27 cho Antigravity
+
+1. **(Chặn plan 19 Task 4)** `frontend/app/admin/` hiện là thư mục con thường, không phải Next.js
+   route group. Gắn `SiteNav`/`SiteFooter` vào `app/layout.tsx` gốc như plan 19 thiết kế sẽ **rò rỉ
+   nav/footer công khai vào mọi trang `/admin/**`**. Cần tách `(public)`/`(admin)` route group trước
+   khi chạy Task 4 của plan 19 — chưa có plan nào làm việc này.
+2. **(Chặn hiển thị, không chặn chức năng)** `app/admin/layout.tsx` (plan 14) mới chỉ có nav
+   Dashboard/Templates/Leads — chưa có link tới Content/Media/Users/Audit log/Error log/Settings.
+   Cần 1 plan nhỏ cập nhật nav admin sau khi 22–27 xong.
+3. **(Ngoài phạm vi FE)** `/admin/templates` (plan 14) hiện chỉ đọc, chưa có action edit — bước
+   verify thủ công của plan 25 (audit log) phải tạo entry demo bằng `curl` thay vì thao tác qua UI.
+
+---
+
 ## Bước kế tiếp — plan 12 **task 2** (carousel)
 
 Task 1 xong, review PASS (`docs/reviews/2026-09-20-code-review-plan-12-task-1.md`).

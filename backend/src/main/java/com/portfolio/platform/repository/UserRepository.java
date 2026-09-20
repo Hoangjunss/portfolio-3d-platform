@@ -1,5 +1,6 @@
 package com.portfolio.platform.repository;
 
+import com.portfolio.platform.enums.Role;
 import com.portfolio.platform.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -12,6 +13,12 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
+
+    long countByRoleAndActiveTrue(Role role);
 
     // JPQL bulk updates bypass JPA lifecycle callbacks (@PreUpdate), ensuring
     // last_login_at is stamped without updating updated_at.

@@ -26,7 +26,7 @@ class LayerDependencyTest {
             entry("helper", Set.of("repository", "model")),
             entry("repository", Set.of("model", "enums", "dto")),
             entry("model", Set.of("enums")),
-            entry("dto", Set.of("model", "enums")),
+            entry("dto", Set.of("model")),
             entry("form", Set.of("enums")),
             entry("enums", Set.of()),
             entry("annotation", Set.of()),

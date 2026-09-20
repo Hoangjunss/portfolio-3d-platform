@@ -85,10 +85,10 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         }
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
+            // No null fallback on purpose: AnalyticsProperties already carries a default, and a
+            // second hardcoded copy of it here would quietly keep hashing with a secret that is
+            // published in this repo. If the secret is ever null, failing is the correct outcome.
             String secret = analyticsProperties.getIpHashSecret();
-            if (secret == null) {
-                secret = "dev-only-analytics-secret-change-me";
-            }
             SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             mac.init(secretKey);
             byte[] rawHmac = mac.doFinal(rawIp.getBytes(StandardCharsets.UTF_8));

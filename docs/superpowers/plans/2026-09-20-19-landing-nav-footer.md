@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-20-landing-page-ui-design.md` (§3 tokens, §4.1 Nav, §4.7 Footer). Backing design tokens already exist at `frontend/tokens.css`.
 
-**Depends on:** none (first landing-page plan). **Required by:** `2026-09-20-20-landing-hero-about.md`, `2026-09-20-21-landing-services-contact.md` — both mount inside the layout this plan produces.
+**Depends on:** `2026-09-20-18b-frontend-route-groups.md` (Task 4 of this plan targets `app/(public)/layout.tsx`, created by that plan — not the true root `app/layout.tsx`). **Required by:** `2026-09-20-20-landing-hero-about.md`, `2026-09-20-21-landing-services-contact.md` — both mount inside the layout this plan produces.
 
 ## Global Constraints
 
@@ -253,53 +253,58 @@ git commit -m "feat: add SiteFooter (Hallmark Ft1 mast-headed)"
 
 ---
 
-### Task 4: Mount `SiteNav` + `SiteFooter` in `app/layout.tsx`
+### Task 4: Mount `SiteNav` + `SiteFooter` in `app/(public)/layout.tsx`
 
 **Files:**
-- Modify: `frontend/app/layout.tsx`
+- Modify: `frontend/app/(public)/layout.tsx` (created as a pass-through by `2026-09-20-18b-frontend-route-groups.md`)
 
 **Interfaces:**
 - Consumes: `SiteNav`, `SiteFooter` from Task 2/3.
-- Produces: every route under `app/` renders with the shared chrome, unless a route segment (e.g. `/admin/**`, which has its own layout from plan 13) opts out via a nested layout that omits `{children}` wrapping — out of scope here, `/admin` already has its own `app/admin/layout.tsx` that Next.js will use instead for that subtree.
+- Produces: every route inside the `(public)` route group renders with the shared chrome.
+  `/admin/**` is a plain sibling directory outside `(public)` (plan 13) — Next.js never applies this
+  group's layout to it, so no opt-out mechanism is needed on the admin side.
 
-- [ ] **Step 1: Modify `layout.tsx`**
+- [ ] **Step 1: Confirm the prerequisite ran**
+
+Run: `test -f "frontend/app/(public)/layout.tsx" && echo present`
+Expected: `present`. If missing, run `2026-09-20-18b-frontend-route-groups.md` first — do not mount
+`SiteNav`/`SiteFooter` into the true root `app/layout.tsx`, that leaks them into `/admin/**`.
+
+- [ ] **Step 2: Modify `app/(public)/layout.tsx`**
 
 ```tsx
-import "./globals.css";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
-export const metadata = {
-  title: "Portfolio",
-};
-
-export default function RootLayout({
+export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi">
-      <body>
-        <SiteNav />
-        {children}
-        <SiteFooter />
-      </body>
-    </html>
+    <>
+      <SiteNav />
+      {children}
+      <SiteFooter />
+    </>
   );
 }
 ```
 
-- [ ] **Step 2: Run the full frontend test suite + build as the self-check**
+The true root `frontend/app/layout.tsx` stays untouched — `<html>`/`<body>`/metadata only, rendering
+just `{children}`. Do not add `SiteNav`/`SiteFooter` there.
+
+- [ ] **Step 3: Run the full frontend test suite + build as the self-check**
 
 Run: `cd frontend && npx vitest run && npm run build`
-Expected: all existing + new tests PASS; `next build` succeeds with no type errors.
+Expected: all existing + new tests PASS; `next build` succeeds with no type errors; the generated
+route manifest shows `/` (not `/(public)`) as the path for the home page.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add frontend/app/layout.tsx
-git commit -m "feat: mount SiteNav and SiteFooter in the root layout"
+git add "frontend/app/(public)/layout.tsx"
+git commit -m "feat: mount SiteNav and SiteFooter in the (public) route group layout"
 ```
 
 ## Self-Review Notes

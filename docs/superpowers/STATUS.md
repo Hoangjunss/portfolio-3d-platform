@@ -69,17 +69,35 @@ Contact) và Sub-project 2 (Template Design System cho 20 demo web) cũng chưa 
 | 27 | Admin — Settings page | `GET /api/admin/settings` (list all — chưa có, hiện chỉ có GET/PUT theo từng key) |
 | 28 | Sub-project 2 — Template Design System: seed 20 dòng `templates` (Flyway) + package `template-kit/` (9 component dùng chung: Hero, ItemGrid, PricedItemGrid, PeopleGrid, Timeline, PhotoGallery, InquiryForm, StatBlock, Footer) | migration mới (không phải REST) |
 
-### 3 điểm cần quyết định trước khi giao plan 19–27 cho Antigravity
+### Đã xử lý — plan 18b bổ sung (sửa điểm chặn số 1 bên dưới)
 
-1. **(Chặn plan 19 Task 4)** `frontend/app/admin/` hiện là thư mục con thường, không phải Next.js
-   route group. Gắn `SiteNav`/`SiteFooter` vào `app/layout.tsx` gốc như plan 19 thiết kế sẽ **rò rỉ
-   nav/footer công khai vào mọi trang `/admin/**`**. Cần tách `(public)`/`(admin)` route group trước
-   khi chạy Task 4 của plan 19 — chưa có plan nào làm việc này.
-2. **(Chặn hiển thị, không chặn chức năng)** `app/admin/layout.tsx` (plan 14) mới chỉ có nav
-   Dashboard/Templates/Leads — chưa có link tới Content/Media/Users/Audit log/Error log/Settings.
+**Sửa khẳng định sai:** `frontend/app/` hiện **chỉ có `globals.css`, `layout.tsx`, `page.tsx`** —
+`admin/` **chưa tồn tại** (plan 13/14 chưa chạy). Điểm chặn không phải "sửa thư mục admin đang có
+kiểu sai", mà là: nếu plan 19 Task 4 mount `SiteNav`/`SiteFooter` thẳng vào `app/layout.tsx` gốc
+trước khi plan 13 tạo `app/admin/`, thì **khi plan 13 chạy sau đó**, `/admin/**` sẽ tự động thừa
+hưởng nav/footer công khai (Next.js App Router cascade layout). Đây là rủi ro tương lai, không phải
+lỗi hiện trạng.
+
+Đã viết `docs/superpowers/plans/2026-09-20-18b-frontend-route-groups.md` để chặn trước: tách
+`app/page.tsx` → `app/(public)/page.tsx` + `app/(public)/layout.tsx` (pass-through), giữ
+`app/layout.tsx` gốc chỉ còn `<html>/<body>`. Plan 19 Task 4 đã được sửa lại để mount vào
+`app/(public)/layout.tsx` thay vì root. Thứ tự chạy: **18b → 19 → 20/21**; `app/admin/**` (plan 13)
+vẫn là thư mục anh em độc lập, không cần route group riêng vì nó nằm ngoài `(public)`.
+
+### 2 điểm còn lại cần quyết định
+
+1. **(Chặn hiển thị, không chặn chức năng)** `app/admin/layout.tsx` (plan 14, chưa chạy) mới chỉ có
+   nav Dashboard/Templates/Leads — chưa có link tới Content/Media/Users/Audit log/Error log/Settings.
    Cần 1 plan nhỏ cập nhật nav admin sau khi 22–27 xong.
-3. **(Ngoài phạm vi FE)** `/admin/templates` (plan 14) hiện chỉ đọc, chưa có action edit — bước
+2. **(Ngoài phạm vi FE)** `/admin/templates` (plan 14) hiện chỉ đọc, chưa có action edit — bước
    verify thủ công của plan 25 (audit log) phải tạo entry demo bằng `curl` thay vì thao tác qua UI.
+
+> **Lưu ý cho người review:** một agent khác (đang chạy autonomous loop trên plan 12 task 2) đã gắn
+> cảnh báo **"CHƯA REVIEW, CHƯA DUYỆT"** lên toàn bộ mục roadmap 19–28 này — đúng, các plan 19–28
+> là do người dùng yêu cầu trực tiếp trong phiên làm việc riêng (không phải do agent tự sinh thêm
+> phạm vi), nhưng **vẫn cần rà từng plan trước khi giao cho Antigravity chạy**, giống mọi plan khác
+> trong dự án (xem lịch sử rà ở các plan 03c/04b/07/08/11/12 bên dưới — plan nào cũng phát hiện lỗi
+> khi rà kỹ).
 
 ---
 

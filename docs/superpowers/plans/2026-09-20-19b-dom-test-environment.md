@@ -23,19 +23,27 @@ You cannot unit-test an `IntersectionObserver` wrapper or an 8-state form by ren
 string. Dropping those tests would gut the coverage the plans exist to provide.
 
 **Architecture decision — per-file, not global.** Do **not** set `environment: "jsdom"` in
-`vitest.config.mjs`. `frontend/lib/webgl.test.ts` asserts the SSR path by doing
+`vitest.config.mjs`. Opt in per file with a `// @vitest-environment jsdom` docblock.
 
-```ts
-delete (globalThis as Record<string, unknown>).window;
-delete (globalThis as Record<string, unknown>).document;
-expect(isWebGLAvailable()).toBe(false);
-```
+**The reason is cost, measured, not correctness.** An earlier draft of this plan justified the
+decision by claiming a global jsdom environment would break `frontend/lib/webgl.test.ts`, which
+asserts its SSR branch by deleting `window` and `document`. **That claim was wrong** — it was
+reasoning, not measurement. Vitest installs those globals as configurable properties, so the
+deletion still works and the file passes either way. Both configurations were run:
 
-and restoring from values captured at module load. Under a global jsdom environment those globals
-are installed by the environment rather than absent, so that deletion no longer produces the SSR
-condition the test is asserting — a green suite would stop meaning what it means today. Opting in
-per file with a `// @vitest-environment jsdom` docblock leaves all 11 existing test files running
-in Node exactly as they do now.
+| | Full suite | Result |
+|---|---|---|
+| Node environment, per-file opt-in | **1.56s** | 47/47 |
+| `--environment jsdom` globally | **3.75s** | 47/47 |
+
+2.4x, and Vitest says why itself: `jsdom was created 12 times · 18.40s total, 93% of tracked time`.
+Only a handful of files need a DOM; the rest are pure-function tests that would each pay for a jsdom
+instance they never touch. That gap widens with every Node-only test file added — and plans 24-27
+add four more.
+
+The honest trade-off: the docblock is a two-line header somebody can forget, and forgetting it gives
+`document is not defined`, which reads like a component bug. Task 2 pins that header with a test so
+the cause is obvious when it happens.
 
 **Tech Stack:** Vitest per-file environment docblock, jsdom, @testing-library/react,
 @testing-library/jest-dom.
@@ -151,6 +159,8 @@ git commit -m "test: pin the per-file jsdom opt-in that plans 20-28 depend on"
   silently lacks the docblock. That fails with `document is not defined`, which reads like a bug in
   the component rather than a missing header. One pinned test makes the cause obvious.
 - **Rejected alternative:** `environment: "jsdom"` globally, one line instead of a header per file.
-  Rejected on evidence, not taste — `lib/webgl.test.ts` deletes `window`/`document` to assert the
-  SSR branch, and a global DOM environment reinstates them.
+  Rejected on a measured 2.4x suite slowdown (1.56s -> 3.75s), **not** on correctness. The first
+  draft of this plan claimed correctness — that global jsdom would break `lib/webgl.test.ts` — and
+  that was false; both configurations give 47/47. The claim was written from reasoning about how
+  jsdom installs globals, and running it took about a minute. Worth remembering next time.
 - **Next:** `2026-09-20-20-landing-hero-about.md`.

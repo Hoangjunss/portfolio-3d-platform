@@ -40,7 +40,7 @@
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **18b / 19 / 19b / 20 / 21 / 22 XONG** — backend **140/140**, frontend **73/73**. Plan 22 cả hai task PASS; task 1 từng commit ở trạng thái **không compile** (thiếu `import java.util.List`), tôi vá ở `4cbe41f`. **Kế tiếp: plan 23.** Còn lại: 23 → 24 → 25 → 26 → 27 → 28. **Nhớ `export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"` trước mọi lệnh `mvn`** — mặc định máy là JDK 8. **Nợ kỹ thuật:** 4 `!important` trong `contact-form.css` (lượt dọn CSS trước production).
+Tiến độ: **18b / 19 / 19b / 20 / 21 / 22 / 23 XONG** — backend **150/150**, frontend **79/79**. **Kế tiếp: plan 24** (admin user management UI, không cần backend mới). Còn lại: 24 → 25 → 26 → 27 → 28. **Nhớ `export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"` trước mọi `mvn`.** **Handoff:** viết file + commit TRƯỚC, verify SAU; không bao giờ nêu lệnh full `mvn test` hay tổng số pass — làm thế nó đi đo baseline rồi chết trước khi tạo file. **Nợ dọn dẹp admin (3 mục):** tham số `username` chết trong `MediaService.delete`; alert "Unauthorized" nháy khi điều hướng; `MediaGrid` báo "Đã sao chép" khi không có Clipboard API. **Nợ CSS:** 4 `!important` trong `contact-form.css`.
 
 ---
 

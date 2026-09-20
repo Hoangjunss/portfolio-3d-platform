@@ -23,8 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -218,6 +220,7 @@ class GlobalExceptionHandlerTest {
 
         mockMvc.perform(get("/api/test/echo"))
                 .andExpect(status().isMethodNotAllowed())
+                .andExpect(header().string("Allow", containsString("POST")))
                 .andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"));
 
         assertThat(systemErrorLogRepository.count()).isEqualTo(before);

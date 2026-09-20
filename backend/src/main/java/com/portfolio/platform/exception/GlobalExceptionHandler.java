@@ -3,6 +3,7 @@ package com.portfolio.platform.exception;
 import com.portfolio.platform.dto.ApiErrorDto;
 import com.portfolio.platform.service.SystemErrorLogService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -20,6 +21,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -108,8 +110,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiErrorDto> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(new ApiErrorDto("METHOD_NOT_ALLOWED", "Request method is not supported", null));
+        Set<HttpMethod> supported = ex.getSupportedHttpMethods();
+        ResponseEntity.BodyBuilder builder = ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED);
+        if (supported != null && !supported.isEmpty()) {
+            builder.allow(supported.toArray(HttpMethod[]::new));
+        }
+        return builder.body(new ApiErrorDto("METHOD_NOT_ALLOWED", "Request method is not supported", null));
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)

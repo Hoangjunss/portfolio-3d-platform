@@ -16,12 +16,16 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mail.MailSendException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -88,6 +92,30 @@ class PublicLeadControllerTest {
         assertThat(auditLog.getAction()).isEqualTo("CREATE");
         assertThat(auditLog.getEntityId()).isEqualTo(saved.getId());
         assertThat(auditLog.getUserId()).isNull();
+        verify(notificationService).notifyNewLead(any(Lead.class));
+    }
+
+    @Test
+    void submit_whenNotificationFails_stillPersistsLead() throws Exception {
+        doThrow(new MailSendException("SMTP down")).when(notificationService).notifyNewLead(any());
+
+        LeadCreateForm form = new LeadCreateForm(
+                "Jane Doe",
+                "jane@example.com",
+                "0123456789",
+                "Hello, I need a portfolio",
+                null
+        );
+
+        mockMvc.perform(post("/api/public/leads")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(form)))
+                .andExpect(status().isAccepted());
+
+        List<Lead> leads = leadRepository.findAll();
+        assertThat(leads).hasSize(1);
+        assertThat(leads.get(0).getName()).isEqualTo("Jane Doe");
+        verify(notificationService).notifyNewLead(any());
     }
 
     @Test

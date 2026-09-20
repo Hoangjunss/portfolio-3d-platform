@@ -1,5 +1,6 @@
 package com.portfolio.platform.service;
 
+import com.portfolio.platform.dto.NewLeadEvent;
 import com.portfolio.platform.enums.LeadStatus;
 import com.portfolio.platform.exception.InvalidRequestException;
 import com.portfolio.platform.form.LeadCreateForm;
@@ -13,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -28,7 +30,7 @@ class LeadServiceTest {
     private TemplateRepository templateRepository;
 
     @Mock
-    private NotificationService notificationService;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private LeadServiceImpl leadService;
@@ -48,7 +50,7 @@ class LeadServiceTest {
         ArgumentCaptor<Lead> captor = ArgumentCaptor.forClass(Lead.class);
         verify(leadRepository).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo(LeadStatus.NEW);
-        verify(notificationService).notifyNewLead(captor.getValue());
+        verify(eventPublisher).publishEvent(any(NewLeadEvent.class));
         verifyNoInteractions(templateRepository);
     }
 
@@ -61,7 +63,7 @@ class LeadServiceTest {
                 .isInstanceOf(InvalidRequestException.class);
 
         verify(leadRepository, never()).save(any());
-        verifyNoInteractions(notificationService);
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test
@@ -82,6 +84,6 @@ class LeadServiceTest {
         verify(leadRepository).save(captor.capture());
         assertThat(captor.getValue().getSourceTemplateId()).isEqualTo(1L);
         assertThat(captor.getValue().getStatus()).isEqualTo(LeadStatus.NEW);
-        verify(notificationService).notifyNewLead(captor.getValue());
+        verify(eventPublisher).publishEvent(any(NewLeadEvent.class));
     }
 }

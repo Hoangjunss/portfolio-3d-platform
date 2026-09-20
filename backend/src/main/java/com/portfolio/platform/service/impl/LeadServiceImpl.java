@@ -1,6 +1,7 @@
 package com.portfolio.platform.service.impl;
 
 import com.portfolio.platform.annotation.Audited;
+import com.portfolio.platform.dto.NewLeadEvent;
 import com.portfolio.platform.enums.LeadStatus;
 import com.portfolio.platform.exception.InvalidRequestException;
 import com.portfolio.platform.form.LeadCreateForm;
@@ -8,7 +9,7 @@ import com.portfolio.platform.model.Lead;
 import com.portfolio.platform.repository.LeadRepository;
 import com.portfolio.platform.repository.TemplateRepository;
 import com.portfolio.platform.service.LeadService;
-import com.portfolio.platform.service.NotificationService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,14 +18,14 @@ public class LeadServiceImpl implements LeadService {
 
     private final LeadRepository leadRepository;
     private final TemplateRepository templateRepository;
-    private final NotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public LeadServiceImpl(LeadRepository leadRepository,
                            TemplateRepository templateRepository,
-                           NotificationService notificationService) {
+                           ApplicationEventPublisher eventPublisher) {
         this.leadRepository = leadRepository;
         this.templateRepository = templateRepository;
-        this.notificationService = notificationService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Audited(entityType = "Lead", action = "CREATE")
@@ -46,7 +47,7 @@ public class LeadServiceImpl implements LeadService {
         lead.setStatus(LeadStatus.NEW);
 
         Lead saved = leadRepository.save(lead);
-        notificationService.notifyNewLead(saved);
+        eventPublisher.publishEvent(new NewLeadEvent(saved.getId()));
         return saved.getId();
     }
 }

@@ -8,22 +8,22 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "next": "14.2.35",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "@react-three/fiber": "8.17.10",
-    "@react-three/drei": "9.114.3",
+    "next": "15.5.25",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "@react-three/fiber": "9.7.0",
+    "@react-three/drei": "10.7.8",
     "three": "0.169.0",
-    "embla-carousel-react": "8.3.0"
+    "embla-carousel-react": "8.6.0"
   },
   "devDependencies": {
     "typescript": "5.6.3",
-    "@types/react": "18.3.11",
+    "@types/react": "19.2.2",
     "@types/node": "^24",
     "@types/three": "0.169.0",
-    "tailwindcss": "3.4.13",
-    "postcss": "8.4.47",
+    "tailwindcss": "3.4.19",
+    "postcss": "8.5.28",
     "autoprefixer": "10.4.20",
-    "vitest": "2.1.9"
+    "vitest": "5.0.1"
   }
 }

@@ -14,6 +14,13 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+    web:
+      pageable:
+        # @PageableDefault only sets the default size, not a ceiling. Spring's own ceiling is
+        # 2000, so ?size=100000 still returned 2000 rows — on leads, which grows with visitor
+        # traffic and stores a 5000-character message per row, that is megabytes per request
+        # against a 350MB heap.
+        max-page-size: 100
   mail:
     host: ${SMTP_HOST:localhost}
     port: ${SMTP_PORT:587}

@@ -79,6 +79,16 @@ class AdminLeadControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin_user", roles = "ADMIN")
+    void list_cannotBeAskedForAnUnboundedPage() throws Exception {
+        // @PageableDefault sets the default, not a ceiling. Without
+        // spring.data.web.pageable.max-page-size this returned 2000 rows per request.
+        mockMvc.perform(get("/api/admin/leads?size=100000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(100));
+    }
+
+    @Test
     @WithMockUser(username = "editor_user", roles = "EDITOR")
     void list_asEditor_returns200() throws Exception {
         mockMvc.perform(get("/api/admin/leads"))

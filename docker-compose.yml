@@ -1,0 +1,84 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./templates-static:/var/www/templates:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      # Plan 16 serves /media/ from this path. Without the mount every uploaded image 404s,
+      # including template thumbnails — which silently empties the 3D carousel.
+      - media-data:/data/media:ro
+    depends_on: [frontend, backend]
+    restart: unless-stopped
+    deploy:
+      resources: { limits: { memory: 50m } }
+
+  frontend:
+    image: ghcr.io/hoangjunss/portfolio-3d-platform/frontend:${IMAGE_TAG:-latest}
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:?set it in .env}
+    restart: unless-stopped
+    deploy:
+      resources: { limits: { memory: 400m } }
+
+  backend:
+    image: ghcr.io/hoangjunss/portfolio-3d-platform/backend:${IMAGE_TAG:-latest}
+    build: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: postgres
+      DB_NAME: portfolio
+      DB_USER: portfolio
+      DB_PASSWORD: ${DB_PASSWORD:?set it in .env}
+      REDIS_HOST: redis
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set it in .env}
+      ANALYTICS_IP_HASH_SECRET: ${ANALYTICS_IP_HASH_SECRET:?set it in .env}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    volumes:
+      - media-data:/data/media
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    restart: unless-stopped
+    deploy:
+      resources: { limits: { memory: 450m } }
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: portfolio
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set it in .env}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    command: ["postgres", "-c", "shared_buffers=128MB", "-c", "max_connections=40"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    deploy:
+      resources: { limits: { memory: 250m } }
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "100mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    deploy:
+      resources: { limits: { memory: 120m } }
+
+volumes:
+  pg-data:
+  media-data:

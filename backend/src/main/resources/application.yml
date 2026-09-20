@@ -42,3 +42,8 @@ media:
     - image/webp
     - image/gif
 
+notification:
+  lead-recipient: ${LEAD_RECIPIENT_EMAIL:sales@portfolio.com}
+  from: ${MAIL_FROM:no-reply@portfolio.com}
+
+

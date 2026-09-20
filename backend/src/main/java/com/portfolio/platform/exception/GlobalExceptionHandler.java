@@ -11,7 +11,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -82,8 +89,53 @@ public class GlobalExceptionHandler {
                 .body(new ApiErrorDto("FILE_TOO_LARGE", "File size exceeds maximum limit", null));
     }
 
+    // Load-bearing: measured, this type does NOT implement ErrorResponse, so the 4xx safety net
+    // below does not catch it. Delete this handler and malformed JSON is a 500 + a log row again,
+    // on an endpoint that needs no login. Same for the type-mismatch handler underneath.
+    // The message is a fixed string on purpose: Jackson's own message reads
+    // "Cannot deserialize value of type `java.lang.Long` ..." and leaks internal type names.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorDto> handleMessageNotReadable(HttpMessageNotReadableException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiErrorDto("MALFORMED_REQUEST", "Malformed request body", null));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorDto> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiErrorDto("VALIDATION_FAILED", "Invalid parameter: " + ex.getName(), null));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiErrorDto> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(new ApiErrorDto("METHOD_NOT_ALLOWED", "Request method is not supported", null));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiErrorDto> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(new ApiErrorDto("UNSUPPORTED_MEDIA_TYPE", "Content type is not supported", null));
+    }
+
+    @ExceptionHandler({MissingServletRequestParameterException.class, MissingServletRequestPartException.class})
+    public ResponseEntity<ApiErrorDto> handleMissingRequestPartOrParameter(Exception ex) {
+        // Fixed string, not ex.getMessage(): the real one names the Java parameter type, e.g.
+        // "Required request parameter 'file' for method parameter type MultipartFile is not present".
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiErrorDto("VALIDATION_FAILED", "Required request parameter is missing", null));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorDto> handleUnexpected(Exception ex, HttpServletRequest request) {
+        // Safety net for Spring MVC client-fault exceptions nobody added a handler for yet.
+        // R-01, C-01 and the malformed-body bug were all the same mistake: a 4xx reaching the
+        // catch-all and being recorded as a server fault.
+        if (ex instanceof ErrorResponse errorResponse && errorResponse.getStatusCode().is4xxClientError()) {
+            return ResponseEntity.status(errorResponse.getStatusCode())
+                    .body(new ApiErrorDto("BAD_REQUEST", "Request could not be processed", null));
+        }
+
         String requestId = UUID.randomUUID().toString();
         systemErrorLogService.record(request.getRequestURI(), HttpStatus.INTERNAL_SERVER_ERROR.value(), ex, requestId);
 

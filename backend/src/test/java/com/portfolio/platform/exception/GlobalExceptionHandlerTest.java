@@ -16,6 +16,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
@@ -59,7 +62,19 @@ class GlobalExceptionHandlerTest {
         public void uploadTooLarge() {
             throw new MaxUploadSizeExceededException(10485760L);
         }
+
+        @PostMapping("/api/test/echo")
+        public EchoRequest echo(@org.springframework.web.bind.annotation.RequestBody EchoRequest request) {
+            return request;
+        }
+
+        @GetMapping("/api/test/echo/{id}")
+        public Long echoPath(@org.springframework.web.bind.annotation.PathVariable Long id) {
+            return id;
+        }
     }
+
+    record EchoRequest(Long id) {}
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
@@ -150,6 +165,87 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isPayloadTooLarge())
                 .andExpect(jsonPath("$.code").value("FILE_TOO_LARGE"))
                 .andExpect(jsonPath("$.message").value("File size exceeds maximum limit"));
+
+        assertThat(systemErrorLogRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    @WithMockUser
+    void malformedJson_returns400AndDoesNotLog() throws Exception {
+        long before = systemErrorLogRepository.count();
+
+        mockMvc.perform(post("/api/test/echo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"a\": BROKEN"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Malformed request body"));
+
+        assertThat(systemErrorLogRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    @WithMockUser
+    void wrongFieldType_returns400AndDoesNotLog() throws Exception {
+        long before = systemErrorLogRepository.count();
+
+        mockMvc.perform(post("/api/test/echo")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"id\":\"not-a-number\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Malformed request body"));
+
+        assertThat(systemErrorLogRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    @WithMockUser
+    void wrongPathVariableType_returns400AndDoesNotLog() throws Exception {
+        long before = systemErrorLogRepository.count();
+
+        mockMvc.perform(get("/api/test/echo/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+
+        assertThat(systemErrorLogRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    @WithMockUser
+    void wrongHttpMethod_returns405AndDoesNotLog() throws Exception {
+        long before = systemErrorLogRepository.count();
+
+        mockMvc.perform(get("/api/test/echo"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.code").value("METHOD_NOT_ALLOWED"));
+
+        assertThat(systemErrorLogRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    @WithMockUser
+    void wrongContentType_returns415AndDoesNotLog() throws Exception {
+        long before = systemErrorLogRepository.count();
+
+        mockMvc.perform(post("/api/test/echo")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("hello"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.code").value("UNSUPPORTED_MEDIA_TYPE"));
+
+        assertThat(systemErrorLogRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    void malformedJsonOnPublicEndpoint_returns400AndWritesNoErrorLog() throws Exception {
+        long before = systemErrorLogRepository.count();
+
+        mockMvc.perform(post("/api/public/leads")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"x\", BROKEN"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("MALFORMED_REQUEST"));
 
         assertThat(systemErrorLogRepository.count()).isEqualTo(before);
     }

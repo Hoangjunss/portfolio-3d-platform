@@ -11,6 +11,7 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
         <Link href="/admin/media">Media</Link>
         <Link href="/admin/users">Users</Link>
         <Link href="/admin/audit-log">Audit log</Link>
+        <Link href="/admin/errors">Error logs</Link>
       </nav>
       <div className="flex-1 p-6">{children}</div>
     </div>

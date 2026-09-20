@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `63b2eb7` — plan 09 xong, **đã push**
-**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **103/103 PASS**
+**Commit cuối:** `c10adee` — plan 10 xong, **đã push**. Backend đã hết plan module.
+**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **120/120 PASS**
 
 ---
 
@@ -23,36 +23,32 @@
 | 08 task 1 | 4xx cho request body hỏng thay vì 500 + log row | `d04bf9d` |
 | 08 task 2 | Analytics ingest + summary, HMAC IP, đóng T-02 | `6837c5e`, `ea8e7de` |
 | 09 | Mail sau commit + `Allow` cho 405; rate limit per-IP có chặn bộ nhớ | `0f53317`, `3c92f50`, `63b2eb7` |
+| 10 | Cap refresh token; user management admin-only + hai guard chống khoá chết | `4339067`, `4a40bd1`, `c10adee` |
 
-Tiến độ: **10/19 task tính năng & refactor**. Suite 103/103 PASS.
+Tiến độ: **11/19 task — hết plan backend, còn frontend (11–14) và hạ tầng (15–18)**. Suite 120/120 PASS.
 
 ---
 
-## Bước kế tiếp — plan 10 (user management) — ĐÃ RÀ XONG, ĐANG GIAO
+## Bước kế tiếp — plan 11 (frontend scaffold)
 
-**`docs/superpowers/plans/2026-09-19-10-user-management.md`** — đã viết lại 2026-09-20. Bản cũ
-dùng feature package, nhét logic mapping vào static factory của DTO thay vì `Converter`, và có
-ba lỗ hành vi:
+**Backend đã hết plan module.** Plan 11–14 là frontend Next.js, plan 15–18 là hạ tầng.
 
-- **Trùng username/email → 500 + `system_error_logs`.** `users.username` và `email` đều
-  `NOT NULL UNIQUE`, không có chỗ nào kiểm trước. Đây đúng là khuôn mẫu R-01 / C-01 /
-  malformed-body, và sẽ là lần thứ tư. Bản mới thêm `existsByUsername`/`existsByEmail` → 400.
-- **`deactivate` dùng `ifPresent`** nên id không tồn tại vẫn trả 200 **và ghi một dòng
-  `audit_logs`** khai một thay đổi chưa từng xảy ra. Đổi sang `orElseThrow` → 404. Đồng thời
-  phải trả `Long` chứ không `void`, nếu không `audit_logs.entity_id` là null (đúng lỗ C-05).
-- **Một ADMIN có thể khoá vĩnh viễn cả admin panel.** Tự deactivate chính mình, hoặc deactivate
-  ADMIN active cuối cùng — mà **trong toàn bộ 19 plan không có luồng password reset nào**. Bản
-  mới bắt buộc hai guard, mỗi cái một test và một mutation.
+**`docs/superpowers/plans/2026-09-19-11-frontend-scaffold.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
+Bảy plan liên tiếp rà ra lỗi sống, trong đó ba cái là lỗ hổng khai thác được. Đừng giao thẳng.
 
-Đã kiểm hai chỗ nghi ngờ trước khi viết, **không có lỗ**: `UserServiceImpl.authenticate` dùng
-`findActiveByUsername` và `RefreshTokenServiceImpl.rotate` có `.filter(User::isActive)` — nên
-tài khoản bị deactivate hết đường vào trong vòng một vòng đời access token. Plan ghi rõ điều này
-để không ai thêm lại lần nữa. Thứ còn thiếu là revoke refresh token cũ, nếu không thì
-**reactivate một tài khoản sẽ hồi sinh mọi session cũ**, kể cả trên thiết bị người dùng không
-còn giữ.
+Riêng với nhóm frontend, ba thứ đã tích sẵn và phải được gánh:
 
-Task 1 gánh R-14 (test phân biệt `AFTER_COMMIT`/`BEFORE_COMMIT`) và R-08 (giới hạn số refresh
-token sống mỗi user, mở từ plan 03b).
+- **C-04 / L-05** — `media.file_name`, `leads.name`, `leads.message` là chuỗi do người gửi đặt.
+  **Plan 14 render bất kỳ cái nào trong số đó đều phải escape.**
+- **A-09** — `/api/admin/analytics/summary` chạy ba query mỗi lần gọi và không cache; dashboard
+  plan 14 sẽ gọi nó mỗi lần mở trang.
+- **U-03** — hàng audit `action = "DELETE"` của User thực chất là deactivate, dữ liệu không mất.
+  Đừng hiển thị là "đã xoá".
+
+Và nhóm hạ tầng nợ bốn thứ: **A-08** (hai secret có default công khai, plan 15 phải bắt buộc env
+thật), **N-01** (`forward-headers-strategy`, nếu không cả site chung một bucket rate limit),
+**M-01** (phục vụ `/media/**` với `Content-Disposition: attachment`), **D-03** (Tomcat
+`max-swallow-size` có thể nuốt mất 413).
 
 ---
 
@@ -93,7 +89,9 @@ token sống mỗi user, mở từ plan 03b).
 | ~~P-03 (p08t1)~~ | MINOR | Response 405 không kèm header `Allow` | **Đã đóng** — `0f53317`, M2 đỏ |
 | P-04 (p08t1) | INFO | Import thừa trong `GlobalExceptionHandlerTest` | Dọn khi chạm lại |
 | ~~**L-01 (p07t2)**~~ | MAJOR | Mail đồng bộ trong transaction + JavaMail không timeout | **Đã đóng** — timeout ở `0fbf9f1`, `AFTER_COMMIT` ở `0f53317`. Nhưng xem R-14 |
-| **R-14 (p09)** | MINOR | Pha `AFTER_COMMIT` chưa có test nào phân biệt được với `BEFORE_COMMIT` — M1 xanh | **Plan 10 task 1** |
+| ~~**R-14 (p09)**~~ | MINOR | Pha `AFTER_COMMIT` chưa có test nào phân biệt được | **Đã đóng** — `c10adee`, test đếm qua transaction `REQUIRES_NEW`, mutation đỏ |
+| ~~**U-01 (p10)**~~ | MAJOR | `audit_logs.entity_id` của User CREATE là null vì service trả DTO | **Đã đóng** — `c10adee` |
+| U-03 (p10) | INFO | `deactivate` ghi `action = "DELETE"`, thực chất là soft-delete | Plan 14 render đúng nhãn |
 | R-15 (p09) | INFO | `maximumSize(10_000)` nghĩa là dưới flood xoay IP, giới hạn thành gần đúng | Phòng thủ thật ở nginx (plan 16) |
 | R-16 (p09) | INFO | 429 ghi body tay, không đặt charset | Gộp vào lần chạm tiếp |
 | L-02 (p07t2) | MINOR | `lead.setStatus(NEW)` không test nào canh được (entity có field initializer); M5 xanh | Ghi nhận |
@@ -107,7 +105,7 @@ token sống mỗi user, mở từ plan 03b).
 | T-05 (p05) | INFO | `config` và `filter` miễn trắng khỏi allow-list | Siết lại nếu `config/` phình |
 | R-03 (p04) | MINOR | Mỗi audit row tốn thêm một SELECT `users` | Hoãn; cân nhắc nhét `userId` vào JWT claim |
 | R-06 (p03b) | MINOR | Test dọn token dùng `userId(1L)` vi phạm FK thật | Thuộc F-01 |
-| **R-08 (p03b)** | MINOR | Không giới hạn số refresh token sống mỗi user | **Plan 10 task 1** |
+| ~~**R-08 (p03b)**~~ | MINOR | Không giới hạn số refresh token sống mỗi user | **Đã đóng** — `4339067`, cap 5 |
 | R-09 (p03b) | MINOR | Test job không chứng minh `@EnableScheduling` còn đó | Hoãn |
 | R-10 (p03b) | INFO | H2 sinh `timestamp with time zone`, migration khai `TIMESTAMP` | Thuộc F-08 |
 | F-01 | — | Migration và entity chưa từng được đối chiếu | Cần Docker. **Phải đóng trước plan 15** |
@@ -145,6 +143,7 @@ treo; F-01 không đóng được.
 | 04b lần 1 | **Chỉ làm task 1/8**, vẫn báo "hoàn tất" |
 | 04b lần 2 | Làm đủ task 2–8, commit body khớp từng điểm khi kiểm lại |
 | 07 lần 1 | **0/16 step.** Vẫn báo "hoàn tất". Cây làm việc sạch, không commit mới, không một file nào được tạo: không có `InvalidRequestException`, không có file `*Lead*` hay `*Notification*` nào. `mvn clean test` sau đó: 58/58 PASS — đúng baseline cũ, không thêm test nào |
+| 10 lần 1 | **15/15 step, cả hai task.** Khai đủ 11 mutation kể cả cái xanh (R-13 không tái phát), và **tự tuyên bố R-14 vẫn mở** sau khi được giao để đóng nó — kiểu báo cáo dễ giấu nhất. Lỗi bỏ sót: `create` trả DTO nên `audit_logs.entity_id` null (U-01) |
 | 09 lần 1 | **15/15 step, cả hai task, hai commit riêng.** Lượt đầy đủ đầu tiên làm trọn một plan trong một lượt. Khai M1 XANH kèm đúng test cần có để bắt — lần thứ hai tự báo điểm yếu. Nhưng bỏ không báo M2 và M3 |
 | 08 lần 2 | **8/8 step của task 2**, kể cả commit. Commit body khai cả bảy mutation kèm thông điệp lỗi thật của từng cái; hai cái tôi kiểm lại đều khớp. Lượt đầy đủ thứ hai |
 | 08 lần 1 | **6/14 step.** Task 1 làm tốt (test cuối đánh thẳng vào `/api/public/leads` thật, không phải endpoint giả), nhưng **lại bỏ bước commit** — lần thứ ba liên tiếp — và không có dấu vết chạy mutation check. Task 2 không động tới |

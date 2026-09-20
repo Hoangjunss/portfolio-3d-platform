@@ -58,5 +58,14 @@ notification:
 analytics:
   ip-hash-secret: ${ANALYTICS_IP_HASH_SECRET:dev-only-analytics-secret-change-me}
 
-
-
+rate-limit:
+  paths:
+    "[/api/auth/login]":
+      capacity: 10
+      window: 15m
+    "[/api/public/leads]":
+      capacity: 5
+      window: 1h
+    "[/api/analytics/events]":
+      capacity: 120
+      window: 1m

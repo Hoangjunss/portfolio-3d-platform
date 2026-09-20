@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -47,6 +48,16 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/api/test/denied")
         public void denied() {
             throw new AccessDeniedException("Access denied!");
+        }
+
+        @GetMapping("/api/test/invalid-request")
+        public void invalidRequest() {
+            throw new InvalidRequestException("Invalid field value");
+        }
+
+        @GetMapping("/api/test/upload-too-large")
+        public void uploadTooLarge() {
+            throw new MaxUploadSizeExceededException(10485760L);
         }
     }
 
@@ -113,6 +124,32 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
                 .andExpect(jsonPath("$.message").isNotEmpty());
+
+        assertThat(systemErrorLogRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    @WithMockUser
+    void invalidRequestException_returns400AndDoesNotLog() throws Exception {
+        long before = systemErrorLogRepository.count();
+
+        mockMvc.perform(get("/api/test/invalid-request"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
+                .andExpect(jsonPath("$.message").value("Invalid field value"));
+
+        assertThat(systemErrorLogRepository.count()).isEqualTo(before);
+    }
+
+    @Test
+    @WithMockUser
+    void maxUploadSizeExceededException_returns413AndDoesNotLog() throws Exception {
+        long before = systemErrorLogRepository.count();
+
+        mockMvc.perform(get("/api/test/upload-too-large"))
+                .andExpect(status().isPayloadTooLarge())
+                .andExpect(jsonPath("$.code").value("FILE_TOO_LARGE"))
+                .andExpect(jsonPath("$.message").value("File size exceeds maximum limit"));
 
         assertThat(systemErrorLogRepository.count()).isEqualTo(before);
     }

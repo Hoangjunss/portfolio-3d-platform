@@ -11,6 +11,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -63,6 +65,21 @@ public class GlobalExceptionHandler {
         // 404 is the caller's fault or unmapped route, not a system fault — no system_error_logs row.
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ApiErrorDto("NOT_FOUND", "Resource not found", null));
+    }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiErrorDto> handleInvalidRequest(InvalidRequestException ex) {
+        // 400 is the caller's fault, not a system fault — no system_error_logs row.
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiErrorDto("VALIDATION_FAILED", ex.getMessage(), null));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiErrorDto> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        // Thrown by multipart parsing before the controller runs; still the caller's fault, so
+        // it must not write a system_error_logs row either.
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(new ApiErrorDto("FILE_TOO_LARGE", "File size exceeds maximum limit", null));
     }
 
     @ExceptionHandler(Exception.class)

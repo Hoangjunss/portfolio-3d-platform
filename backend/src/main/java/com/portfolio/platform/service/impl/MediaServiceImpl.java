@@ -4,6 +4,7 @@ import com.portfolio.platform.annotation.Audited;
 import com.portfolio.platform.config.MediaStorageProperties;
 import com.portfolio.platform.converter.MediaConverter;
 import com.portfolio.platform.dto.MediaDto;
+import com.portfolio.platform.exception.InvalidRequestException;
 import com.portfolio.platform.exception.ResourceNotFoundException;
 import com.portfolio.platform.model.Media;
 import com.portfolio.platform.repository.MediaRepository;
@@ -77,7 +78,7 @@ public class MediaServiceImpl implements MediaService {
             case "image/jpeg" -> ".jpg";
             case "image/webp" -> ".webp";
             case "image/gif" -> ".gif";
-            default -> throw new IllegalArgumentException("Unsupported media type: " + mimeType);
+            default -> throw new InvalidRequestException("Unsupported media type: " + mimeType);
         };
     }
 
@@ -86,25 +87,28 @@ public class MediaServiceImpl implements MediaService {
     @Override
     public Long store(MultipartFile file, String username) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("File must not be empty");
+            throw new InvalidRequestException("File must not be empty");
         }
         if (file.getSize() > mediaStorageProperties.getMaxSizeBytes()) {
-            throw new IllegalArgumentException("File size exceeds maximum limit");
+            throw new InvalidRequestException("File size exceeds maximum limit");
         }
 
-        byte[] header = new byte[12];
+        byte[] header;
         try (InputStream in = file.getInputStream()) {
-            int read = in.read(header);
-            if (read < 3) {
-                throw new IllegalArgumentException("File content is too short");
-            }
+            // readNBytes, not read(byte[]): a single read() on a file- or network-backed stream
+            // may return fewer bytes than asked even when more are available, which would make a
+            // valid 12-byte WEBP signature undetectable.
+            header = in.readNBytes(12);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+        if (header.length < 3) {
+            throw new InvalidRequestException("File content is too short");
         }
 
         String detectedMimeType = detectMimeType(header);
         if (detectedMimeType == null || !mediaStorageProperties.getAllowedContentTypes().contains(detectedMimeType)) {
-            throw new IllegalArgumentException("Disallowed media type");
+            throw new InvalidRequestException("Disallowed media type");
         }
 
         String extension = extensionForMimeType(detectedMimeType);
@@ -112,6 +116,7 @@ public class MediaServiceImpl implements MediaService {
 
         Path uploadDirPath = Path.of(mediaStorageProperties.getUploadDir());
         Path target = uploadDirPath.resolve(storedFileName).normalize();
+        // Server fault if startsWith fails since filename is UUID + derived extension — deserves 500
         if (!target.startsWith(uploadDirPath.normalize())) {
             throw new SecurityException("Path traversal attempt detected");
         }

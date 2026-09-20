@@ -6,6 +6,7 @@ import com.portfolio.platform.model.Media;
 import com.portfolio.platform.model.User;
 import com.portfolio.platform.repository.AuditLogRepository;
 import com.portfolio.platform.repository.MediaRepository;
+import com.portfolio.platform.repository.SystemErrorLogRepository;
 import com.portfolio.platform.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +59,9 @@ class MediaControllerTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private SystemErrorLogRepository systemErrorLogRepository;
 
     @BeforeEach
     void setUp() {
@@ -104,6 +109,22 @@ class MediaControllerTest {
         Media savedMedia = mediaRepository.findById(auditLog.getEntityId()).orElseThrow();
         assertThat(savedMedia.getUploadedBy()).isEqualTo(editor.getId());
         assertThat(savedMedia.getFileName()).isEqualTo("test-upload.png");
+    }
+
+    @Test
+    @WithMockUser(username = "editor_user", roles = "EDITOR")
+    void upload_withDisallowedType_returns400AndWritesNoErrorLog() throws Exception {
+        long errorLogsBefore = systemErrorLogRepository.count();
+
+        MockMultipartFile evil = new MockMultipartFile(
+                "file", "evil.html", "text/html",
+                "<html><script>alert(1)</script></html>".getBytes(StandardCharsets.UTF_8));
+
+        mockMvc.perform(multipart("/api/admin/media").file(evil))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+
+        assertThat(systemErrorLogRepository.count()).isEqualTo(errorLogsBefore);
     }
 
     @Test

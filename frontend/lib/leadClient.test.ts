@@ -19,4 +19,10 @@ describe("submitLead", () => {
     const result = await submitLead({ name: "An", email: "an@example.com", message: "Xin chào" });
     expect(result).toEqual({ ok: false, reason: "server-error" });
   });
+
+  it("returns a network result when fetch rejects", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+    const result = await submitLead({ name: "An", email: "an@example.com", message: "Xin chào" });
+    expect(result).toEqual({ ok: false, reason: "network" });
+  });
 });

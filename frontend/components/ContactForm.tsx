@@ -9,6 +9,7 @@ const ERROR_COPY: Record<string, string> = {
   "rate-limited": "Không gửi được yêu cầu. Bạn vừa gửi quá nhiều lần. Thử lại sau vài phút.",
   "server-error": "Không gửi được yêu cầu. Máy chủ không phản hồi. Thử lại sau ít phút hoặc gọi trực tiếp.",
   validation: "Không gửi được yêu cầu. Vài trường chưa hợp lệ. Kiểm tra lại email và nội dung.",
+  network: "Không gửi được yêu cầu. Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.",
 };
 
 export function ContactForm() {

@@ -9,6 +9,7 @@ describe("ContactForm", () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("labels every field descriptively, not abbreviated", () => {
@@ -56,5 +57,23 @@ describe("ContactForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Gửi yêu cầu tư vấn" }));
     await waitFor(() => expect(screen.getByText(/Đã gửi yêu cầu/)).toBeInTheDocument());
     expect((screen.getByLabelText("Họ tên") as HTMLInputElement).value).toBe("");
+  });
+
+  it("re-enables submit button with default text and shows an alert when fetch rejects", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+    render(<ContactForm />);
+    fireEvent.change(screen.getByLabelText("Họ tên"), { target: { value: "An" } });
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "an@example.com" } });
+    fireEvent.change(screen.getByLabelText("Nội dung"), { target: { value: "Xin chào" } });
+    fireEvent.click(screen.getByRole("button", { name: "Gửi yêu cầu tư vấn" }));
+
+    await waitFor(() => {
+      const alert = screen.getByRole("alert");
+      expect(alert).toBeInTheDocument();
+      expect(alert.textContent?.trim().length).toBeGreaterThan(0);
+    });
+    const submitButton = screen.getByRole("button", { name: "Gửi yêu cầu tư vấn" });
+    expect(submitButton).toBeInTheDocument();
+    expect(submitButton).not.toBeDisabled();
   });
 });

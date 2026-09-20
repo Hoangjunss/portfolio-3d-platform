@@ -5,6 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useTexture, Html } from "@react-three/drei";
 import * as THREE from "three";
 import type { Template } from "@/lib/apiClient";
+import { shouldRenderTexture } from "@/lib/templateTexture";
 
 interface TextureErrorBoundaryProps {
   fallback: React.ReactNode;
@@ -141,7 +142,7 @@ function CardMesh({
       <planeGeometry args={[3.2, 2.0]} />
       {/* Decision (i): Null thumbnailUrl renders coloured plane without calling useTexture.
           URLs are wrapped in Suspense and ErrorBoundary to prevent 404 from blanking carousel. */}
-      {template.thumbnailUrl ? (
+      {shouldRenderTexture(template.thumbnailUrl) ? (
         <TextureErrorBoundary
           fallback={<FallbackCardMaterial template={template} />}
         >

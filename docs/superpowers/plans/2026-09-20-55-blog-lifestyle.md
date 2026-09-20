@@ -1,0 +1,563 @@
+# Blog-Lifestyle Demo Site Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Build the `blog-lifestyle` demo template site (`templates/blog-lifestyle/`) — the extra
+lifestyle/travel-magazine Blog/Magazine variant under the interactive-demo templates program (§4.2,
+one of the 3 extra blog variants). Run a real per-site Hallmark design pass (warm anchor hue, serif
+display), scaffold the static Next.js export composing the article-list page
+(`Hero` → `ArticleList`(paginated) → `TagCloud` → `Footer`) and the article detail route
+(`app/posts/[slug]/page.tsx`), and build the per-post comment interactive feature on
+`useLocalCollection`, keyed per article.
+
+**Architecture:** This plan is plan 55 in the interactive-demo spec's §9 execution order — one of
+plans 31-59, independent of every other site plan once plan 30 lands. It has one hard
+prerequisite: `2026-09-20-30-template-kit-scaffold.md` must be complete and committed
+(`@portfolio/template-kit` built, tested, exporting `Hero`, `ItemGrid`, `Footer`, `CommentThread`,
+`useLocalCollection`, `TemplateTheme`/`assertValidTheme` from its barrel `src/index.ts`). This
+plan does not modify `template-kit` itself — it only consumes it. Task 1 runs a real Hallmark
+design session and commits its own theme output; Task 2 scaffolds the Next.js app, seed data, and
+both routes (list + detail); Task 3 builds the per-post comment feature, its interaction test, and
+the design-scoring self-audit. Structurally this plan mirrors the baseline `blog` site's own plan
+(`2026-09-20-37-blog.md`) — same interactive pattern (per-post `CommentThread`/
+`useLocalCollection`), different content/theme/storageKey prefix.
+
+**Tech Stack:** Next.js 15 / React 19 static export (`output: 'export'`), TypeScript, Vitest +
+Testing Library + jsdom for the interaction test, `@portfolio/template-kit` as a local workspace
+dependency. No backend change — this plan touches nothing under `backend/`.
+
+**Spec:** `docs/superpowers/specs/2026-09-20-site-blog-lifestyle-design.md` (page/route
+composition, seed data shape/content, per-post comment data flow, Hallmark design brief) plus the
+two specs it is scoped by: `docs/superpowers/specs/2026-09-20-interactive-demo-templates-design.md`
+(§3.1 `useLocalCollection` contract, §3.2 row #7 the per-post comment feature pattern, §3.3
+`CommentThread`, §4.2 this site's assigned mood family and slug, §5 per-site Hallmark requirement,
+§7 the build+interaction test gate, §8 the 10-criterion design scoring gate, §9 execution order)
+and `docs/superpowers/specs/2026-09-20-template-design-system-design.md` (§3 taxonomy row #7
+"Article list (paginated static) + category tag cloud", §4 component behavior/prop contracts, §6
+folder/thumbnail/slug convention).
+
+## Global Constraints
+
+- **Hard prerequisite: plan 30 must be committed first.** Do not start Task 2 until
+  `@portfolio/template-kit`'s barrel export (`template-kit/src/index.ts`) exists and its own test
+  suite passes — this plan imports from it, it does not vendor or reimplement any kit component,
+  including `CommentThread`.
+- **`slug` = `blog-lifestyle`, `subdomain` = `blog-lifestyle`, `display_order` = 25** — fixed by
+  plan 30 Task 1's authoritative slug table; do not deviate.
+- No comments restating what code does; only comments explaining non-obvious "why" (same rule as
+  plan 30/37).
+- **No fabricated content.** Seed data (the 8 posts, tags, and the empty per-post comment seed)
+  must match `docs/superpowers/specs/2026-09-20-site-blog-lifestyle-design.md` §3/§4 exactly — no
+  invented statistics presented as real, no Lorem Ipsum above the fold.
+- **Static content must never be gated behind `useLocalCollection`'s hydration** (interactive-demo
+  spec §3.1's render-pattern rule) — `POSTS`, the article list, the tag cloud, and every article's
+  body render directly from imported seed data; only each post's comment thread lives inside a
+  client component that mounts after the static shell is already visible.
+- **Per-post storage key, not a shared one** (site spec §4) — every `useLocalCollection` call for
+  comments MUST use `` `blog-lifestyle-comments-${postId}` ``, never a single shared
+  `blog-lifestyle-comments` key filtered by a `postId` field. This is the one architectural rule
+  this plan must not get wrong; Task 3's interaction test exists specifically to catch a regression
+  of it.
+- Every composed page must render at 320/375/414/768px without horizontal scroll (same rule
+  `template-kit` components are already built to, per plan 30's Global Constraints — this plan is
+  responsible for not breaking it at the page-composition level: grid/section wrappers, spacing,
+  and the long-form article body's line length).
+- `next.config.js` must set `output: 'export'` (parent spec §6, unchanged) — the dynamic
+  `app/posts/[slug]/page.tsx` route requires `generateStaticParams()` returning every post id from
+  the seed data, since static export cannot resolve dynamic params at request time.
+- `public/thumbnail.webp` is required and validated by `template-kit/scripts/check-thumbnail.mjs`
+  (plan 30 Task 2) wired into this site's own `package.json` `build` script — this plan does not
+  reimplement the checker, only calls it.
+- Do not fabricate Hallmark token values in this plan document. Task 1 states the process and the
+  required output shape; the real hex/font/spacing values only exist after the real session runs.
+- Do not fabricate Task 3's design-score numbers in this plan document. The score table is written
+  with criterion names and an empty/TBD score column — real scores are filled in by whoever
+  executes Task 3, after implementation, per master spec §8.
+- Current baseline: re-read `docs/superpowers/STATUS.md`'s own header for the actual current pass
+  count before reporting — plans may have landed between this plan's authoring and its execution.
+
+---
+
+## Task 1: Hallmark design pass
+
+**Files:**
+- Create: `templates/blog-lifestyle/theme.ts`
+- Create: `templates/blog-lifestyle/app/globals.css`
+- Create (Hallmark's own working artifacts, per the skill's normal output — moodboard/reference
+  notes, wherever the `hallmark` skill places them): no fixed path prescribed here; follow the
+  skill's own convention.
+
+**Interfaces:**
+- Consumes: `TemplateTheme` type and `assertValidTheme` validator from `@portfolio/template-kit`
+  (`template-kit/src/theme.ts`, shipped by plan 30 Task 2) — this site's `theme.ts` must conform
+  to that shape and call `assertValidTheme` on its own exported value so a malformed token set
+  fails the build loudly instead of shipping `undefined` CSS variables.
+- Produces: `templates/blog-lifestyle/theme.ts` (the validated `TemplateTheme` value this site
+  commits to) and `templates/blog-lifestyle/app/globals.css` (the `--color-*`/`--font-*`/
+  `--space-*` custom properties `template-kit`'s components read at render time, populated with
+  this site's real values instead of placeholders).
+
+### Design decision
+
+**(a) This is a real Hallmark session, not a scaffold placeholder.** Per interactive-demo spec §5,
+every one of the 29 sites gets its own full `hallmark` skill pass (greenfield path), same rigor as
+the main portfolio site's own pass — not a value picked from the parent spec's old 4-cluster enum
+(that enum is explicitly overridden, per plan 30 decision (f)). The input to the session is this
+plan's own spec, `docs/superpowers/specs/2026-09-20-site-blog-lifestyle-design.md` §5 ("Hallmark
+design brief") — industry mood (lifestyle/travel magazine, warm anchor hue/serif display as a
+non-binding starting direction), and the 3 reference directions to research. The session may land
+anywhere its research supports, including deviating from that starting direction, as long as the
+result clears every criterion in master spec §8 at Task 3 time (particularly #1 anti-generic, #2
+typographic craft — this site's long-form article body makes typographic craft especially
+load-bearing — #3 color coherence, #10 distinctiveness against the other 28 sites, including the
+baseline `blog` and the other 2 extra blog variants, `blog-tech` and `blog-food`).
+
+- [ ] **Step 1: Invoke the `hallmark` skill, greenfield path**, supplying it this plan's context:
+  the site is a lifestyle/travel-magazine demo (`Hero` → paginated article list → tag cloud on `/`,
+  plus a long-form article detail route with a comment thread), industry mood per spec §5, and the
+  constraint that output must conform to `template-kit`'s `TemplateTheme` shape (`accentHue:
+  string`, `displayFont: string`, `bodyFont: string` — plus whatever additional `--space-*`/motion
+  tokens the session decides are needed for `globals.css`, which are not constrained by
+  `TemplateTheme`'s type since that type only governs the 3 fields `template-kit`'s components read
+  directly).
+- [ ] **Step 2: Run the session's research phase** — the skill's own process for the 2-3 reference
+  directions named in the spec (independent print/digital travel and lifestyle magazines,
+  warm-toned hospitality/boutique-travel brand identity systems, classic serif-display editorial
+  type systems), converging on one direction with a rationale, not a blend of all three.
+- [ ] **Step 3: Produce `templates/blog-lifestyle/theme.ts`** exporting a `TemplateTheme`-conformant
+  object and calling `assertValidTheme` on it at module scope (so an invalid theme throws at import
+  time, not silently):
+
+```typescript
+import { assertValidTheme, type TemplateTheme } from '@portfolio/template-kit';
+
+const theme: TemplateTheme = {
+  accentHue: /* real value from the Hallmark session, not a placeholder */ '',
+  displayFont: /* real value from the Hallmark session */ '',
+  bodyFont: /* real value from the Hallmark session */ '',
+};
+
+export default assertValidTheme(theme);
+```
+
+  (The empty-string right-hand sides above are illustrative of the shape only — the real file
+  committed in this step must have the session's actual values; an empty string would fail
+  `assertValidTheme` itself and is not an acceptable committed state.)
+
+- [ ] **Step 4: Produce `templates/blog-lifestyle/app/globals.css`** defining the `--color-*`/
+  `--font-*`/`--space-*` (and any motion-duration/easing tokens the session's interaction-polish
+  direction needs, per master spec §8 criterion #5) custom properties `template-kit`'s components
+  read, with real values matching `theme.ts`'s exported `TemplateTheme` — no ad-hoc hex/OKLCH
+  values outside this token file (master spec §8 criterion #3 requires every color trace to a
+  token). Pay particular attention to a real body-text type scale/line-height/measure for the
+  article detail page's long-form paragraphs (site spec §2, §5) — this is what criterion #2
+  (typographic craft) is actually scored against on this site, more than on a grid-heavy category
+  like `corporate`.
+- [ ] **Step 5: Verify WCAG AA contrast** on every real text/background token pairing the session
+  defines (criterion #3) — using the Hallmark skill's own audit capability or an equivalent
+  contrast checker; record the pass in the session's own notes.
+- [ ] **Step 6: Verify `theme.ts` imports and `assertValidTheme` succeeds** — `cd
+  templates/blog-lifestyle && npx tsx theme.ts` (or equivalent quick run) exits 0, no thrown error.
+- [ ] **Step 7: Commit** — `design: Hallmark pass for blog-lifestyle site theme`
+
+**Acceptance criteria for this task:** `templates/blog-lifestyle/theme.ts` exists, type-checks
+against `TemplateTheme`, and its module-scope `assertValidTheme` call does not throw; `globals.css`
+defines real (non-placeholder) values for every token `template-kit` components consume; the
+direction is traceable to the spec's Hallmark brief (§5) and its research phase, not asserted
+without process; the result reads as warm-hued/serif-display and distinct from `blog-tech`'s
+cool/grotesque direction and the baseline `blog`'s neutral direction.
+
+---
+
+## Task 2: Next.js app scaffold + article list & detail routes
+
+**Files:**
+- Create: `templates/blog-lifestyle/package.json`, `templates/blog-lifestyle/tsconfig.json`,
+  `templates/blog-lifestyle/next.config.js`
+- Create: `templates/blog-lifestyle/app/layout.tsx`, `templates/blog-lifestyle/app/page.tsx`
+- Create: `templates/blog-lifestyle/app/posts/[slug]/page.tsx`
+- Create: `templates/blog-lifestyle/components/ArticleList.tsx`,
+  `templates/blog-lifestyle/components/TagCloud.tsx` (page-local, not kit components — see site
+  spec §2)
+- Create: `templates/blog-lifestyle/data/seed.ts`
+- Create: `templates/blog-lifestyle/public/thumbnail.webp` (placeholder image — see step 7 note)
+- Test: `templates/blog-lifestyle/scripts/build-gate.test.mjs`
+
+**Interfaces:**
+- Consumes: `Hero`, `ItemGrid`, `Footer` from `@portfolio/template-kit`'s barrel export (plan 30
+  Task 5); `theme.ts`/`globals.css` from Task 1; `template-kit/scripts/check-thumbnail.mjs` (plan
+  30 Task 2) wired into this `package.json`'s `build` script.
+- Produces: `templates/blog-lifestyle/app/page.tsx` (the static list page) and
+  `templates/blog-lifestyle/app/posts/[slug]/page.tsx` (the static-exported article detail route,
+  one static page per seed post via `generateStaticParams()`), which Task 3 extends with the
+  `CommentThread`-backed interactive section; the `npm run build` gate every later task in this
+  plan (and any future maintenance) relies on.
+
+### Design decisions
+
+**(b) `data/seed.ts` holds `POSTS`** exactly as shaped in
+`docs/superpowers/specs/2026-09-20-site-blog-lifestyle-design.md` §3 — imported directly into both
+`app/page.tsx` and `app/posts/[slug]/page.tsx`, never behind a hook, per the Global Constraints
+render-pattern rule.
+
+**(c) Routing: `app/posts/[slug]/page.tsx`, `slug` = `BlogPost.id`.** A Next.js dynamic segment
+under `app/posts/`, not a flat `app/[slug]/page.tsx` at the site root — keeping the detail route
+under its own `/posts/` prefix leaves the root free for the list page and avoids any future
+collision with a static top-level route (e.g. an `/about` page) matching the dynamic segment
+instead. `generateStaticParams()` returns `POSTS.map(p => ({ slug: p.id }))` so `next build` with
+`output: 'export'` can pre-render every post's static HTML — a static export has no request-time
+router, so every dynamic param must be enumerable at build time (site spec's static-only
+constraint applies here too, same as the baseline `blog` plan).
+
+**(d) `ArticleList` and `TagCloud` are page-local components (`templates/blog-lifestyle/
+components/`), not new `template-kit` exports** — per site spec §2's explicit rationale, identical
+to the baseline `blog` plan's own decision (d): `ArticleList` composes `ItemGrid`'s existing
+`GridItem` shape (`title`/`description`/`image`) plus a page-local "wrap each card in a link to
+`/posts/[slug]`" concern and the reveal-count pagination behavior; `TagCloud` derives its tag set
+from `POSTS` and filters client-side. Neither behavior is generic enough across the other 28 sites
+to belong in the shared kit.
+
+**(e) `public/thumbnail.webp` in this step is a real, valid WEBP file (placeholder imagery is
+acceptable, an invalid/missing file is not)** — the build-gate check (plan 30 Task 2's
+`checkThumbnail`) asserts real `RIFF`/`WEBP` magic bytes, not just a `.webp`-named file. Use any
+placeholder WEBP export (e.g. a neutral generated image matching this site's Task 1 accent color)
+until an admin uploads the real one through the media library, per parent spec §6 — this step's
+job is to satisfy the build gate honestly, not to fake the check.
+
+- [ ] **Step 1: Write the failing build-gate test** — asserts `npm run build` (which runs
+  `check-thumbnail.mjs` then `next build`) exits 0 and `out/` (the configured static-export output
+  dir) contains both `index.html` and at least one pre-rendered post page:
+
+```javascript
+// templates/blog-lifestyle/scripts/build-gate.test.mjs
+import { describe, it, expect } from 'vitest';
+import { execSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
+const ROOT = path.resolve(import.meta.dirname, '..');
+
+describe('blog-lifestyle site build gate', () => {
+  it('npm run build succeeds and produces a static export with index.html', () => {
+    execSync('npm run build', { cwd: ROOT, stdio: 'pipe' });
+    expect(existsSync(path.join(ROOT, 'out', 'index.html'))).toBe(true);
+  });
+
+  it('every seed post is pre-rendered as a static /posts/[slug] page', () => {
+    expect(existsSync(path.join(ROOT, 'out', 'posts', 'a-slow-morning-in-hoi-an', 'index.html'))).toBe(true);
+    expect(existsSync(path.join(ROOT, 'out', 'posts', 'the-case-for-boring-vacations', 'index.html'))).toBe(true);
+  });
+
+  it('public/thumbnail.webp exists and is a valid WEBP before build runs', () => {
+    const { checkThumbnail } = require('../../template-kit/scripts/check-thumbnail.mjs');
+    const result = checkThumbnail(path.join(ROOT, 'public', 'thumbnail.webp'));
+    expect(result.ok).toBe(true);
+  });
+});
+```
+
+- [ ] **Step 2: Run to verify it fails** — `cd templates/blog-lifestyle && npx vitest run
+  scripts/build-gate.test.mjs` (package/app don't exist yet, expect failure).
+- [ ] **Step 3: `templates/blog-lifestyle/package.json`**
+
+```json
+{
+  "name": "blog-lifestyle-template",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "node ../../template-kit/scripts/check-thumbnail.mjs public/thumbnail.webp && next build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@portfolio/template-kit": "workspace:*",
+    "next": "15.5.4",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@types/react": "19.2.2",
+    "typescript": "5.6.3",
+    "vitest": "5.0.1"
+  }
+}
+```
+
+- [ ] **Step 4: `templates/blog-lifestyle/next.config.js`**
+
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'export',
+};
+
+module.exports = nextConfig;
+```
+
+- [ ] **Step 5: `templates/blog-lifestyle/tsconfig.json`** — same shape as
+  `template-kit/tsconfig.json` (plan 30 Task 2 Step 4) with `jsx: "preserve"` and Next.js's
+  standard `plugins`/`paths` additions per the installed Next.js version's own scaffold defaults.
+- [ ] **Step 6: Add `public/thumbnail.webp`** — a placeholder WEBP image (any tool capable of
+  emitting a real `RIFF`/`WEBP` file; content is not load-bearing for this step, validity is).
+- [ ] **Step 7: `templates/blog-lifestyle/data/seed.ts`** — the `BlogPost`/`POSTS` array exactly as
+  specified in `docs/superpowers/specs/2026-09-20-site-blog-lifestyle-design.md` §3 (copy verbatim
+  from the spec, including all 8 posts — do not trim or invent additional rows).
+- [ ] **Step 8: `templates/blog-lifestyle/app/layout.tsx`**
+
+```tsx
+import type { Metadata } from 'next';
+import './globals.css';
+
+export const metadata: Metadata = {
+  title: 'Chậm Rãi',
+  description: 'A lifestyle and travel magazine on slow travel, home, food, and everyday ritual.',
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+- [ ] **Step 9: `templates/blog-lifestyle/components/ArticleList.tsx`** — client component; takes
+  the (possibly tag-filtered) `BlogPost[]` and an initial page size of 4 (matching the baseline
+  site's pagination convention); renders each post as a card (title, excerpt, tag, "Read more" link
+  to `/posts/${post.id}`) and a "Load more" button that reveals 4 more per click, hiding itself
+  once every passed-in post is visible. Implemented as page-local JSX reusing `ItemGrid`'s
+  `GridItem` shape for each card's title/description, not a new kit component (design decision
+  (d)).
+- [ ] **Step 10: `templates/blog-lifestyle/components/TagCloud.tsx`** — client component; derives
+  its tag list from the full `POSTS` array (not the currently-filtered list, so every tag stays
+  clickable even while another tag's filter is active), renders each as a button, and calls an
+  `onSelectTag(tag: string | null)` callback owned by the parent page (`null` = "All", clearing the
+  filter).
+- [ ] **Step 11: `templates/blog-lifestyle/app/page.tsx`** — a client component (needed for the
+  filter/pagination `useState` in `ArticleList`/`TagCloud`) that imports `Hero`, `Footer` from
+  `@portfolio/template-kit` and `POSTS` from `../data/seed`; composes `Hero` → `ArticleList` →
+  `TagCloud` → `Footer` in that order per site spec §2, holding the active-tag filter state at the
+  page level and passing the filtered array down to `ArticleList`.
+- [ ] **Step 12: `templates/blog-lifestyle/app/posts/[slug]/page.tsx`** — a static server component
+  exporting `generateStaticParams()` (`POSTS.map(p => ({ slug: p.id }))`) and a page component that
+  looks up the matching `BlogPost` by `params.slug`, renders its title/tag/publish date and `body`
+  paragraphs, then `Footer` from `@portfolio/template-kit`. This step may leave an explicit,
+  clearly named empty `<section>` marker between the article body and `Footer` for the comment
+  feature (not a TODO left unresolved at plan end — Task 3 fills it in the same plan) so the page
+  composes and builds correctly before Task 3 lands.
+- [ ] **Step 13: Run `cd templates/blog-lifestyle && npm install && npm run build`, then `npx
+  vitest run scripts/build-gate.test.mjs`, verify pass.**
+- [ ] **Step 14: Mutation checks**
+
+| # | Revert | Test that must go RED |
+|---|---|---|
+| M1 | remove `output: 'export'` from `next.config.js` | the static-export `out/index.html` existence assertion |
+| M2 | remove `generateStaticParams()` from `app/posts/[slug]/page.tsx` | the every-seed-post-pre-rendered test |
+| M3 | replace `public/thumbnail.webp` with a non-WEBP file of the same name | the thumbnail-valid-WEBP test |
+| M4 | drop `check-thumbnail.mjs` from the `build` npm script | the build-gate test (build would succeed on an invalid thumbnail, silently passing when it should fail first) |
+
+- [ ] **Step 15: Commit** — `feat: scaffold blog-lifestyle template Next.js app with article list and detail routes`
+
+---
+
+## Task 3: Per-post comment interactive feature + design scoring
+
+**Files:**
+- Create: `templates/blog-lifestyle/app/posts/[slug]/ArticleComments.tsx` (client component)
+- Modify: `templates/blog-lifestyle/app/posts/[slug]/page.tsx` (wire `ArticleComments` into the
+  slot left by Task 2 Step 12)
+- Test: `templates/blog-lifestyle/app/posts/[slug]/ArticleComments.test.tsx`
+
+**Interfaces:**
+- Consumes: `useLocalCollection`, `CommentThread` from `@portfolio/template-kit`.
+- Produces: the site's one required interaction test per master spec §7 ("exactly one interaction
+  test exercising its `useLocalCollection` feature end-to-end") — here specifically proving the
+  per-post storage-key isolation from site spec §4, not just a generic add/persist test; the final
+  design-score table that marks this plan complete per master spec §8.
+
+### Design decisions
+
+**(f) `ArticleComments` is a client component (`'use client'`)** taking a required `postId: string`
+prop, mounted inside the otherwise static-exported `app/posts/[slug]/page.tsx`, per the Global
+Constraints render-pattern rule — it owns the `useLocalCollection` call and renders `CommentThread`;
+the rest of the page (article header, body, `Footer`) stays server/static-rendered.
+
+**(g) Storage key is `` `blog-lifestyle-comments-${postId}` ``, built inside `ArticleComments` from
+its `postId` prop — never a module-level constant, never a shared collection filtered by post.**
+This is the single most important implementation rule in this task (site spec §4); Step 1's test
+suite exists specifically to catch a regression where a future edit collapses all posts onto one
+shared key.
+
+- [ ] **Step 1: Write the failing interaction test** — this is the plan's one required §7
+  interaction test, and per site spec §4 it must prove per-post isolation, not just a generic
+  add/persist round-trip:
+
+```tsx
+// templates/blog-lifestyle/app/posts/[slug]/ArticleComments.test.tsx
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { ArticleComments } from './ArticleComments';
+
+beforeEach(() => {
+  window.localStorage.clear();
+});
+
+describe('ArticleComments', () => {
+  it('shows the empty state before any comment is posted', () => {
+    render(<ArticleComments postId="a-slow-morning-in-hoi-an" />);
+    expect(screen.getByText(/no comments yet/i)).toBeInTheDocument();
+  });
+
+  it('posting a comment on post A appears under post A', async () => {
+    render(<ArticleComments postId="a-slow-morning-in-hoi-an" />);
+    fireEvent.change(screen.getByLabelText(/add a comment/i), { target: { value: 'This made me want to book a flight.' } });
+    fireEvent.click(screen.getByRole('button', { name: /post/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('This made me want to book a flight.')).toBeInTheDocument();
+    });
+  });
+
+  it('a comment posted on post A does NOT appear under post B', async () => {
+    const postA = render(<ArticleComments postId="a-slow-morning-in-hoi-an" />);
+    fireEvent.change(postA.getByLabelText(/add a comment/i), { target: { value: 'Only for post A.' } });
+    fireEvent.click(postA.getByRole('button', { name: /post/i }));
+    await waitFor(() => expect(postA.getByText('Only for post A.')).toBeInTheDocument());
+    postA.unmount();
+
+    render(<ArticleComments postId="the-case-for-boring-vacations" />);
+    expect(screen.getByText(/no comments yet/i)).toBeInTheDocument();
+    expect(screen.queryByText('Only for post A.')).not.toBeInTheDocument();
+  });
+
+  it('reloading (remounting) the same post keeps its own comment', async () => {
+    const first = render(<ArticleComments postId="what-my-grandmothers-kitchen-taught-me-about-hosting" />);
+    fireEvent.change(first.getByLabelText(/add a comment/i), { target: { value: 'Still thinking about this.' } });
+    fireEvent.click(first.getByRole('button', { name: /post/i }));
+    await waitFor(() => expect(first.getByText('Still thinking about this.')).toBeInTheDocument());
+    first.unmount();
+
+    render(<ArticleComments postId="what-my-grandmothers-kitchen-taught-me-about-hosting" />);
+    await waitFor(() => {
+      expect(screen.getByText('Still thinking about this.')).toBeInTheDocument();
+    });
+  });
+
+  it('uses a distinct localStorage key per post, not a shared key', async () => {
+    const a = render(<ArticleComments postId="a-slow-morning-in-hoi-an" />);
+    fireEvent.change(a.getByLabelText(/add a comment/i), { target: { value: 'A comment' } });
+    fireEvent.click(a.getByRole('button', { name: /post/i }));
+    await waitFor(() => {
+      expect(window.localStorage.getItem('blog-lifestyle-comments-a-slow-morning-in-hoi-an')).not.toBeNull();
+    });
+    expect(window.localStorage.getItem('blog-lifestyle-comments-the-case-for-boring-vacations')).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 2: Run to verify it fails** — `cd templates/blog-lifestyle && npx vitest run
+  app/posts/\[slug\]/ArticleComments.test.tsx` (module doesn't exist yet).
+- [ ] **Step 3: `templates/blog-lifestyle/app/posts/[slug]/ArticleComments.tsx`**
+
+```tsx
+'use client';
+import { useLocalCollection, CommentThread, type Comment } from '@portfolio/template-kit';
+
+const COMMENT_SEED: Comment[] = [];
+
+export function ArticleComments({ postId }: { postId: string }) {
+  const { items, add } = useLocalCollection<Comment>(`blog-lifestyle-comments-${postId}`, COMMENT_SEED);
+
+  async function handleSubmit(text: string) {
+    add({
+      id: crypto.randomUUID(),
+      author: 'You', // no auth in this demo — every visitor-authored comment is attributed to a
+                      // fixed placeholder name (site spec §4), not a fabricated real identity
+      text,
+      at: new Date().toISOString(),
+    });
+  }
+
+  return (
+    <section className="blog-lifestyle-article-comments" aria-label="Comments">
+      <h2>Comments</h2>
+      <CommentThread comments={items} onSubmit={handleSubmit} />
+    </section>
+  );
+}
+```
+
+- [ ] **Step 4: Wire `ArticleComments` into `app/posts/[slug]/page.tsx`** — replace Task 2 Step
+  12's marker with `<ArticleComments postId={post.id} />`, positioned between the article body and
+  `Footer` per site spec §2.
+- [ ] **Step 5: Run `cd templates/blog-lifestyle && npx vitest run`, verify all pass.**
+- [ ] **Step 6: Run the full build gate again** — `npm run build`, confirm still green after
+  wiring `ArticleComments` in.
+- [ ] **Step 7: Mutation checks**
+
+| # | Revert | Test that must go RED |
+|---|---|---|
+| M5 | hardcode the storage key to a single shared `'blog-lifestyle-comments'` instead of `` `blog-lifestyle-comments-${postId}` `` | the "does NOT appear under post B" test and the "distinct localStorage key per post" test |
+| M6 | seed `COMMENT_SEED` with a non-empty fake comment instead of `[]` | the empty-state-before-any-post test |
+| M7 | drop the `useEffect`-driven read-from-`localStorage` path (i.e. break `useLocalCollection` usage by seeding from `useState(() => [])` locally instead of calling the hook) | the reloading-keeps-its-own-comment test |
+
+- [ ] **Step 8: Commit** — `feat: add per-post comment interactive feature to blog-lifestyle site`
+
+### Design score
+
+Per master spec §8: every criterion must reach 9-10/10 before this plan is marked complete; a
+criterion that cannot without a real trade-off must say so with a one-line reason instead of an
+inflated number. This table is filled in by whoever executes this task, after the real
+implementation and a real Hallmark `audit` pass exist to score against — the scores below are
+intentionally left blank at plan-authoring time (master spec §8: scoring happens after
+implementation, not during planning).
+
+| # | Criterion | Score (0-10) | Notes |
+|---|---|---|---|
+| 1 | Anti-generic / anti-AI-slop | TBD | |
+| 2 | Typographic craft | TBD | |
+| 3 | Color system coherence | TBD | |
+| 4 | Layout/spacing rhythm | TBD | |
+| 5 | Motion & interaction polish | TBD | |
+| 6 | Responsive integrity | TBD | |
+| 7 | Accessibility | TBD | |
+| 8 | Content authenticity | TBD | |
+| 9 | Interaction correctness | TBD | |
+| 10 | Brand/industry distinctiveness | TBD | |
+
+- [ ] **Step 9: Run the Hallmark `audit` capability** against the built site, score each criterion
+  honestly, fill in the table above, and fix/re-score any criterion below 9/10 before considering
+  this plan complete.
+- [ ] **Step 10: Commit** — `docs: plan 55 complete — blog-lifestyle site design score`
+
+## Self-Review Notes
+
+- **Spec coverage:** `2026-09-20-site-blog-lifestyle-design.md` §2 (Task 2's route composition), §3
+  (Task 2's seed data), §4 (Task 3's per-post comment feature and the per-post storageKey pattern),
+  §5 (Task 1's Hallmark brief). Interactive-demo spec §3.1 (Task 3's hook usage), §3.2 row #7 (the
+  feature pattern this variant reuses), §3.3 (`CommentThread`'s kit contract), §4.2 (this site's
+  slug/mood-family assignment), §5 (Task 1's per-site Hallmark requirement), §7 (Task 2/3's build +
+  interaction test gates), §8 (Task 3's design-score table), §9 (this plan is "plan 55" in that
+  section's numbering). Parent spec §3 row #7 (Task 2's section composition source), §4 (Task 2's
+  `Hero`/`ItemGrid`/`Footer` component contracts), §6 (Task 2's folder/thumbnail/`output: 'export'`
+  convention).
+- **Explicitly not built here:** any of the other 28 site plans, including the baseline `blog` site
+  (plan 37, already built — this plan reuses its `ArticleComments`/per-post-storageKey structure as
+  precedent, per that plan's own "Next step" note) and the other 2 extra blog variants
+  (`blog-tech`, `blog-food` — separate plans with their own subject/theme, same architecture);
+  changes to `@portfolio/template-kit` itself (any new component or hook change belongs in a
+  plan-30 follow-up, not here); CI wiring for this site's static-export deploy (plan 17,
+  parameterized for 29 sites, unchanged by this plan); real thumbnail upload through the admin
+  media library (admin action, not a code task).
+- **Dependency confirmed:** this plan assumes plan 30's barrel export
+  (`template-kit/src/index.ts`) already ships `Hero`, `ItemGrid`, `Footer`, `CommentThread`,
+  `useLocalCollection`, `TemplateTheme`, `assertValidTheme` — if plan 30 is not yet complete when
+  this plan is executed, Task 2 cannot start; verify plan 30's own commit history first.
+- **Next step:** once this plan's design score (Task 3) clears every criterion at 9-10/10 (or
+  documents an honest trade-off), the remaining blog variant (`blog-food`) or any other
+  not-yet-authored site in §9's sequence may reuse this plan's `ArticleComments`/
+  per-post-storageKey structure as its own precedent, the same way this plan reused plan 37's
+  structure for its own Task 1/3 shape.

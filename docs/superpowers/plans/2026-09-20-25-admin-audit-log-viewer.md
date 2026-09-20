@@ -65,10 +65,17 @@ settings, media all write here). **Every query in this plan filters explicitly b
 
 **Files:**
 - Create: `backend/src/main/java/com/portfolio/platform/dto/AuditLogDto.java`
-- Create: `backend/src/main/java/com/portfolio/platform/converter/AuditLogConverter.java`
-- Create: `backend/src/main/java/com/portfolio/platform/converter/impl/AuditLogConverterImpl.java`
-- Create: `backend/src/main/java/com/portfolio/platform/service/AuditLogService.java`
-- Create: `backend/src/main/java/com/portfolio/platform/service/impl/AuditLogServiceImpl.java`
+- **Modify (NOT create):** `backend/src/main/java/com/portfolio/platform/converter/AuditLogConverter.java`
+- **Modify (NOT create):** `backend/src/main/java/com/portfolio/platform/converter/impl/AuditLogConverterImpl.java`
+- **Modify (NOT create):** `backend/src/main/java/com/portfolio/platform/service/AuditLogService.java`
+- **Modify (NOT create):** `backend/src/main/java/com/portfolio/platform/service/impl/AuditLogServiceImpl.java`
+
+> **Corrected 2026-09-20.** These four were labelled `Create:` in the original draft. All four have
+> existed since `382f0e6` (plan 04b's layered refactor). Writing them fresh would delete
+> `AuditLogServiceImpl.record(...)` and `AuditLogConverter.toEntity(...)` — the methods the
+> `@Audited` aspect calls to write **every** `audit_logs` row in the application. Audit logging for
+> templates, users, content, settings and media would stop silently. **Add `list`/`toDto` to the
+> existing files; do not replace them.**
 - Create: `backend/src/main/java/com/portfolio/platform/controller/AdminAuditLogController.java`
 - Modify: `backend/src/main/java/com/portfolio/platform/repository/AuditLogRepository.java` — add
   `Page<AuditLog> findByEntityType(String entityType, Pageable pageable)` and

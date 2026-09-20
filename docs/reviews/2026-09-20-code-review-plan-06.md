@@ -5,6 +5,11 @@
 **Plan đối chiếu:** `docs/superpowers/plans/2026-09-19-06-content-media-settings.md`
 **Người viết code:** Antigravity — review độc lập
 
+> **ĐÃ XỬ LÝ XONG (2026-09-20).** Verdict NEEDS_REVISION bên dưới là trạng thái tại thời điểm
+> review. C-01, C-02, C-03 đã đóng ở commit `c7a3a0d` (plan 07 task 1), mỗi cái có một mutation
+> check đỏ chứng minh — xem `2026-09-20-code-review-plan-07-task-1.md`. `e99ae9e` đã được push.
+> C-04 vẫn mở, chuyển cho plan 14. C-05 là quyết định có lý do, giữ nguyên.
+
 ## Trạng thái kiểm chứng
 
 | Hạng mục | Kết quả |

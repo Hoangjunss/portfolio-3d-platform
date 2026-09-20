@@ -19,6 +19,15 @@ spring:
     port: ${SMTP_PORT:587}
     username: ${SMTP_USER:}
     password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          # JavaMail defaults to no timeout at all. POST /api/public/leads is unauthenticated and
+          # sends this mail inside the request thread, so an SMTP host that accepts the connection
+          # and then hangs would pin a thread — and its DB connection — forever.
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
   flyway:
     locations: classpath:db/migration
   servlet:

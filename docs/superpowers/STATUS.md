@@ -1,7 +1,7 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `8f01382` — plan 16 shipped. **Plan 17 giao lượt 1: 0/9 step, không file nào**
+**Commit cuối:** `cb1adf1` — plan 17 xong. **Bộ 18 plan gốc chỉ còn plan 18 (debug SSH)**
 **Test:** backend `mvn clean test` → **137/137 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
 
 ---
@@ -36,8 +36,10 @@
 | 15 step 1–6 | Dockerfile ×2, compose, `SecretsGuard` + 4 test (đóng A-08 về logic) | `6733cc2` |
 | 16 task 0 | `.dockerignore` cho từng build context + `SecretsGuardWiringTest` — đóng AB-01/AB-02 | `93a4ee6` |
 | 16 task 1 | nginx TLS ×4 conf + `forward-headers-strategy` + test — **đóng N-01, M-01** | `5737471` |
+| 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
+| 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **còn plan 17–18**. Backend 137/137, frontend 42/42. Plan 15 và 16 ở trạng thái **"code đã viết, chưa vận hành"** — cả hai bước verify cuối đều cần Docker.
+Tiến độ: **còn plan 18 (debug SSH)**. Backend 137/137, frontend 42/42. Plan 15, 16, 17 đều ở trạng thái **"code đã viết, chưa vận hành"**.
 
 ---
 
@@ -109,31 +111,50 @@ vẫn là thư mục anh em độc lập, không cần route group riêng vì n�
 
 ---
 
-## Bước kế tiếp — plan 17, giao lại (lượt 1 cho ra 0/9 step)
+## Bước kế tiếp — sửa AD-01 trước bất kỳ deploy thật nào, rồi plan 18
 
-Plan 16 shipped, review PASS (`docs/reviews/2026-09-20-code-review-plan-16.md`). **N-01, M-01,
-AB-01, AB-02 đều đóng**, cả bốn đều có test hoặc bằng chứng.
+Plan 17 xong cả hai task, review PASS có điều kiện
+(`docs/reviews/2026-09-20-code-review-plan-17.md`). **Bộ 18 plan gốc chỉ còn plan 18.**
 
-Plan 17 giao lượt 1 → **0/9 step**, không file nào, và cả bản vá AC-01 cũng không làm. Chi tiết
-ở bảng theo dõi Antigravity bên dưới.
+### AD-01 — phải sửa trước lần deploy thật đầu tiên (MAJOR)
 
-**Điều chỉnh cho lượt 2:** viết hết file và commit **trước**, chạy lệnh kiểm **sau**. Và bỏ yêu
-cầu chạy full `mvn test` sau Task 0 — Task 0 chỉ sửa một comment trong `nginx/conf.d/00-redirect.conf`,
-không có đường nào nó ảnh hưởng tới test Java. Yêu cầu đó là lỗi của lượt giao trước.
+`deploy/deploy.sh` kiểm sức khoẻ bằng `curl -fsS http://localhost/api/public/templates`. Nhưng
+sau plan 16, cổng 80 chỉ còn `return 301 https://...`. Tôi dựng server trả 301 rồi chạy đúng lệnh
+đó: **`curl -fsS` thoát 0**. Và nginx trả 301 ngay lập tức, không phụ thuộc backend.
 
-### Trạng thái hạ tầng — chưa gì được vận hành
+Nên vòng lặp thành công ở lần lặp đầu **bất kể backend sống hay chết**. `deploy.sh` in `deploy ok`
+cho một container crash-loop, và Actions vẫn xanh. Tệ hơn cả không có health check, vì comment
+ngay phía trên khẳng định là có.
 
-| Plan | Trạng thái |
-|---|---|
-| 15 | Code đã viết, **chưa vận hành**. Step 7 cần Docker |
-| 16 | Code đã viết, **chưa vận hành**. Step 8 cần Docker |
-| 17 | **Chưa implement.** Task 0 verify được ở đây; Task 1 cần VPS + secrets |
+Sửa: hỏi thẳng backend, bỏ qua nginx —
+`docker compose exec -T backend wget -qO- http://localhost:8080/actuator/health`
+(`/actuator/health` là `permitAll`, và alpine có `wget` busybox).
 
-**Cấu hình nginx chưa từng được nạp bởi nginx, và image Docker chưa từng build.** Bốn file `.conf`
-là thứ duy nhất trong dự án chưa có một dòng nào chứng minh nó đúng cú pháp.
+**Đây là lỗi xuyên plan thứ bảy trong nhóm này, và là của tôi** — tôi viết cả `deploy.sh` lẫn
+block redirect của plan 16, trong hai lượt khác nhau, sau khi vừa viết một bài review tìm ra sáu
+lỗi cùng loại.
 
-**F-01, R-03, A-11 vẫn mở.** Cài Docker Desktop giờ mở khoá được: ba finding đó, Step 7 của plan 15,
-và Step 8 của plan 16 — nhiều hơn hẳn so với lúc đề xuất lần đầu.
+### Ba finding nhỏ hơn của plan 17
+
+- **AD-02** — heredoc `<<EOF` không trích dẫn, secret bị shell VPS diễn giải. Mật khẩu đặt tay có
+  `$` sẽ âm thầm thành giá trị khác; triệu chứng giống hệt gõ sai mật khẩu.
+- **AD-03** — ops doc thiếu `mkdir`/`chown` và **`docker login ghcr.io`**. Package GHCR mặc định
+  private, nên `docker compose pull` — lệnh đầu tiên của `deploy.sh` — trả 401 và **lần deploy đầu
+  tiên hỏng**.
+- **AD-04** — secret `PUBLIC_API_BASE_URL` chưa đặt → build-arg thành chuỗi rỗng → `API_BASE = ""`
+  vì `??` **không** rơi về mặc định với chuỗi rỗng → mọi lời gọi thành URL tương đối tới
+  `portfolio.com` và nhận 404. Build xanh, container `Up`, landing page trống. Đúng khuôn A-08.
+
+### Trạng thái thật của hạ tầng
+
+| Plan | Code | Đã vận hành? |
+|---|---|---|
+| 15 | Xong | **Chưa** — Step 7 cần Docker; image chưa từng build |
+| 16 | Xong | **Chưa** — Step 8 cần Docker; 4 file `.conf` chưa từng được nginx nạp |
+| 17 | Xong | **Chưa** — Step 5 cần VPS; pipeline chưa từng chạy, và AD-01 nghĩa là nếu chạy nó cũng **không thể báo hỏng** |
+
+**F-01, R-03, A-11 vẫn mở.** Cài Docker Desktop mở khoá: ba finding đó, Step 7 plan 15, Step 8
+plan 16, và cho phép kiểm AD-01 bằng cách dựng stack thật.
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -232,7 +253,11 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | F-09 | — | JWT sống thêm tối đa 15 phút sau khi deactivate | Chấp nhận theo spec |
 | ~~**AB-01 (p15)**~~ | MAJOR | `.dockerignore` ở gốc repo nhưng build context là `./frontend`/`./backend`; Docker không đọc nó. `COPY . .` đè `node_modules` win32 của host lên → `docker compose build frontend` chết | **Đã đóng** — `93a4ee6` |
 | ~~**AB-02 (p15)**~~ | MAJOR | Không gì chứng minh `SecretsGuard` được nối vào startup; bỏ `@Component` hoặc `@PostConstruct` đều **XANH 135/135** → A-08 mở lại im lặng | **Đã đóng** — `93a4ee6`, MC đỏ. Mutation bỏ `@PostConstruct` **vẫn mở** |
-| AC-01 (p16) | MINOR | Block `/.well-known/acme-challenge/` trỏ `/var/www/certbot` — thư mục không mount, và cert là wildcard/DNS-01 nên đường HTTP-01 đó không bao giờ dùng | **Plan 17** — bỏ block hoặc mount webroot |
+| ~~AC-01 (p16)~~ | MINOR | Block `/.well-known/acme-challenge/` trỏ `/var/www/certbot` — thư mục không mount, và cert là wildcard/DNS-01 nên đường HTTP-01 đó không bao giờ dùng | **Đã đóng** — `416b58e` |
+| **AD-01 (p17)** | MAJOR | `deploy.sh` kiểm sức khoẻ qua `curl -fsS http://localhost/...`, mà cổng 80 giờ chỉ trả 301 — `curl -fsS` thoát 0 nên deploy luôn báo thành công kể cả khi backend chết | **Phải sửa trước deploy thật** — hỏi `/actuator/health` của backend |
+| AD-02 (p17) | MINOR | Heredoc `<<EOF` không trích dẫn; secret chứa `$`/backtick bị VPS diễn giải | Dùng `<<'EOF'` + `envs:` |
+| AD-03 (p17) | MINOR | Ops doc thiếu `docker login ghcr.io`; package GHCR private nên `docker compose pull` 401, lần deploy đầu hỏng | Bổ sung ops doc |
+| AD-04 (p17) | MINOR | `PUBLIC_API_BASE_URL` rỗng → `API_BASE=""` (vì `??` không bắt chuỗi rỗng) → URL tương đối, 404, trang trống | Job `build` fail sớm khi secret rỗng |
 | AC-03 (p16) | INFO | Không block 443 nào khai `default_server`; HTTPS không khớp host rơi vào `api.conf` theo thứ tự alphabet của conf.d | Khai có chủ đích |
 | AC-04 (p16) | INFO | Không có HSTS, dù toàn bộ bản vá Z-18 dựa trên HTTPS | Quyết định của plan deploy |
 | AB-03 (p15) | INFO | `@PostConstruct` trên method trả `boolean`; JSR-250 đòi `void`, Spring dễ dãi nên chạy được | Tách `void` gọi `verify()` khi chạm lại |
@@ -285,6 +310,7 @@ treo; F-01 không đóng được.
 
 | Lượt | Kết quả |
 |---|---|
+| 17 lần 2 | **9/9 step khả thi, cả hai task, hai commit đúng ranh giới.** YAML hợp lệ, gating đúng, trigger đúng nhánh `master`, cả năm quyết định dễ bị "sửa cho gọn" đều giữ nguyên. **Không tạo `sync-templates.sh`** dù plan chỉ nhắc trong Self-Review Notes rằng nó bị bỏ — một công cụ chỉ đọc danh sách file rất dễ tạo lại. Tự dùng `setup-java@v4` temurin 21 nên CI không dính bẫy JDK 8. Khai Step 5 không chạy được. Thiếu sót: ghi Step 4 chỉ một nửa (AD-03) |
 | 17 lần 1 | **0/9 step.** Vẫn báo "hoàn tất". Không `.github/`, không `deploy/`, và **cả bản vá AC-01 — sửa một block comment trong file nginx — cũng không làm**. Cây sạch, HEAD không đổi. Dấu vết: Maven khởi động 15:31, chỉ 2 report mới (`architecture` rồi `aspect`, đúng thứ tự alphabet) rồi dừng. **Cùng chữ ký với plan 15 lượt 1.** Hai lần trùng nhau: lượt giao bảo chạy `mvn test` xác nhận trước, nó làm đúng thứ tự đó và chết ở Maven trước khi viết gì |
 | 16 lần 1 | **9/9 step khả thi, cả hai task, hai commit đúng ranh giới** — lần đầu làm trọn một plan hai task mà **không bỏ bước commit**. Tránh được **F-13** (thêm khoá vào `server:` đang có thay vì tạo block thứ hai) — cái bẫy từng sinh 74 error. **Đọc code trước khi viết test**: dùng `isAccepted()` (202) chứ không phải 201 như lượt giao đoán, và tự thêm `@MockBean NotificationService` mà plan không nhắc. Khai Step 8 không chạy được. **Nhưng không báo kết quả mutation nào** dù plan đòi ở hai chỗ — lần đầu kể từ plan 08; tôi chạy, cả hai đỏ |
 | 15 lần 2 | **7/8 step.** Đủ 7 file, nội dung khớp plan gần như từng dòng, giữ nguyên cả ba chỗ dễ bị "sửa cho gọn" (build arg, `image:` + `build:`, không có `JWT_REFRESH_SECRET`). **Khai báo trung thực rằng Step 7 không chạy được vì thiếu Docker** thay vì tick checkbox — lần thứ tư nó tự báo một điều bất lợi cho chính nó. **Lại bỏ bước commit** (lần thứ năm) |

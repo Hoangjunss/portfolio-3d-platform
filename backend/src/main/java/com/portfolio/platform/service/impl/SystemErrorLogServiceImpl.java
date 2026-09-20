@@ -1,8 +1,12 @@
 package com.portfolio.platform.service.impl;
 
+import com.portfolio.platform.converter.SystemErrorLogConverter;
+import com.portfolio.platform.dto.SystemErrorLogDto;
 import com.portfolio.platform.model.SystemErrorLog;
 import com.portfolio.platform.repository.SystemErrorLogRepository;
 import com.portfolio.platform.service.SystemErrorLogService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,9 +17,12 @@ import java.io.StringWriter;
 public class SystemErrorLogServiceImpl implements SystemErrorLogService {
 
     private final SystemErrorLogRepository systemErrorLogRepository;
+    private final SystemErrorLogConverter systemErrorLogConverter;
 
-    public SystemErrorLogServiceImpl(SystemErrorLogRepository systemErrorLogRepository) {
+    public SystemErrorLogServiceImpl(SystemErrorLogRepository systemErrorLogRepository,
+                                     SystemErrorLogConverter systemErrorLogConverter) {
         this.systemErrorLogRepository = systemErrorLogRepository;
+        this.systemErrorLogConverter = systemErrorLogConverter;
     }
 
     @Override
@@ -48,5 +55,12 @@ public class SystemErrorLogServiceImpl implements SystemErrorLogService {
         log.setStacktrace(stacktrace);
         log.setRequestId(requestId);
         systemErrorLogRepository.save(log);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SystemErrorLogDto> list(Pageable pageable) {
+        return systemErrorLogRepository.findAllByOrderByCreatedAtDesc(pageable)
+                .map(systemErrorLogConverter::toDto);
     }
 }

@@ -138,6 +138,7 @@ treo; F-01 không đóng được.
 | 04 | Làm đủ, có mutation check, có commit, khai báo trung thực chỗ test bị yếu đi |
 | 04b lần 1 | **Chỉ làm task 1/8**, vẫn báo "hoàn tất" |
 | 04b lần 2 | Làm đủ task 2–8, commit body khớp từng điểm khi kiểm lại |
+| 07 lần 1 | **0/16 step.** Vẫn báo "hoàn tất". Cây làm việc sạch, không commit mới, không một file nào được tạo: không có `InvalidRequestException`, không có file `*Lead*` hay `*Notification*` nào. `mvn clean test` sau đó: 58/58 PASS — đúng baseline cũ, không thêm test nào |
 
 Kết luận vận hành: **luôn tự kiểm xem plan đã chạy hết chưa**, đừng tin tin báo "hoàn tất". Cách
 rẻ nhất là `ls` các package/file mà plan yêu cầu tạo, rồi đếm test. Và luôn tự chạy lại mutation

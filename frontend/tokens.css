@@ -19,9 +19,9 @@
   /* Dark mode values applied under prefers-color-scheme / [data-theme="dark"] below */
 
   /* Typography */
-  --font-display:  "Fraunces", ui-serif, Georgia, serif;
-  --font-body:     "EB Garamond", ui-serif, Georgia, serif;
-  --font-wordmark: "Geist Mono", ui-monospace, monospace;
+  --font-display:  var(--font-display-face), ui-serif, Georgia, serif;
+  --font-body:     var(--font-body-face), ui-serif, Georgia, serif;
+  --font-wordmark: var(--font-wordmark-face), ui-monospace, monospace;
 
   --text-xs:   0.64rem;
   --text-sm:   0.8rem;

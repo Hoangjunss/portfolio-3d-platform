@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `c10adee` — plan 10 xong, **đã push**. Backend đã hết plan module.
-**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **120/120 PASS**
+**Commit cuối:** `6a39589` — plan 11 task 1 xong, **đã push**
+**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **126/126 PASS**
 
 ---
 
@@ -24,35 +24,27 @@
 | 08 task 2 | Analytics ingest + summary, HMAC IP, đóng T-02 | `6837c5e`, `ea8e7de` |
 | 09 | Mail sau commit + `Allow` cho 405; rate limit per-IP có chặn bộ nhớ | `0f53317`, `3c92f50`, `63b2eb7` |
 | 10 | Cap refresh token; user management admin-only + hai guard chống khoá chết | `4339067`, `4a40bd1`, `c10adee` |
+| 11 task 1 | `GET /api/admin/leads` phân trang đúng spec 5.1 + trần page size | `136a486`, `6a39589` |
 
-Tiến độ: **11/19 task — hết plan backend, còn frontend (11–14) và hạ tầng (15–18)**. Suite 120/120 PASS.
+Tiến độ: **12/19 task — backend xong hẳn, còn frontend (11 task 2, 12–14) và hạ tầng (15–18)**. Suite 126/126 PASS.
 
 ---
 
-## Bước kế tiếp — ĐANG CHỜ QUYẾT ĐỊNH CỦA NGƯỜI DÙNG
+## Bước kế tiếp — plan 11 **task 2** (dựng Next.js)
 
-**Hai lượt giao liên tiếp cho plan 11 đều tạo ra đúng con số không** — lần đầu cả 18 step, lần
-sau đã thu hẹp còn 9 step của mỗi Task 1. Thu hẹp phạm vi không giải quyết được gì.
+Task 1 xong, review PASS (`docs/reviews/2026-09-20-code-review-plan-11-task-1.md`).
+**Task 2 chưa bắt đầu, 0/9 step** — `frontend/` vẫn chưa tồn tại.
 
-Bằng chứng cho thấy đây là **không chạy**, không phải làm sai:
+Antigravity đã hoạt động lại sau hai lượt trắng liên tiếp.
 
-- Không file nào được tạo, cây làm việc sạch, không stash, không branch khác.
-- Dấu vết `mvn` gần nhất trong `backend/target/surefire-reports` là **08:40**, của chính tôi khi
-  review plan 10. Lượt giao thứ hai diễn ra lúc 08:48 và báo "hoàn tất" khoảng 08:50 — **~2
-  phút**, trong khi một lần `mvn clean test` của dự án này mất hơn một phút, và Task 1 đòi ba
-  mutation check tức là bốn lần chạy build trở lên.
+Năm quyết định của Task 2 đã ghi trong plan; ba cái quan trọng nhất:
 
-Bảy lượt trước đó đều có sản phẩm, bốn lượt gần nhất làm trọn plan. Nên đây là hỏng đột ngột
-chứ không phải xu hướng giảm dần.
+- Type `Template` phải có **đủ mười hai trường** của `TemplateDto`, dùng `| null` cho cột nullable
+  chứ không dùng `?` (Jackson ghi ra khoá với giá trị `null`, không bỏ khoá).
+- `trackEvent` chỉ gửi ba khoá; `userAgent`/`referrer` backend đọc từ header.
+- `trackEvent` phải luôn resolve, `getTemplates` phải có `AbortSignal.timeout(5000)`.
 
-**Hai lựa chọn, cần người dùng chọn:**
-
-1. **Chờ và giao lại** — nếu đây là quota hoặc lỗi phiên như lần `RESOURCE_EXHAUSTED` ngày
-   2026-09-19 thì nó tự hết.
-2. **Cho phép tôi tự implement Task 1** — quy tắc vận hành hiện tại bắt tôi giao phần viết code
-   sản phẩm cho Antigravity, nên đây là ngoại lệ cần người dùng đồng ý rõ ràng.
-
-Nội dung Task 1 không đổi, đã mô tả đầy đủ trong plan 11.
+---
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -121,6 +113,8 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | ~~**L-01 (p07t2)**~~ | MAJOR | Mail đồng bộ trong transaction + JavaMail không timeout | **Đã đóng** — timeout ở `0fbf9f1`, `AFTER_COMMIT` ở `0f53317`. Nhưng xem R-14 |
 | ~~**R-14 (p09)**~~ | MINOR | Pha `AFTER_COMMIT` chưa có test nào phân biệt được | **Đã đóng** — `c10adee`, test đếm qua transaction `REQUIRES_NEW`, mutation đỏ |
 | ~~**U-01 (p10)**~~ | MAJOR | `audit_logs.entity_id` của User CREATE là null vì service trả DTO | **Đã đóng** — `c10adee` |
+| ~~**F-11 (p11t1)**~~ | MINOR | `@PageableDefault` chỉ đặt mặc định chứ không đặt trần; `?size=100000` trả về 2000 dòng trên cả leads lẫn users | **Đã đóng** — `6a39589`, `max-page-size: 100`, có test |
+| F-13 (p11t1) | INFO | Thêm khoá trùng nhánh vào `application.yml` ghi đè im lặng (tôi tự vấp: thêm `data:` thứ hai làm mất cấu hình Redis, 74 error) | Plan 15/16 phải kiểm nhánh cha trước khi thêm |
 | U-03 (p10) | INFO | `deactivate` ghi `action = "DELETE"`, thực chất là soft-delete | Plan 14 render đúng nhãn |
 | R-15 (p09) | INFO | `maximumSize(10_000)` nghĩa là dưới flood xoay IP, giới hạn thành gần đúng | Phòng thủ thật ở nginx (plan 16) |
 | R-16 (p09) | INFO | 429 ghi body tay, không đặt charset | Gộp vào lần chạm tiếp |

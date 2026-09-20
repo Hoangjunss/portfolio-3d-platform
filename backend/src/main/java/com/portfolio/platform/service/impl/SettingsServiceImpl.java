@@ -1,6 +1,7 @@
 package com.portfolio.platform.service.impl;
 
 import com.portfolio.platform.annotation.Audited;
+import com.portfolio.platform.constant.SettingKeys;
 import com.portfolio.platform.converter.SettingConverter;
 import com.portfolio.platform.dto.SettingDto;
 import com.portfolio.platform.exception.ResourceNotFoundException;
@@ -11,6 +12,8 @@ import com.portfolio.platform.service.SettingsService;
 import com.portfolio.platform.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class SettingsServiceImpl implements SettingsService {
@@ -25,6 +28,14 @@ public class SettingsServiceImpl implements SettingsService {
         this.settingRepository = settingRepository;
         this.settingConverter = settingConverter;
         this.userService = userService;
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<SettingDto> listAll() {
+        return settingRepository.findAllByKeyIn(SettingKeys.ALL).stream()
+                .map(settingConverter::toDto)
+                .toList();
     }
 
     // Settings are not cached: read rarely by admin flows requiring immediate consistency.

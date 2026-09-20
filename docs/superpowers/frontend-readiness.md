@@ -142,7 +142,11 @@ Plan 11 chỉ định sử dụng:
     ```
   - **Sự cố kiến trúc:**
     1. **Vi phạm yêu cầu đóng băng Backend:** Backend đã hoàn thiện và 120/120 tests PASS; chỉ thị của dự án yêu cầu không sửa đổi bất kỳ code nào trong `backend/`.
-    2. **Vi phạm nghiêm trọng Spec 5.1 (Layer Dependency Rules):** Đoạn code mà Plan 14 Step 5 định thêm sẽ tiêm trực tiếp `LeadRepository` vào controller. Quy tắc kiến trúc trong Spec 5.1 quy định rõ: *`Controller → Facade, Service`* và *`Never allowed: Controller → Repository`*. Nếu làm theo Step 5 của Plan 14, bài test kiến trúc `LayerDependencyTest` (ArchUnit) sẽ thất bại ngay lập tức (`BUILD FAILURE`).
+    2. **Vi phạm nghiêm trọng Spec 5.1 (Layer Dependency Rules):** Đoạn code mà Plan 14 Step 5 định thêm sẽ tiêm trực tiếp `LeadRepository` vào controller. Quy tắc kiến trúc trong Spec 5.1 quy định rõ: *`Controller → Facade, Service`* và *`Never allowed: Controller → Repository`*.
+
+       **Sửa lại một khẳng định sai trong bản khảo sát gốc (kiểm chứng khi review):** `LayerDependencyTest` **không dùng ArchUnit**. `grep -c "archunit\|ArchUnit\|com.tngtech"` trên cả file test lẫn `backend/pom.xml` đều trả về **0**. Nó là một bộ quét viết tay: `Files.walk` toàn bộ `src/main/java`, đọc các dòng bắt đầu bằng `import ` và so với một allow-list. Finding **A-04** trong STATUS đã ghi điều này, kèm ghi chú "ArchUnit nếu dự án chịu thêm dependency" — tức là chính xác *chưa* dùng.
+
+       Hệ quả làm thay đổi kết luận: test chỉ bắt được vi phạm khi class được **import**. Nếu ai đó viết `com.portfolio.platform.repository.LeadRepository` bằng tên đầy đủ trong khai báo field, bộ quét **không thấy gì** và build vẫn xanh — đúng nội dung A-04. Vậy nên "sẽ thất bại ngay lập tức" chỉ đúng với cách viết thông thường có `import`; nó **không** phải một hàng rào không thể lách.
     3. **Vi phạm Form vs Dto Ownership:** Step 5 của Plan 14 trả về trực tiếp danh sách JPA Entity `Lead`, trong khi Spec 5.1 bắt buộc response body ra ngoài frontend phải là `dto/*Dto` chứ không bao giờ trả về entity từ `model/`.
 
 ---
@@ -322,3 +326,27 @@ public record TokenDto(String accessToken, String refreshToken)
    - **Endpoint `/api/admin/leads` (GET):** Plan 14 đang giả định có endpoint này và thậm chí định viết code backend vi phạm quy tắc tầng. Vì backend đã đóng băng (120/120 pass, không sửa backend), **màn hình `/admin/leads` trong Plan 14 không thể gọi endpoint này**. Cần có quyết định: tạm thời mock dữ liệu ở frontend hoặc ẩn tính năng danh sách leads cho đến khi có một đợt cập nhật backend chính thức theo đúng quy chuẩn kiến trúc (tạo `LeadDto`, `LeadConverter`, `AdminLeadController`).
    - **Type `Template`:** Cần bổ sung các trường `active: boolean`, `viewCount: number`, `clickCount: number` vào `Template` type ở `frontend/lib/apiClient.ts` để khớp hoàn toàn với `TemplateDto` của backend.
    - **Hàm `trackEvent`:** Loại bỏ `userAgent` và `referrer` khỏi JSON payload body vì backend nhận qua request headers.
+
+---
+
+## 6. Bổ sung khi review: ba finding đã mở sẵn mà nhóm plan frontend phải gánh
+
+Bản khảo sát gốc trả lời đúng bốn câu được hỏi. Ba mục dưới đây nằm ngoài bốn câu đó nhưng đã
+được ghi trong `STATUS.md` từ các vòng review trước, và chúng thuộc về đúng nhóm plan này:
+
+- **C-04 / L-05 — dữ liệu do người gửi đặt.** `media.file_name`, `leads.name` và `leads.message`
+  đều là chuỗi người lạ nhập vào. React escape mặc định nên rủi ro **không** nằm ở việc render
+  thông thường; nó nằm ở `dangerouslySetInnerHTML`, ở thuộc tính `href`/`src` dựng từ chuỗi đó,
+  và ở bất kỳ chỗ nào chèn vào DOM ngoài React. Plan 14 chạm cả ba trường này.
+- **A-09 — `/api/admin/analytics/summary` không cache.** Mỗi lần gọi chạy ba query, trong đó có
+  một `GROUP BY` trên bảng lớn dần theo từng lượt khách. Dashboard của plan 14 gọi nó mỗi lần mở
+  trang; nếu thêm auto-refresh thì phải cân nhắc cache phía backend trước.
+- **U-03 — nhãn audit.** Hàng `audit_logs` của user có `action = "DELETE"` nhưng thực chất là
+  deactivate, dữ liệu không mất. Màn hình lịch sử audit không được hiển thị là "đã xoá".
+
+## 7. Ghi chú về phạm vi bảng endpoint
+
+Bảng ở mục 3 chỉ liệt kê method mà bốn plan tham chiếu trực tiếp. Kiểm lại khi review:
+`AdminTemplateController` thực tế có đủ `@GetMapping`, `@PostMapping`, `@PutMapping("/{id}")` và
+`@DeleteMapping("/{id}")`, nên các màn CRUD template của plan 14 có đủ endpoint. Kết luận
+"TỒN TẠI" của bảng là đúng; chỉ là bảng không liệt kê hết method.

@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `900714b` — plan 14 shipped. **Plan 15 giao lượt 1: 0/8 step, không file nào**
-**Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
+**Commit cuối:** plan 15 lượt 2 — 7/8 step, review PASS có điều kiện; **image chưa từng build được**
+**Test:** backend `mvn clean test` → **135/135 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
 
 ---
 
@@ -33,8 +33,9 @@
 | 13 task 2 | Login page + middleware guard đọc `exp`; lưu cả hai token | `9ed973b` |
 | 14 task 1 | `loginErrorMessage` + `persistSession` hàm thuần — đóng Y-01 | `fc7f518` |
 | 14 task 2–3 | `adminFetch` (refresh 1 lần) + 3 màn admin trong route group `(dashboard)` | `874bab2` |
+| 15 step 1–6 | Dockerfile ×2, compose, `SecretsGuard` + 4 test (đóng A-08 về logic) | xem review p15 |
 
-Tiến độ: **18/19 task — chỉ còn 15–18 (hạ tầng)**. Backend 131/131, frontend 42/42. **Toàn bộ frontend của bộ 18 plan gốc đã xong.**
+Tiến độ: **còn plan 16–18**. Backend 135/135, frontend 42/42. Plan 15 ở trạng thái **"code đã viết, chưa vận hành"** — Step 7 cần Docker.
 
 ---
 
@@ -106,31 +107,48 @@ vẫn là thư mục anh em độc lập, không cần route group riêng vì n�
 
 ---
 
-## Bước kế tiếp — plan 15, giao lại (lượt 1 cho ra 0/8 step)
+## Bước kế tiếp — plan 16, và **Task 0 bắt buộc** sửa hai lỗi của plan 15
 
-Plan 14 shipped, review PASS (`docs/reviews/2026-09-20-code-review-plan-14.md`).
-**Bộ 18 plan gốc chỉ còn phần hạ tầng.**
+Plan 15 lượt 2: **7/8 step**, review PASS có điều kiện
+(`docs/reviews/2026-09-20-code-review-plan-15.md`). 135/135 backend, 42/42 frontend.
 
-Plan 15 đã rà và viết lại (`docs/reviews/2026-09-20-plan-review-14-to-17.md`), giao lượt 1 lúc
-~15:00 và **không file nào được tạo**. Không có code để review. Chi tiết ở bảng theo dõi
-Antigravity bên dưới.
+**Z-10 đóng bằng bằng chứng, không cần Docker.** Kiểm chứng số 1 của Step 7 hỏi "biến
+`NEXT_PUBLIC_*` có được inline vào bundle client lúc build không" — trả lời được bằng chính
+`npm run build`:
 
-**Điều chỉnh cho lượt 2:** dấu vết cho thấy nó khởi động `mvn test` (suite đầy đủ, hơn 1 phút)
-rồi bị cắt ngang. Plan 15 Step 6 không cần chạy cả suite để biết test đỏ/xanh —
-`mvn -Dtest=SecretsGuardTest test` chạy trong vài giây. Chỉ cần chạy đủ suite **một lần** ở cuối.
-Đã ghi điều này vào lượt giao.
+```
+$ NEXT_PUBLIC_API_BASE_URL="https://api.portfolio.com" npm run build
+$ grep -rl "api.portfolio.com" .next/static   → 3 file
+$ grep -rl "localhost:8080"    .next/static   → không có
+```
 
-### Phạm vi verify được ở máy này
+Giá trị thật được nhúng, fallback biến mất. Cái bẫy đắt nhất của plan 15 đã đóng.
 
-| Bước plan 15 | Chạy được? |
+### Hai lỗi phải sửa trước khi làm tiếp — **cả hai là lỗi của plan tôi viết**
+
+- **AB-01 (MAJOR)** — `.dockerignore` đặt ở gốc repo, nhưng build context là `./frontend` và
+  `./backend`, mà Docker chỉ đọc `.dockerignore` ở **gốc context**. Nên nó vô tác dụng. Hậu quả:
+  `frontend/Dockerfile` chạy `npm ci` rồi `COPY . .` đè 560MB `node_modules` của host lên — và
+  host chỉ có `@next/swc-win32-x64-msvc` trong khi image là Alpine. **`docker compose build
+  frontend` sẽ chết thẳng ở `npm run build`.** Image chưa từng build được như plan viết.
+- **AB-02 (MAJOR)** — không gì chứng minh `SecretsGuard` được nối vào startup. Tôi chạy hai
+  mutation: bỏ `@Component` → **XANH 135/135**; bỏ `@PostConstruct` → **XANH 135/135**. Xoá một
+  dòng annotation là **A-08 mở lại hoàn toàn** và mọi test vẫn xanh. Đúng khuôn **R-09** đã nằm
+  trong bảng này từ plan 03b, lần này hậu quả nặng hơn vì guard là hàng rào duy nhất chặn deploy
+  bằng secret công khai trong repo.
+
+Hai cái này thành **Task 0 của plan 16**. Plan 16 cũng cần rà lại trước khi giao, như mọi plan.
+
+### Trạng thái hạ tầng
+
+| Plan | Trạng thái |
 |---|---|
-| 1–5 (Dockerfile, compose, `.env.example`, `.dockerignore`) | Viết được; `npm run build` kiểm được `output: "standalone"` |
-| **6 (`SecretsGuard` + 4 test Java)** | **Được** — `mvn test`, đóng **A-08** thật |
-| 7 (`docker compose up`) | **Không** — không có Docker |
-| 8 (commit) | Được |
+| 15 | Code đã viết, **chưa vận hành**. Step 7 cần Docker |
+| 16 | Đã viết lại sau rà, **chưa implement**, cần Task 0 ở trên |
+| 17 | Đã viết lại sau rà, **chưa implement** |
 
-**F-01, R-03, A-11 chỉ mở khoá ở Step 7** — lần đầu Flyway gặp Postgres thật thay vì H2. Còn
-treo cho tới khi có Docker.
+**F-01, R-03, A-11 vẫn mở** — chỉ Step 7 của plan 15 đóng được, và nó cần Docker. Lựa chọn số 1
+(cài Docker Desktop) vẫn là thứ trả nợ nhiều nhất.
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -189,7 +207,7 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | ~~**C-02 (p06)**~~ | MAJOR | Test sniffed-type không canh giá trị `mime_type` lưu xuống | **Đã đóng** — `c7a3a0d`, M1 đỏ |
 | ~~C-03 (p06)~~ | MINOR | `in.read(header)` có thể đọc thiếu → WEBP hợp lệ bị từ chối | **Đã đóng** — `c7a3a0d`, M2 đỏ |
 | **N-01 (p09 rà plan)** | MAJOR khi deploy | Rate limit khoá `getRemoteAddr()`; sau nginx thì cả site chung một bucket | **Plan 16 Step 1–2** — đã ghi vào plan kèm test và bẫy `$proxy_add_x_forwarded_for` |
-| **A-08 (p08t2)** | MAJOR khi deploy | `analytics.ip-hash-secret` và `jwt.access-secret` đều có default nằm công khai trong repo, không gì fail nếu env không đặt | **Plan 15 Step 6** — `SecretsGuard` + 4 test, đã ghi vào plan. Bản cũ của plan 15 còn **không truyền `ANALYTICS_IP_HASH_SECRET`** |
+| ~~**A-08 (p08t2)**~~ | MAJOR khi deploy | `analytics.ip-hash-secret` và `jwt.access-secret` đều có default nằm công khai trong repo, không gì fail nếu env không đặt | **Đóng về logic** — `SecretsGuard` + 4 test. **Nhưng xem AB-02**: gỡ `@Component` là mở lại, suite vẫn xanh |
 | A-09 (p08t2) | INFO | `/api/admin/analytics/summary` không cache, 3 query mỗi lần gọi | Plan 14 — cache TTL ngắn |
 | A-10 (p08t2) | INFO | `existsById` bỏ qua soft-delete của `TemplateService` | Ghi nhận |
 | A-11 (p08t2) | — | `V3__analytics_indexes.sql` chưa từng chạy thật | Gia nhập R-03/F-01 |
@@ -227,6 +245,9 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | F-01 | — | Migration và entity chưa từng được đối chiếu | **Plan 15 Step 7 kiểm chứng 3** đóng nó — lần đầu Flyway gặp Postgres thật. Cần Docker |
 | F-08 | — | `TIMESTAMP` vs `Instant` lệch timezone | Chốt trước deploy thật |
 | F-09 | — | JWT sống thêm tối đa 15 phút sau khi deactivate | Chấp nhận theo spec |
+| **AB-01 (p15)** | MAJOR | `.dockerignore` ở gốc repo nhưng build context là `./frontend`/`./backend`; Docker không đọc nó. `COPY . .` đè `node_modules` win32 của host lên → `docker compose build frontend` chết | **Plan 16 Task 0** — thêm `.dockerignore` vào từng context |
+| **AB-02 (p15)** | MAJOR | Không gì chứng minh `SecretsGuard` được nối vào startup; bỏ `@Component` hoặc `@PostConstruct` đều **XANH 135/135** → A-08 mở lại im lặng | **Plan 16 Task 0** — `@SpringBootTest` khẳng định bean tồn tại |
+| AB-03 (p15) | INFO | `@PostConstruct` trên method trả `boolean`; JSR-250 đòi `void`, Spring dễ dãi nên chạy được | Tách `void` gọi `verify()` khi chạm lại |
 | **AA-01 (p14)** | MINOR | Stub cookie trong test *nối thêm* thay vì *thay thế* như `document.cookie` thật; `readCookie` phải dùng `findLast` cho vừa stub. Đổi về `find` là test đỏ | Plan frontend kế tiếp — sửa stub, trả về `find` |
 | AA-02 (p14) | INFO | Màn dashboard không có lưới hình dạng (`body as Summary` rồi `.map` trường lồng); hai màn kia có `unwrapPage` | Cân nhắc khi viết màn admin thứ tư |
 | AA-03 (p14) | INFO | `persistSession` ném trong `adminFetch` → hiện "Cannot reach the server." cho một lỗi hợp đồng API | Lượt chạm `adminFetch` tiếp theo |
@@ -276,6 +297,7 @@ treo; F-01 không đóng được.
 
 | Lượt | Kết quả |
 |---|---|
+| 15 lần 2 | **7/8 step.** Đủ 7 file, nội dung khớp plan gần như từng dòng, giữ nguyên cả ba chỗ dễ bị "sửa cho gọn" (build arg, `image:` + `build:`, không có `JWT_REFRESH_SECRET`). **Khai báo trung thực rằng Step 7 không chạy được vì thiếu Docker** thay vì tick checkbox — lần thứ tư nó tự báo một điều bất lợi cho chính nó. **Lại bỏ bước commit** (lần thứ năm) |
 | 15 lần 1 | **0/8 step.** Vẫn báo "hoàn tất". Không một file nào: không `Dockerfile`, không `docker-compose.yml`, không `SecretsGuard`, `next.config.mjs` không có `output: "standalone"`. Cây sạch, HEAD không đổi, không stash, không branch khác. **Khác các lượt 0/N trước ở một điểm:** lần này Maven *có* khởi động lúc 15:01, nhưng chỉ **3/32** surefire report mang dấu thời gian mới — `architecture` → `aspect` → `config`, đúng thứ tự alphabet theo package — rồi dừng giữa chừng. Không có report của `SecretsGuardTest`. Tức nó chạy suite baseline sẵn có, bị cắt ngang, và không viết gì |
 | 14 lần 1 | **23/23 step, cả ba task, hai commit đúng ranh giới plan chia.** 12 file, **0 file backend**, không đẻ thêm gì. Sáu mutation báo đủ, tôi chạy lại khớp cả sáu. Dùng `unwrapPage` cho **cả hai** màn danh sách kể cả màn endpoint đã trả mảng phẳng — plan không bắt buộc, nhưng đúng. Lệch plan duy nhất là `findLast` thay `find` trong `readCookie`, và đó là code bị bẻ cho vừa một stub sai (AA-01) |
 | 13 lần 1 | **20/20 step, cả hai task, hai commit riêng đúng ranh giới plan chia.** 9 file, **0 file backend**, không đẻ thêm plan/spec — lượt đầu tiên phạm vi khớp tuyệt đối. Báo cáo bốn mutation kèm số test đỏ ở từng file; tôi chạy lại cả bốn, khớp từng con số (4/1/4/2). Và **tự sửa plan cho đúng**: `shouldRenderTexture` trả type predicate chứ không phải `boolean` như plan viết — chữ ký của plan sẽ làm type-check đỏ. Lỗ duy nhất là Y-01, và đó là lỗi của plan chứ không phải của nó |

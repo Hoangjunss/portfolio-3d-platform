@@ -217,7 +217,7 @@ throwing `MaxUploadSizeExceededException` — and assert status plus an unchange
 
 ```bash
 export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"
-mvn -f backend/pom.xml test -Dtest='MediaServiceTest+MediaControllerTest+GlobalExceptionHandlerTest'
+mvn -f backend/pom.xml test -Dtest='MediaServiceTest,MediaControllerTest,GlobalExceptionHandlerTest'
 ```
 
 Expected: FAIL — `InvalidRequestException` does not exist; the sniffed-type and short-read cases
@@ -464,7 +464,7 @@ autowire `LeadRepository`, `AuditLogRepository`, `SystemErrorLogRepository`):
 
 ```bash
 export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"
-mvn -f backend/pom.xml test -Dtest='LeadServiceTest+NotificationServiceTest+PublicLeadControllerTest'
+mvn -f backend/pom.xml test -Dtest='LeadServiceTest,NotificationServiceTest,PublicLeadControllerTest'
 ```
 
 Expected: FAIL — classes do not exist.

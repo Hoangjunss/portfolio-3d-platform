@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `c7a3a0d` — plan 07 task 1, **đã đủ điều kiện push**
-**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **63/63 PASS**
+**Commit cuối:** `0fbf9f1` — plan 07 xong cả hai task, **đã push**
+**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **73/73 PASS**
 
 ---
 
@@ -19,35 +19,25 @@
 | 04b | Layered architecture restructure (8 task) | `382f0e6` |
 | 06 | Content sections + media upload + settings | `e99ae9e` |
 | 07 task 1 | Đóng C-01/C-02/C-03 + lỗi giới hạn multipart | `c7a3a0d` |
+| 07 task 2 | Lead capture + notification email (best-effort) | `fa7b824`, `0fbf9f1` |
 
-Tiến độ: **6/19 task tính năng & refactor**. Suite 63/63 PASS.
-
----
-
-## `e99ae9e` đã được mở khoá
-
-Lý do giữ nó ở local là C-01 và C-02. Cả hai đã đóng ở `c7a3a0d`, có mutation check đỏ chứng
-minh từng cái — xem `docs/reviews/2026-09-20-code-review-plan-07-task-1.md`.
+Tiến độ: **7/19 task tính năng & refactor**. Suite 73/73 PASS.
 
 ---
 
-## Bước kế tiếp — plan 07 **task 2** (lead + notification)
+## Bước kế tiếp — plan 08 (analytics)
 
-Task 1 xong và đã review PASS (`docs/reviews/2026-09-20-code-review-plan-07-task-1.md`).
-**Task 2 chưa bắt đầu, 0/8 step** — đang giao lại.
+**`docs/superpowers/plans/2026-09-19-08-analytics.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
+Plan 05 rà ra 6 lỗi, plan 06 rà ra 9 lỗi, plan 07 rà ra 2 lỗi sống. Đừng giao thẳng.
 
-Task 2 gồm: `enums/LeadStatus`, `model/Lead`, `repository/LeadRepository`, `form/LeadCreateForm`,
-`config/NotificationProperties`, cặp `NotificationService`/`Impl`, cặp `LeadService`/`Impl`,
-`controller/PublicLeadController`, ba lớp test, cộng test canh cặp giới hạn multipart (D-02).
+Plan 08 phải gánh thêm:
 
-Bốn quyết định bắt buộc, đã ghi lý do trong plan:
-
-- **(d)** mail là best-effort, `NotificationServiceImpl` nuốt `MailException` — SMTP chết không
-  được phép làm mất lead.
-- **(e)** `LeadCreateForm` phải có `@Size` khớp độ dài cột, nếu không tên 300 ký tự thành
-  500 + log row **từ endpoint công khai không cần đăng nhập**, tệ hơn C-01.
-- **(f)** `sourceTemplateId` phải kiểm `existsById`, cùng lý do.
-- **(h)** thêm `MultipartLimitTest` canh cặp `multipart.max-file-size` / `media.max-size-bytes`.
+- **T-02** — `view_count` có trong schema, entity và `TemplateDto` nhưng không code nào ghi.
+  Plan 08 phải quyết: wire nó hay bỏ khỏi DTO. Nếu để nguyên thì FE plan 12 vẽ số 0 vĩnh viễn.
+- Endpoint `POST /api/analytics/events` là endpoint công khai thứ hai. Mọi bài học của plan 07
+  áp dụng nguyên: `@Size` khớp độ dài cột, FK phải kiểm `existsById`, không được để lỗi của
+  caller thành 500 + dòng `system_error_logs`.
+- `analytics_events.ip_hash` — hash IP, không bao giờ lưu IP thô (spec mục 6).
 
 ---
 
@@ -79,7 +69,11 @@ Bốn quyết định bắt buộc, đã ghi lý do trong plan:
 | ~~**C-01 (p06)**~~ | MAJOR | Upload bị từ chối → 500 + ghi `system_error_logs`; EDITOR bơm được bảng | **Đã đóng** — `c7a3a0d`, M3 đỏ |
 | ~~**C-02 (p06)**~~ | MAJOR | Test sniffed-type không canh giá trị `mime_type` lưu xuống | **Đã đóng** — `c7a3a0d`, M1 đỏ |
 | ~~C-03 (p06)~~ | MINOR | `in.read(header)` có thể đọc thiếu → WEBP hợp lệ bị từ chối | **Đã đóng** — `c7a3a0d`, M2 đỏ |
-| **D-02 (p07t1)** | MINOR | `spring.servlet.multipart.max-file-size` và `media.max-size-bytes` phải đi cặp, không gì canh; nâng một cái mà quên cái kia là lỗi 500 + log row quay lại | plan 07 task 2, quyết định (h) |
+| **L-01 (p07t2)** | MAJOR | Mail gửi đồng bộ trong `@Transactional`; JavaMail không timeout mặc định → SMTP treo giữ luôn DB connection. **Nửa đầu đã vá** (`0fbf9f1`, timeout 5s) | Nửa sau — gửi sau commit — **plan 09**, cùng chỗ rate limiting |
+| L-02 (p07t2) | MINOR | `lead.setStatus(NEW)` không test nào canh được (entity có field initializer); M5 xanh | Ghi nhận |
+| L-03 (p07t2) | MINOR | Test audit row lấy `findAll().get(size-1)`, phụ thuộc thứ tự và `audit_logs` không được dọn | Plan 14 khi chạm lại: lọc theo `entityType` |
+| L-05 (p07t2) | INFO | Tên/nội dung lead đi thẳng vào email; JavaMail có mã hoá nên chưa phải lỗ hổng sống | Cùng nhóm C-04 |
+| ~~**D-02 (p07t1)**~~ | MINOR | `spring.servlet.multipart.max-file-size` và `media.max-size-bytes` phải đi cặp, không gì canh; nâng một cái mà quên cái kia là lỗi 500 + log row quay lại | **Đã đóng** — `MultipartLimitTest` trong `fa7b824` |
 | D-03 (p07t1) | INFO | Tomcat `max-swallow-size` mặc định 2MB có thể làm client thấy connection reset thay vì 413 | Plan 15/16 — kiểm bằng `curl` thật |
 | D-04 (p07t1) | INFO | `InvalidRequestException` echo `ex.getMessage()`; giờ là loại dùng chung toàn dự án | Quy ước: không nhét input người gửi vào message |
 | C-04 (p06) | MINOR | `media.file_name` là tên do người gửi đặt, trả ra `MediaDto` | Plan 14 phải escape |
@@ -125,6 +119,7 @@ treo; F-01 không đóng được.
 | 04b lần 1 | **Chỉ làm task 1/8**, vẫn báo "hoàn tất" |
 | 04b lần 2 | Làm đủ task 2–8, commit body khớp từng điểm khi kiểm lại |
 | 07 lần 1 | **0/16 step.** Vẫn báo "hoàn tất". Cây làm việc sạch, không commit mới, không một file nào được tạo: không có `InvalidRequestException`, không có file `*Lead*` hay `*Notification*` nào. `mvn clean test` sau đó: 58/58 PASS — đúng baseline cũ, không thêm test nào |
+| 07 lần 3 | **8/8 step của task 2**, kể cả commit. Lượt đầy đủ đầu tiên của plan 07. Đáng ghi nhận: **tự báo M5 XANH** — kiểm lại đúng là xanh. Lần đầu nó khai một mutation không bị bắt thay vì báo cáo đẹp hơn thực tế |
 | 07 lần 2 | **8/16 step.** Task 1 xong và làm tốt (mutation M1–M4 tôi tự chạy đều đỏ), nhưng **bỏ đúng bước commit** như lượt 03c, và Task 2 không động tới. Vẫn báo "hoàn tất". Thêm một `@WithMockUser` thừa vào test cũ — loại thay đổi không làm suite đỏ nên không gì tự báo, phải `git diff` cả file cũ mới thấy |
 
 Kết luận vận hành: **luôn tự kiểm xem plan đã chạy hết chưa**, đừng tin tin báo "hoàn tất". Cách

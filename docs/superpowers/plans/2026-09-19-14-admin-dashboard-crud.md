@@ -101,20 +101,8 @@ export async function adminFetch(path: string, options: RequestInit = {}): Promi
 Run: `cd frontend && npx vitest run lib/adminApiClient.test.ts`
 Expected: PASS
 
-- [ ] **Step 5: Add `GET /api/admin/leads` to the backend (plan 07 follow-up)**
+- [x] **Step 5: `GET /api/admin/leads` endpoint** — implemented in plan 11 (`AdminLeadController` returning paginated `LeadDto` per spec 5.1).
 
-```java
-// LeadRepository.java addition
-java.util.List<Lead> findAllByOrderByCreatedAtDesc();
-```
-
-```java
-// LeadController.java: constructor-inject LeadRepository alongside the existing LeadService, then add:
-@GetMapping
-public java.util.List<Lead> listAll() {
-    return leadRepository.findAllByOrderByCreatedAtDesc();
-}
-```
 
 - [ ] **Step 6: Verify the backend addition compiles and the endpoint responds**
 

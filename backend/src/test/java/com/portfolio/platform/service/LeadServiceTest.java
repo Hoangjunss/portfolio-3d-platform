@@ -1,5 +1,7 @@
 package com.portfolio.platform.service;
 
+import com.portfolio.platform.converter.LeadConverter;
+import com.portfolio.platform.dto.LeadDto;
 import com.portfolio.platform.dto.NewLeadEvent;
 import com.portfolio.platform.enums.LeadStatus;
 import com.portfolio.platform.exception.InvalidRequestException;
@@ -15,6 +17,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import java.time.Instant;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,6 +40,9 @@ class LeadServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private LeadConverter leadConverter;
 
     @InjectMocks
     private LeadServiceImpl leadService;
@@ -86,4 +98,26 @@ class LeadServiceTest {
         assertThat(captor.getValue().getStatus()).isEqualTo(LeadStatus.NEW);
         verify(eventPublisher).publishEvent(any(NewLeadEvent.class));
     }
+
+    @Test
+    void list_returnsConvertedPage() {
+        Lead lead = new Lead();
+        lead.setId(10L);
+        lead.setName("Test Lead");
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Lead> entityPage = new PageImpl<>(List.of(lead), pageable, 1);
+        when(leadRepository.findAll(pageable)).thenReturn(entityPage);
+
+        LeadDto dto = new LeadDto(10L, "Test Lead", "test@example.com", null, null, null, LeadStatus.NEW, Instant.now());
+        when(leadConverter.toDto(lead)).thenReturn(dto);
+
+        Page<LeadDto> result = leadService.list(pageable);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent()).containsExactly(dto);
+        verify(leadRepository).findAll(pageable);
+        verify(leadConverter).toDto(lead);
+    }
 }
+

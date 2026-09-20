@@ -85,7 +85,7 @@ unauthenticated public form (findings C-04, L-05). Nothing to do on the backend 
 as given, deliberately — but this DTO is where they cross into the admin UI, so say it in a
 comment so plan 14 does not have to rediscover it.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 `AdminLeadControllerTest` (`@SpringBootTest`, `@MockBean NotificationService`):
 - `list_asAdmin_returnsPageOfLeadsNewestFirst` — seed three leads with distinct `createdAt`,
@@ -98,13 +98,13 @@ comment so plan 14 does not have to rediscover it.
 
 `LeadServiceTest`: `list_returnsConvertedPage`.
 
-- [ ] **Step 2: Run to verify they fail.**
-- [ ] **Step 3: Create `LeadDto` and the converter pair.**
-- [ ] **Step 4: Add `Page<LeadDto> list(Pageable)` to `LeadService` + impl** (`@Transactional(readOnly = true)`).
-- [ ] **Step 5: Create `AdminLeadController`.**
-- [ ] **Step 6: Delete Step 5 from plan 14** and replace it with a line pointing here.
-- [ ] **Step 7: Full suite** — baseline **120 PASS**. Report the real number.
-- [ ] **Step 8: Mutation checks**
+- [x] **Step 2: Run to verify they fail.**
+- [x] **Step 3: Create `LeadDto` and the converter pair.**
+- [x] **Step 4: Add `Page<LeadDto> list(Pageable)` to `LeadService` + impl** (`@Transactional(readOnly = true)`).
+- [x] **Step 5: Create `AdminLeadController`.**
+- [x] **Step 6: Delete Step 5 from plan 14** and replace it with a line pointing here.
+- [x] **Step 7: Full suite** — baseline **120 PASS**. Report the real number.
+- [x] **Step 8: Mutation checks**
 
 | # | Revert | Test that must go RED |
 |---|---|---|
@@ -112,7 +112,7 @@ comment so plan 14 does not have to rediscover it.
 | M2 | add `internalNote` to `LeadDto` | `list_neverExposesInternalNote` |
 | M3 | return `List<LeadDto>` instead of `Page` | the page-metadata assertion |
 
-- [ ] **Step 9: Commit** — `feat: add paginated admin leads endpoint`
+- [x] **Step 9: Commit** — `feat: add paginated admin leads endpoint`
 
 ---
 

@@ -1,6 +1,8 @@
 package com.portfolio.platform.service.impl;
 
 import com.portfolio.platform.annotation.Audited;
+import com.portfolio.platform.converter.LeadConverter;
+import com.portfolio.platform.dto.LeadDto;
 import com.portfolio.platform.dto.NewLeadEvent;
 import com.portfolio.platform.enums.LeadStatus;
 import com.portfolio.platform.exception.InvalidRequestException;
@@ -10,6 +12,8 @@ import com.portfolio.platform.repository.LeadRepository;
 import com.portfolio.platform.repository.TemplateRepository;
 import com.portfolio.platform.service.LeadService;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +23,16 @@ public class LeadServiceImpl implements LeadService {
     private final LeadRepository leadRepository;
     private final TemplateRepository templateRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final LeadConverter leadConverter;
 
     public LeadServiceImpl(LeadRepository leadRepository,
                            TemplateRepository templateRepository,
-                           ApplicationEventPublisher eventPublisher) {
+                           ApplicationEventPublisher eventPublisher,
+                           LeadConverter leadConverter) {
         this.leadRepository = leadRepository;
         this.templateRepository = templateRepository;
         this.eventPublisher = eventPublisher;
+        this.leadConverter = leadConverter;
     }
 
     @Audited(entityType = "Lead", action = "CREATE")
@@ -50,4 +57,11 @@ public class LeadServiceImpl implements LeadService {
         eventPublisher.publishEvent(new NewLeadEvent(saved.getId()));
         return saved.getId();
     }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<LeadDto> list(Pageable pageable) {
+        return leadRepository.findAll(pageable).map(leadConverter::toDto);
+    }
 }
+

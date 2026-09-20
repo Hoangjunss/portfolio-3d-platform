@@ -25,19 +25,34 @@ Tiến độ: **7/19 task tính năng & refactor**. Suite 73/73 PASS.
 
 ---
 
-## Bước kế tiếp — plan 08 (analytics)
+## Bước kế tiếp — plan 08 (analytics) — ĐÃ RÀ XONG, ĐANG GIAO
 
-**`docs/superpowers/plans/2026-09-19-08-analytics.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
-Plan 05 rà ra 6 lỗi, plan 06 rà ra 9 lỗi, plan 07 rà ra 2 lỗi sống. Đừng giao thẳng.
+**`docs/superpowers/plans/2026-09-19-08-analytics.md`** — đã viết lại 2026-09-20. Bản cũ dùng
+feature package `com.portfolio.platform.analytics` ở mọi code block, nhét route công khai và
+route admin vào chung một controller, **không có một dòng validation nào** trên endpoint không
+cần đăng nhập, và hash IP bằng SHA-256 không khoá.
 
-Plan 08 phải gánh thêm:
+Bản mới có **2 task**:
 
-- **T-02** — `view_count` có trong schema, entity và `TemplateDto` nhưng không code nào ghi.
-  Plan 08 phải quyết: wire nó hay bỏ khỏi DTO. Nếu để nguyên thì FE plan 12 vẽ số 0 vĩnh viễn.
-- Endpoint `POST /api/analytics/events` là endpoint công khai thứ hai. Mọi bài học của plan 07
-  áp dụng nguyên: `@Size` khớp độ dài cột, FK phải kiểm `existsById`, không được để lỗi của
-  caller thành 500 + dòng `system_error_logs`.
-- `analytics_events.ip_hash` — hash IP, không bao giờ lưu IP thô (spec mục 6).
+- **Task 1 — chặn lỗ bơm `system_error_logs` đang sống.** Probe chạy thật trên HEAD:
+  `POST /api/public/leads` với JSON hỏng → `500`, `system_error_logs +1`. Với `sourceTemplateId`
+  sai kiểu → `500`, `+1`. `HttpMessageNotReadableException` không có handler nên rơi vào
+  catch-all. **C-01 còn cần tài khoản EDITOR; cái này không cần gì cả.** Lần thứ ba cùng một
+  khuôn mẫu (R-01, C-01, và nó). Task 1 vá từng loại *và* thêm lưới an toàn: nếu exception là
+  `ErrorResponse` mang status 4xx thì không ghi log row.
+- **Task 2 — analytics + đóng T-02.**
+
+Bốn quyết định đáng chú ý, đã ghi lý do trong plan:
+
+- **(g)** SHA-256 không khoá **không phải là ẩn danh hoá**. IPv4 chỉ có 2^32 giá trị, ai cầm DB
+  cũng brute-force hết trong vài phút, nên `ip_hash` kiểu đó chính là IP thô. Đổi sang HMAC-SHA256
+  với secret từ config.
+- **(h)** Sau nginx (plan 16) thì `getRemoteAddr()` là IP của proxy, mọi event hash về một giá
+  trị. Đọc `X-Forwarded-For`, **nhưng ghi rõ**: client giả được header này nên giá trị đó không
+  bao giờ được dùng cho quyết định bảo mật. **Plan 09 không được tái sử dụng nó cho rate limit.**
+- **(c)** `eventType` phải là enum. Để String tự do trên endpoint công khai nghĩa là ai cũng ghi
+  được nhãn tuỳ ý vào bảng, rồi dashboard admin render đúng nhãn kẻ tấn công chọn.
+- **(i)** Đóng T-02: `PAGE_VIEW` tăng `templates.view_count`, đối xứng với `TEMPLATE_CLICK`.
 
 ---
 

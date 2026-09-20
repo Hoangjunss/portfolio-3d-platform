@@ -28,20 +28,31 @@ Tiến độ: **10/19 task tính năng & refactor**. Suite 103/103 PASS.
 
 ---
 
-## Bước kế tiếp — plan 10 (user management)
+## Bước kế tiếp — plan 10 (user management) — ĐÃ RÀ XONG, ĐANG GIAO
 
-**`docs/superpowers/plans/2026-09-19-10-user-management.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
+**`docs/superpowers/plans/2026-09-19-10-user-management.md`** — đã viết lại 2026-09-20. Bản cũ
+dùng feature package, nhét logic mapping vào static factory của DTO thay vì `Converter`, và có
+ba lỗ hành vi:
 
-Plan 10 phải gánh:
+- **Trùng username/email → 500 + `system_error_logs`.** `users.username` và `email` đều
+  `NOT NULL UNIQUE`, không có chỗ nào kiểm trước. Đây đúng là khuôn mẫu R-01 / C-01 /
+  malformed-body, và sẽ là lần thứ tư. Bản mới thêm `existsByUsername`/`existsByEmail` → 400.
+- **`deactivate` dùng `ifPresent`** nên id không tồn tại vẫn trả 200 **và ghi một dòng
+  `audit_logs`** khai một thay đổi chưa từng xảy ra. Đổi sang `orElseThrow` → 404. Đồng thời
+  phải trả `Long` chứ không `void`, nếu không `audit_logs.entity_id` là null (đúng lỗ C-05).
+- **Một ADMIN có thể khoá vĩnh viễn cả admin panel.** Tự deactivate chính mình, hoặc deactivate
+  ADMIN active cuối cùng — mà **trong toàn bộ 19 plan không có luồng password reset nào**. Bản
+  mới bắt buộc hai guard, mỗi cái một test và một mutation.
 
-- **R-14** — thêm test phân biệt `AFTER_COMMIT` với `BEFORE_COMMIT` cho mail lead. Hiện M1 xanh,
-  nghĩa là L-01 nửa sau đúng về code nhưng chưa có gì chứng minh. Test cần: `@MockBean
-  NotificationService` ném `RuntimeException` (không phải `MailException` để khỏi bị nuốt), POST
-  một lead, assert lead **vẫn còn** trong bảng.
-- **R-08 (p03b)** — không giới hạn số refresh token sống mỗi user; đã hoãn từ plan 03b và gắn
-  vào plan 09, nhưng plan 09 không chạm tới. Plan 10 quản lý user nên là chỗ đúng.
-- Mọi bài học endpoint công khai vẫn áp dụng: `@Size` khớp cột, FK kiểm `existsById`, không để
-  lỗi caller thành 500 + `system_error_logs`.
+Đã kiểm hai chỗ nghi ngờ trước khi viết, **không có lỗ**: `UserServiceImpl.authenticate` dùng
+`findActiveByUsername` và `RefreshTokenServiceImpl.rotate` có `.filter(User::isActive)` — nên
+tài khoản bị deactivate hết đường vào trong vòng một vòng đời access token. Plan ghi rõ điều này
+để không ai thêm lại lần nữa. Thứ còn thiếu là revoke refresh token cũ, nếu không thì
+**reactivate một tài khoản sẽ hồi sinh mọi session cũ**, kể cả trên thiết bị người dùng không
+còn giữ.
+
+Task 1 gánh R-14 (test phân biệt `AFTER_COMMIT`/`BEFORE_COMMIT`) và R-08 (giới hạn số refresh
+token sống mỗi user, mở từ plan 03b).
 
 ---
 
@@ -96,7 +107,7 @@ Plan 10 phải gánh:
 | T-05 (p05) | INFO | `config` và `filter` miễn trắng khỏi allow-list | Siết lại nếu `config/` phình |
 | R-03 (p04) | MINOR | Mỗi audit row tốn thêm một SELECT `users` | Hoãn; cân nhắc nhét `userId` vào JWT claim |
 | R-06 (p03b) | MINOR | Test dọn token dùng `userId(1L)` vi phạm FK thật | Thuộc F-01 |
-| R-08 (p03b) | MINOR | Không giới hạn số refresh token sống mỗi user | Hoãn, gắn plan 09 |
+| **R-08 (p03b)** | MINOR | Không giới hạn số refresh token sống mỗi user | **Plan 10 task 1** |
 | R-09 (p03b) | MINOR | Test job không chứng minh `@EnableScheduling` còn đó | Hoãn |
 | R-10 (p03b) | INFO | H2 sinh `timestamp with time zone`, migration khai `TIMESTAMP` | Thuộc F-08 |
 | F-01 | — | Migration và entity chưa từng được đối chiếu | Cần Docker. **Phải đóng trước plan 15** |

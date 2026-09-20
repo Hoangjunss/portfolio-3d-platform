@@ -92,4 +92,11 @@ public class TemplateServiceImpl implements TemplateService {
     public void incrementClickCount(Long id) {
         templateRepository.incrementClickCount(id);
     }
+
+    @Override
+    @Transactional
+    public void incrementViewCount(Long id) {
+        templateRepository.incrementViewCount(id);
+    }
 }
+

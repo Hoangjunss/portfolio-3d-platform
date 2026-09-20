@@ -55,4 +55,8 @@ notification:
   lead-recipient: ${LEAD_RECIPIENT_EMAIL:sales@portfolio.com}
   from: ${MAIL_FROM:no-reply@portfolio.com}
 
+analytics:
+  ip-hash-secret: ${ANALYTICS_IP_HASH_SECRET:dev-only-analytics-secret-change-me}
+
+
 

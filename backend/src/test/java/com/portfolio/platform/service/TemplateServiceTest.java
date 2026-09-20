@@ -65,6 +65,14 @@ class TemplateServiceTest {
     }
 
     @Test
+    void incrementViewCount_issuesAtomicUpdate() {
+        templateService.incrementViewCount(5L);
+
+        verify(templateRepository).incrementViewCount(5L);
+        verifyNoMoreInteractions(templateRepository);
+    }
+
+    @Test
     void update_withUnknownId_throwsResourceNotFound() {
         when(templateRepository.findById(999L)).thenReturn(Optional.empty());
         TemplateUpsertForm form = new TemplateUpsertForm("Name", "slug", "subdomain", null, null, null, null, 0, true);

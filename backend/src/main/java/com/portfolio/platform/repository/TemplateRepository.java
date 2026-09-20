@@ -17,4 +17,8 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
     @Modifying
     @Query("update Template t set t.clickCount = t.clickCount + 1 where t.id = :id")
     int incrementClickCount(@Param("id") Long id);
+
+    @Modifying
+    @Query("update Template t set t.viewCount = t.viewCount + 1 where t.id = :id")
+    int incrementViewCount(@Param("id") Long id);
 }

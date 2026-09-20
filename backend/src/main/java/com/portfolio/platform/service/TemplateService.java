@@ -19,4 +19,6 @@ public interface TemplateService {
     Long softDelete(Long id);
 
     void incrementClickCount(Long id);
+
+    void incrementViewCount(Long id);
 }

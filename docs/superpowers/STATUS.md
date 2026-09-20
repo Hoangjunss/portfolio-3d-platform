@@ -1,7 +1,7 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `5737471` — plan 16 xong cả hai task, review PASS. **N-01 đóng**
+**Commit cuối:** `8f01382` — plan 16 shipped. **Plan 17 giao lượt 1: 0/9 step, không file nào**
 **Test:** backend `mvn clean test` → **137/137 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
 
 ---
@@ -109,44 +109,31 @@ vẫn là thư mục anh em độc lập, không cần route group riêng vì n�
 
 ---
 
-## Bước kế tiếp — plan 17 (CI/CD), đã rà và viết lại, **chưa implement**
+## Bước kế tiếp — plan 17, giao lại (lượt 1 cho ra 0/9 step)
 
-Plan 16 xong cả hai task, review PASS (`docs/reviews/2026-09-20-code-review-plan-16.md`).
-**N-01, M-01, AB-01, AB-02 đều đóng**, cả bốn đều có test hoặc bằng chứng.
+Plan 16 shipped, review PASS (`docs/reviews/2026-09-20-code-review-plan-16.md`). **N-01, M-01,
+AB-01, AB-02 đều đóng**, cả bốn đều có test hoặc bằng chứng.
 
-Hai mutation tôi tự chạy (plan đòi, commit không báo) đều **ĐỎ**:
+Plan 17 giao lượt 1 → **0/9 step**, không file nào, và cả bản vá AC-01 cũng không làm. Chi tiết
+ở bảng theo dõi Antigravity bên dưới.
 
-| # | Revert | Kết quả |
-|---|---|---|
-| MC | Bỏ `@Component` khỏi `SecretsGuard` | **ĐỎ** — `SecretsGuardWiringTest` |
-| MD | Bỏ `forward-headers-strategy: framework` | **ĐỎ** — `RateLimitForwardedIpTest` |
+**Điều chỉnh cho lượt 2:** viết hết file và commit **trước**, chạy lệnh kiểm **sau**. Và bỏ yêu
+cầu chạy full `mvn test` sau Task 0 — Task 0 chỉ sửa một comment trong `nginx/conf.d/00-redirect.conf`,
+không có đường nào nó ảnh hưởng tới test Java. Yêu cầu đó là lỗi của lượt giao trước.
 
-Trước plan 16 cả hai mutation này đều XANH. Giờ N-01 và AB-02 có lưới thật.
-
-Kiểm thêm thứ tự filter, vì `forward-headers-strategy` chỉ có tác dụng nếu `ForwardedHeaderFilter`
-chạy trước `RateLimitFilter`: Spring Boot đăng ký nó ở `HIGHEST_PRECEDENCE`, còn `RateLimitFilter`
-ở **−99**. Đúng thứ tự, cách nhau xa, và MD đỏ nghĩa là test canh được chính chỗ đó.
-Hệ quả phụ không nằm trong plan: `AuditAspect` cũng đọc `getRemoteAddr()`, nên `audit_logs.ip_address`
-từ nay ghi IP khách thật.
-
-### Phải nói rõ về trạng thái hạ tầng
-
-**Cấu hình nginx chưa từng được nạp bởi nginx.** Bốn file `.conf` là thứ duy nhất trong dự án chưa
-có một dòng nào chứng minh nó đúng cú pháp, chứ chưa nói định tuyến đúng. Tương tự, **image Docker
-chưa từng build**. Cả hai chỉ xác nhận được ở bước verify cần Docker.
+### Trạng thái hạ tầng — chưa gì được vận hành
 
 | Plan | Trạng thái |
 |---|---|
 | 15 | Code đã viết, **chưa vận hành**. Step 7 cần Docker |
 | 16 | Code đã viết, **chưa vận hành**. Step 8 cần Docker |
-| 17 | Đã rà và viết lại, **chưa implement**. Verify cần VPS + secrets |
+| 17 | **Chưa implement.** Task 0 verify được ở đây; Task 1 cần VPS + secrets |
 
-**F-01, R-03, A-11 vẫn mở.** Lựa chọn số 1 (cài Docker Desktop) vẫn là thứ trả nợ nhiều nhất —
-giờ nó mở khoá thêm cả việc kiểm chứng plan 15 và 16, không chỉ ba finding kia.
+**Cấu hình nginx chưa từng được nạp bởi nginx, và image Docker chưa từng build.** Bốn file `.conf`
+là thứ duy nhất trong dự án chưa có một dòng nào chứng minh nó đúng cú pháp.
 
-**AC-01 phải vào plan 17:** `00-redirect.conf` có block `/.well-known/acme-challenge/` trỏ vào
-`/var/www/certbot`, thư mục **không được mount** vào nginx — và chính plan 16 nói cert là wildcard
-qua **DNS-01**, vốn không dùng đường HTTP-01 đó. Code chết ngụ ý sai. Lỗi của plan 16.
+**F-01, R-03, A-11 vẫn mở.** Cài Docker Desktop giờ mở khoá được: ba finding đó, Step 7 của plan 15,
+và Step 8 của plan 16 — nhiều hơn hẳn so với lúc đề xuất lần đầu.
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -298,6 +285,7 @@ treo; F-01 không đóng được.
 
 | Lượt | Kết quả |
 |---|---|
+| 17 lần 1 | **0/9 step.** Vẫn báo "hoàn tất". Không `.github/`, không `deploy/`, và **cả bản vá AC-01 — sửa một block comment trong file nginx — cũng không làm**. Cây sạch, HEAD không đổi. Dấu vết: Maven khởi động 15:31, chỉ 2 report mới (`architecture` rồi `aspect`, đúng thứ tự alphabet) rồi dừng. **Cùng chữ ký với plan 15 lượt 1.** Hai lần trùng nhau: lượt giao bảo chạy `mvn test` xác nhận trước, nó làm đúng thứ tự đó và chết ở Maven trước khi viết gì |
 | 16 lần 1 | **9/9 step khả thi, cả hai task, hai commit đúng ranh giới** — lần đầu làm trọn một plan hai task mà **không bỏ bước commit**. Tránh được **F-13** (thêm khoá vào `server:` đang có thay vì tạo block thứ hai) — cái bẫy từng sinh 74 error. **Đọc code trước khi viết test**: dùng `isAccepted()` (202) chứ không phải 201 như lượt giao đoán, và tự thêm `@MockBean NotificationService` mà plan không nhắc. Khai Step 8 không chạy được. **Nhưng không báo kết quả mutation nào** dù plan đòi ở hai chỗ — lần đầu kể từ plan 08; tôi chạy, cả hai đỏ |
 | 15 lần 2 | **7/8 step.** Đủ 7 file, nội dung khớp plan gần như từng dòng, giữ nguyên cả ba chỗ dễ bị "sửa cho gọn" (build arg, `image:` + `build:`, không có `JWT_REFRESH_SECRET`). **Khai báo trung thực rằng Step 7 không chạy được vì thiếu Docker** thay vì tick checkbox — lần thứ tư nó tự báo một điều bất lợi cho chính nó. **Lại bỏ bước commit** (lần thứ năm) |
 | 15 lần 1 | **0/8 step.** Vẫn báo "hoàn tất". Không một file nào: không `Dockerfile`, không `docker-compose.yml`, không `SecretsGuard`, `next.config.mjs` không có `output: "standalone"`. Cây sạch, HEAD không đổi, không stash, không branch khác. **Khác các lượt 0/N trước ở một điểm:** lần này Maven *có* khởi động lúc 15:01, nhưng chỉ **3/32** surefire report mang dấu thời gian mới — `architecture` → `aspect` → `config`, đúng thứ tự alphabet theo package — rồi dừng giữa chừng. Không có report của `SecretsGuardTest`. Tức nó chạy suite baseline sẵn có, bị cắt ngang, và không viết gì |
@@ -323,6 +311,12 @@ Cập nhật sau lượt 14: **hai lượt liên tiếp (13, 14) làm đủ step
 trước, tin sau. Điều đáng chú ý ở lượt 13–14 là cả hai plan đều được **rà kỹ trước khi giao** —
 plan 13 ra 4 MAJOR, plan 14 ra 4 MAJOR. Giả thuyết: chất lượng lượt giao đi theo chất lượng plan,
 chứ không phải theo may rủi.
+
+**Bài học từ hai lượt rỗng có cùng chữ ký (15 lần 1, 17 lần 1):** cả hai đều bắt đầu bằng một lần
+`mvn test` đầy đủ (hơn 1 phút) và chết trước khi viết file nào. Lượt giao phải **bảo nó viết hết file
+và commit trước, rồi mới chạy lệnh kiểm**, và không được đòi chạy full suite cho những thay đổi không
+thể ảnh hưởng tới nó — plan 17 Task 0 chỉ sửa một comment trong file `.conf`, mà lượt giao vẫn bắt
+chạy `mvn test` xác nhận 137/137. Đó là lỗi của lượt giao, không phải của công cụ.
 
 Kết luận vận hành: **luôn tự kiểm xem plan đã chạy hết chưa**, đừng tin tin báo "hoàn tất". Cách
 rẻ nhất là `ls` các package/file mà plan yêu cầu tạo, rồi đếm test. Và luôn tự chạy lại mutation

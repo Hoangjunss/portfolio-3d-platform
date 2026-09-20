@@ -1,7 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `feb74a9` — plan 18 Task 0 + Task 1 đã implement. **Pipeline đã chạy thật lần đầu và job `build` đỏ — AF-01**
+**Commit cối:** `3bc502a` — đã push lên `origin/master`. **AF-01 đóng**: run [35502552392](https://github.com/Hoangjunss/portfolio-3d-platform/actions/runs/35502552392) không còn lỗi `repository name must be lowercase`.
+**Blocker hiện tại — AF-02:** repo có **0 secrets** (`gh api .../actions/secrets` → `total_count: 0`), nên job `build` dừng ngay ở gate `Require a non-empty PUBLIC_API_BASE_URL`. Đây là gate cố ý của `44952e6`, không phải bug. Phải set secrets bằng tay — xem `docs/ops/ci-cd-secrets.md`.
 **Test:** backend `mvn clean test` → **137/137 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
 
 ---

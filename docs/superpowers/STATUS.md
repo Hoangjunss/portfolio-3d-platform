@@ -29,11 +29,30 @@ Tiến độ: **11/19 task — hết plan backend, còn frontend (11–14) và h
 
 ---
 
-## Bước kế tiếp — plan 11 **task 1**, giao lại sau một lượt trắng
+## Bước kế tiếp — ĐANG CHỜ QUYẾT ĐỊNH CỦA NGƯỜI DÙNG
 
-Lượt giao đầu cho plan 11 tạo ra **0/18 step**. Giao lại **chỉ Task 1** (backend,
-`GET /api/admin/leads`) thay vì cả hai task — thu hẹp phạm vi là điều chỉnh duy nhất đáng làm
-sau một lượt trắng, vì mọi lượt thành công gần đây đều nằm trong khoảng 8–15 step.
+**Hai lượt giao liên tiếp cho plan 11 đều tạo ra đúng con số không** — lần đầu cả 18 step, lần
+sau đã thu hẹp còn 9 step của mỗi Task 1. Thu hẹp phạm vi không giải quyết được gì.
+
+Bằng chứng cho thấy đây là **không chạy**, không phải làm sai:
+
+- Không file nào được tạo, cây làm việc sạch, không stash, không branch khác.
+- Dấu vết `mvn` gần nhất trong `backend/target/surefire-reports` là **08:40**, của chính tôi khi
+  review plan 10. Lượt giao thứ hai diễn ra lúc 08:48 và báo "hoàn tất" khoảng 08:50 — **~2
+  phút**, trong khi một lần `mvn clean test` của dự án này mất hơn một phút, và Task 1 đòi ba
+  mutation check tức là bốn lần chạy build trở lên.
+
+Bảy lượt trước đó đều có sản phẩm, bốn lượt gần nhất làm trọn plan. Nên đây là hỏng đột ngột
+chứ không phải xu hướng giảm dần.
+
+**Hai lựa chọn, cần người dùng chọn:**
+
+1. **Chờ và giao lại** — nếu đây là quota hoặc lỗi phiên như lần `RESOURCE_EXHAUSTED` ngày
+   2026-09-19 thì nó tự hết.
+2. **Cho phép tôi tự implement Task 1** — quy tắc vận hành hiện tại bắt tôi giao phần viết code
+   sản phẩm cho Antigravity, nên đây là ngoại lệ cần người dùng đồng ý rõ ràng.
+
+Nội dung Task 1 không đổi, đã mô tả đầy đủ trong plan 11.
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -154,6 +173,7 @@ treo; F-01 không đóng được.
 | 04b lần 1 | **Chỉ làm task 1/8**, vẫn báo "hoàn tất" |
 | 04b lần 2 | Làm đủ task 2–8, commit body khớp từng điểm khi kiểm lại |
 | 07 lần 1 | **0/16 step.** Vẫn báo "hoàn tất". Cây làm việc sạch, không commit mới, không một file nào được tạo: không có `InvalidRequestException`, không có file `*Lead*` hay `*Notification*` nào. `mvn clean test` sau đó: 58/58 PASS — đúng baseline cũ, không thêm test nào |
+| 11 lần 2 | **0/9 step**, dù đã thu hẹp còn mỗi Task 1. Không file nào được tạo. Dấu vết build gần nhất trong `backend/target/surefire-reports` là **08:40** — của chính tôi khi review plan 10; lượt giao lúc 08:48 và báo "hoàn tất" lúc ~08:50, tức **~2 phút**, ngắn hơn cả một lần `mvn clean test` (hơn 1 phút). Không phải làm sai, mà là **không chạy** |
 | 11 lần 1 | **0/18 step.** Vẫn báo "hoàn tất". HEAD không đổi, cây sạch, không stash, không branch khác, không có `LeadDto`/`LeadConverter`/`AdminLeadController`, không có `frontend/` — kể cả ở sai vị trí trong workspace. Lần thứ hai một lượt cho ra đúng con số không (lần đầu: plan 07 lần 1) |
 | 10 lần 1 | **15/15 step, cả hai task.** Khai đủ 11 mutation kể cả cái xanh (R-13 không tái phát), và **tự tuyên bố R-14 vẫn mở** sau khi được giao để đóng nó — kiểu báo cáo dễ giấu nhất. Lỗi bỏ sót: `create` trả DTO nên `audit_logs.entity_id` null (U-01) |
 | 09 lần 1 | **15/15 step, cả hai task, hai commit riêng.** Lượt đầy đủ đầu tiên làm trọn một plan trong một lượt. Khai M1 XANH kèm đúng test cần có để bắt — lần thứ hai tự báo điểm yếu. Nhưng bỏ không báo M2 và M3 |

@@ -92,6 +92,34 @@ class TemplateServiceTest {
     }
 
     @Test
+    void listAllForAdmin_alsoResolvesThumbnailUrl() {
+        // The admin list shares TemplateDto with the public one. Before this, it went through
+        // toDtoList -> toDto(template) -> toDto(template, null), so thumbnailUrl was always null
+        // on /api/admin/templates while being populated on /api/public/templates — the same
+        // "field exists but nothing fills it" shape as finding T-02.
+        Template template = new Template();
+        template.setId(5L);
+        template.setName("Admin Visible");
+        template.setThumbnailMediaId(200L);
+
+        Media media = new Media();
+        media.setId(200L);
+        media.setUrl("/media/admin-thumb.webp");
+
+        when(templateRepository.findByDeletedAtIsNullOrderByDisplayOrderAsc()).thenReturn(List.of(template));
+        when(mediaRepository.findAllById(List.of(200L))).thenReturn(List.of(media));
+        when(templateConverter.toDto(template, "/media/admin-thumb.webp")).thenReturn(
+                new TemplateDto(5L, "Admin Visible", "av", "av", 200L, "/media/admin-thumb.webp",
+                        "desc", "cat", "tags", 0, true, 0, 0));
+
+        List<TemplateDto> result = templateService.listAllForAdmin();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).thumbnailUrl()).isEqualTo("/media/admin-thumb.webp");
+        verify(mediaRepository, times(1)).findAllById(List.of(200L));
+    }
+
+    @Test
     void listActive_withNoThumbnail_leavesThumbnailUrlNull() {
         Template template = new Template();
         template.setId(2L);

@@ -45,7 +45,12 @@ public class TemplateServiceImpl implements TemplateService {
     @Cacheable("public-templates")
     @Transactional(readOnly = true)
     public List<TemplateDto> listActive() {
-        List<Template> templates = templateRepository.findByActiveTrueAndDeletedAtIsNullOrderByDisplayOrderAsc();
+        return withThumbnailUrls(templateRepository.findByActiveTrueAndDeletedAtIsNullOrderByDisplayOrderAsc());
+    }
+
+    // One findAllById for the whole page, never findById per row: this runs on the landing page
+    // and the N+1 would be invisible to every test that does not count the calls.
+    private List<TemplateDto> withThumbnailUrls(List<Template> templates) {
         List<Long> mediaIds = templates.stream()
                 .map(Template::getThumbnailMediaId)
                 .filter(Objects::nonNull)
@@ -70,9 +75,7 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     @Transactional(readOnly = true)
     public List<TemplateDto> listAllForAdmin() {
-        return templateConverter.toDtoList(
-                templateRepository.findByDeletedAtIsNullOrderByDisplayOrderAsc()
-        );
+        return withThumbnailUrls(templateRepository.findByDeletedAtIsNullOrderByDisplayOrderAsc());
     }
 
     @Override

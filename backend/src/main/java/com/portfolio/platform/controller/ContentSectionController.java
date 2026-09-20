@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 public class ContentSectionController {
 
@@ -15,6 +17,11 @@ public class ContentSectionController {
 
     public ContentSectionController(ContentSectionService contentSectionService) {
         this.contentSectionService = contentSectionService;
+    }
+
+    @GetMapping("/api/admin/content-sections")
+    public ResponseEntity<List<ContentSectionDto>> listAll() {
+        return ResponseEntity.ok(contentSectionService.listAll());
     }
 
     @GetMapping("/api/public/content-sections/{key}")

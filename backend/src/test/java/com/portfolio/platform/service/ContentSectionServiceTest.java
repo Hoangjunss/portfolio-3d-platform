@@ -38,6 +38,24 @@ class ContentSectionServiceTest {
     private ContentSectionServiceImpl contentSectionService;
 
     @Test
+    void listAll_returnsEveryContentSectionAsDto() {
+        ContentSection hero = new ContentSection();
+        hero.setId(1L);
+        hero.setSectionKey("hero");
+        hero.setDataJson("{\"headline\":\"See your site before you build it.\"}");
+        hero.setVersion(1);
+
+        ContentSectionDto heroDto = new ContentSectionDto("hero", "{\"headline\":\"See your site before you build it.\"}", 1, Instant.now());
+
+        when(contentSectionRepository.findAll()).thenReturn(List.of(hero));
+        when(contentSectionConverter.toDto(hero)).thenReturn(heroDto);
+
+        List<ContentSectionDto> result = contentSectionService.listAll();
+
+        assertThat(result).containsExactly(heroDto);
+    }
+
+    @Test
     void getByKey_returnsDto() {
         ContentSection section = new ContentSection();
         section.setId(1L);

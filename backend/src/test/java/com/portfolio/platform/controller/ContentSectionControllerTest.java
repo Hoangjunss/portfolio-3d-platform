@@ -52,6 +52,29 @@ class ContentSectionControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
+    void listAllContentSections_returns200WithArray() throws Exception {
+        ContentSection section = new ContentSection();
+        section.setSectionKey("hero");
+        section.setDataJson("{\"headline\":\"See your site before you build it.\"}");
+        section.setVersion(1);
+        contentSectionRepository.save(section);
+
+        mockMvc.perform(get("/api/admin/content-sections"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].sectionKey").value("hero"))
+                .andExpect(jsonPath("$[0].dataJson").value("{\"headline\":\"See your site before you build it.\"}"))
+                .andExpect(jsonPath("$[0].version").value(1));
+    }
+
+    @Test
+    void listAllContentSections_withoutToken_returns401() throws Exception {
+        mockMvc.perform(get("/api/admin/content-sections"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void getByKey_public_returnsSeededSection() throws Exception {
         ContentSection section = new ContentSection();
         section.setSectionKey("hero");

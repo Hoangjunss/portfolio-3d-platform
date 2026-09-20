@@ -14,6 +14,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class ContentSectionServiceImpl implements ContentSectionService {
 
@@ -27,6 +29,14 @@ public class ContentSectionServiceImpl implements ContentSectionService {
         this.contentSectionRepository = contentSectionRepository;
         this.contentSectionConverter = contentSectionConverter;
         this.userService = userService;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ContentSectionDto> listAll() {
+        return contentSectionRepository.findAll().stream()
+                .map(contentSectionConverter::toDto)
+                .toList();
     }
 
     // Returns Dto directly because Optional is not Serializable and fails with RedisCacheManager.

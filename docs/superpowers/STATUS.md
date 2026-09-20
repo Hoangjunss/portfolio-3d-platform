@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `ea8e7de` — plan 08 xong cả hai task, **đã push**
-**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **92/92 PASS**
+**Commit cuối:** `63b2eb7` — plan 09 xong, **đã push**
+**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **103/103 PASS**
 
 ---
 
@@ -22,40 +22,26 @@
 | 07 task 2 | Lead capture + notification email (best-effort) | `fa7b824`, `0fbf9f1` |
 | 08 task 1 | 4xx cho request body hỏng thay vì 500 + log row | `d04bf9d` |
 | 08 task 2 | Analytics ingest + summary, HMAC IP, đóng T-02 | `6837c5e`, `ea8e7de` |
+| 09 | Mail sau commit + `Allow` cho 405; rate limit per-IP có chặn bộ nhớ | `0f53317`, `3c92f50`, `63b2eb7` |
 
-Tiến độ: **9/19 task tính năng & refactor**. Suite 92/92 PASS.
+Tiến độ: **10/19 task tính năng & refactor**. Suite 103/103 PASS.
 
 ---
 
-## Bước kế tiếp — plan 09 (rate limiting) — ĐÃ RÀ XONG, ĐANG GIAO
+## Bước kế tiếp — plan 10 (user management)
 
-**`docs/superpowers/plans/2026-09-19-09-rate-limiting.md`** — đã viết lại 2026-09-20. Bản cũ có
-bốn lỗ, trong đó hai cái tự mâu thuẫn với chính ràng buộc của nó:
+**`docs/superpowers/plans/2026-09-19-10-user-management.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
 
-- **Map bucket không giới hạn.** `ConcurrentHashMap` khoá theo `path:ip` mọc một entry mỗi IP,
-  vĩnh viễn, trên heap 350MB. Đây không phải rò rỉ để sửa sau — **chính nó là đòn tấn công**:
-  client đổi IP liên tục làm đầy heap, và bộ rate limit trở thành đúng cái DoS nó sinh ra để
-  chặn. Bản mới dùng Caffeine có `maximumSize` + `expireAfterAccess`, và **có test bắn 20.000 IP
-  khác nhau rồi assert kích thước cache không vượt ngưỡng** — không có assertion đó thì cái bound
-  chỉ là trang trí.
-- **Một giới hạn 5/phút cho cả ba endpoint.** `/api/analytics/events` bắn cả lúc xem trang lẫn
-  mỗi cú click template, nên một khách thật duyệt portfolio sẽ vượt 5/phút trong vài giây và
-  dashboard âm thầm đếm thiếu. Bản mới tách theo path: login 10/15 phút, leads 5/giờ,
-  analytics 120/phút.
-- **429 không có body.** Cả dự án có một shape lỗi JSON duy nhất, mà filter nằm ngoài
-  `@RestControllerAdvice` nên phải tự ghi body. Không sửa thì 429 là response duy nhất rỗng ruột.
-- **Danh sách path chép hai nơi** (trong filter và trong `addUrlPatterns`). Hai danh sách sẽ lệch,
-  và khi lệch thì hỏng im lặng — một endpoint lặng lẽ không còn giới hạn.
+Plan 10 phải gánh:
 
-Và lỗ thứ năm về mặt kiểm chứng: bản cũ chỉ có một unit test dùng mock, **vẫn xanh kể cả khi
-filter không hề được đăng ký**. Bản mới thêm `RateLimitIntegrationTest` gọi endpoint thật, và
-mutation M8 (gỡ hẳn đăng ký filter) là cái bản cũ không thể bắt được.
-
-**Cảnh báo mang sang plan 16:** rate limit khoá theo `getRemoteAddr()`, **không** dùng
-`X-Forwarded-For` (client giả được — xem quyết định (h) của plan 08). Mặt trái: khi có nginx,
-`getRemoteAddr()` là IP của nginx nên **cả site dùng chung một bucket**. Cách sửa đúng không phải
-đọc header trong code ứng dụng mà là `server.forward-headers-strategy: NATIVE` + danh sách proxy
-tin cậy. Đây là thứ thứ ba plan 16 nợ, cùng M-01 và D-03.
+- **R-14** — thêm test phân biệt `AFTER_COMMIT` với `BEFORE_COMMIT` cho mail lead. Hiện M1 xanh,
+  nghĩa là L-01 nửa sau đúng về code nhưng chưa có gì chứng minh. Test cần: `@MockBean
+  NotificationService` ném `RuntimeException` (không phải `MailException` để khỏi bị nuốt), POST
+  một lead, assert lead **vẫn còn** trong bảng.
+- **R-08 (p03b)** — không giới hạn số refresh token sống mỗi user; đã hoãn từ plan 03b và gắn
+  vào plan 09, nhưng plan 09 không chạm tới. Plan 10 quản lý user nên là chỗ đúng.
+- Mọi bài học endpoint công khai vẫn áp dụng: `@Size` khớp cột, FK kiểm `existsById`, không để
+  lỗi caller thành 500 + `system_error_logs`.
 
 ---
 
@@ -93,9 +79,12 @@ tin cậy. Đây là thứ thứ ba plan 16 nợ, cùng M-01 và D-03.
 | A-10 (p08t2) | INFO | `existsById` bỏ qua soft-delete của `TemplateService` | Ghi nhận |
 | A-11 (p08t2) | — | `V3__analytics_indexes.sql` chưa từng chạy thật | Gia nhập R-03/F-01 |
 | **P-01 (p08t1)** | — | Lưới `ErrorResponse` không phủ malformed-body và type-mismatch; hai handler riêng là load-bearing | **Đã ghi comment** (`d04bf9d`) |
-| P-03 (p08t1) | MINOR | Response 405 không kèm header `Allow` | Plan 09 |
+| ~~P-03 (p08t1)~~ | MINOR | Response 405 không kèm header `Allow` | **Đã đóng** — `0f53317`, M2 đỏ |
 | P-04 (p08t1) | INFO | Import thừa trong `GlobalExceptionHandlerTest` | Dọn khi chạm lại |
-| **L-01 (p07t2)** | MAJOR | Mail gửi đồng bộ trong `@Transactional`; JavaMail không timeout mặc định → SMTP treo giữ luôn DB connection. **Nửa đầu đã vá** (`0fbf9f1`, timeout 5s) | Nửa sau — gửi sau commit — **plan 09**, cùng chỗ rate limiting |
+| ~~**L-01 (p07t2)**~~ | MAJOR | Mail đồng bộ trong transaction + JavaMail không timeout | **Đã đóng** — timeout ở `0fbf9f1`, `AFTER_COMMIT` ở `0f53317`. Nhưng xem R-14 |
+| **R-14 (p09)** | MINOR | Pha `AFTER_COMMIT` chưa có test nào phân biệt được với `BEFORE_COMMIT` — M1 xanh | **Plan 10 task 1** |
+| R-15 (p09) | INFO | `maximumSize(10_000)` nghĩa là dưới flood xoay IP, giới hạn thành gần đúng | Phòng thủ thật ở nginx (plan 16) |
+| R-16 (p09) | INFO | 429 ghi body tay, không đặt charset | Gộp vào lần chạm tiếp |
 | L-02 (p07t2) | MINOR | `lead.setStatus(NEW)` không test nào canh được (entity có field initializer); M5 xanh | Ghi nhận |
 | L-03 (p07t2) | MINOR | Test audit row lấy `findAll().get(size-1)`, phụ thuộc thứ tự và `audit_logs` không được dọn | Plan 14 khi chạm lại: lọc theo `entityType` |
 | L-05 (p07t2) | INFO | Tên/nội dung lead đi thẳng vào email; JavaMail có mã hoá nên chưa phải lỗ hổng sống | Cùng nhóm C-04 |
@@ -145,6 +134,7 @@ treo; F-01 không đóng được.
 | 04b lần 1 | **Chỉ làm task 1/8**, vẫn báo "hoàn tất" |
 | 04b lần 2 | Làm đủ task 2–8, commit body khớp từng điểm khi kiểm lại |
 | 07 lần 1 | **0/16 step.** Vẫn báo "hoàn tất". Cây làm việc sạch, không commit mới, không một file nào được tạo: không có `InvalidRequestException`, không có file `*Lead*` hay `*Notification*` nào. `mvn clean test` sau đó: 58/58 PASS — đúng baseline cũ, không thêm test nào |
+| 09 lần 1 | **15/15 step, cả hai task, hai commit riêng.** Lượt đầy đủ đầu tiên làm trọn một plan trong một lượt. Khai M1 XANH kèm đúng test cần có để bắt — lần thứ hai tự báo điểm yếu. Nhưng bỏ không báo M2 và M3 |
 | 08 lần 2 | **8/8 step của task 2**, kể cả commit. Commit body khai cả bảy mutation kèm thông điệp lỗi thật của từng cái; hai cái tôi kiểm lại đều khớp. Lượt đầy đủ thứ hai |
 | 08 lần 1 | **6/14 step.** Task 1 làm tốt (test cuối đánh thẳng vào `/api/public/leads` thật, không phải endpoint giả), nhưng **lại bỏ bước commit** — lần thứ ba liên tiếp — và không có dấu vết chạy mutation check. Task 2 không động tới |
 | 07 lần 3 | **8/8 step của task 2**, kể cả commit. Lượt đầy đủ đầu tiên của plan 07. Đáng ghi nhận: **tự báo M5 XANH** — kiểm lại đúng là xanh. Lần đầu nó khai một mutation không bị bắt thay vì báo cáo đẹp hơn thực tế |

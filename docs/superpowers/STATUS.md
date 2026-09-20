@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `6a39589` — plan 11 task 1 xong, **đã push**
-**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **126/126 PASS**
+**Commit cuối:** `b12cb83` — plan 11 xong cả hai task, **đã push**
+**Test:** backend `mvn clean test` → **126/126 PASS**; frontend `npx vitest run` → **5/5 PASS**
 
 ---
 
@@ -25,41 +25,28 @@
 | 09 | Mail sau commit + `Allow` cho 405; rate limit per-IP có chặn bộ nhớ | `0f53317`, `3c92f50`, `63b2eb7` |
 | 10 | Cap refresh token; user management admin-only + hai guard chống khoá chết | `4339067`, `4a40bd1`, `c10adee` |
 | 11 task 1 | `GET /api/admin/leads` phân trang đúng spec 5.1 + trần page size | `136a486`, `6a39589` |
+| 11 task 2 | Next.js scaffold + `lib/apiClient.ts` có kiểu khớp DTO thật | `b12cb83` |
 
-Tiến độ: **12/19 task — backend xong hẳn, còn frontend (11 task 2, 12–14) và hạ tầng (15–18)**. Suite 126/126 PASS.
+Tiến độ: **13/19 task — backend xong hẳn, còn frontend (12–14) và hạ tầng (15–18)**. Backend 126/126, frontend 5/5.
 
 ---
 
-## Bước kế tiếp — plan 11 task 2, **còn dở: thiếu đúng file chính**
+## Bước kế tiếp — plan 12 (3D carousel)
 
-Task 1 xong, review PASS (`docs/reviews/2026-09-20-code-review-plan-11-task-1.md`).
+Plan 11 xong cả hai task. **`docs/superpowers/plans/2026-09-19-12-3d-carousel.md` CẦN RÀ LẠI
+TRƯỚC KHI GIAO.**
 
-Task 2 làm được **4/9 step** và dừng ở chỗ tệ nhất có thể:
+Plan 12 phải chốt **V-02** trước khi viết dòng code nào: `npm audit` còn 9 advisory, và dải bị
+ảnh hưởng của `next` kéo tới `16.3.0-preview.10` — tức chỉ Next **16.3.5+** mới nằm ngoài. Ở lại
+dòng 14 nghĩa là ship với advisory critical đã biết; lên 16 là nhảy hai major, kéo React 19 và
+có thể phải lên `@react-three/fiber` 9. Plan 12 là chỗ đúng để quyết vì nó là nơi R3F gắn vào.
 
-| Có | Thiếu |
-|---|---|
-| `package.json`, `next.config.mjs`, `tsconfig.json`, `tailwind.config.ts`, `postcss.config.js` | — |
-| `app/globals.css`, `app/layout.tsx`, `app/page.tsx` | — |
-| `lib/apiClient.test.ts` — viết tốt, phủ đúng bốn ca | **`lib/apiClient.ts` KHÔNG TỒN TẠI** |
-| — | chưa `npm install`, chưa chạy vitest, chưa mutation, **chưa commit** |
+Giảm nhẹ mức khẩn: spec mục 4 nói template là **static export** phục vụ qua nginx, nên phần lớn
+advisory còn lại (Image Optimization, Server Actions, cache poisoning) không chạm tới. Nhưng
+`/admin` thì chạy runtime thật.
 
-Nghĩa là bài test đã có nhưng thứ nó kiểm thì chưa. Đây cũng là module mà plan 12, 13, 14 đều
-import. `frontend/` hiện vẫn là untracked, chưa commit — cố ý giữ vậy, vì commit một cây có test
-import module không tồn tại là commit một trạng thái hỏng.
-
-Tôi đã tự chạy `npm install` (việc chạy lệnh build là phần của tôi, không phải phần giao đi).
-
-Một thiếu sót của bộ test cần vá khi làm nốt: **không ca nào kiểm `AbortSignal.timeout(5000)`**
-của quyết định (i), nên timeout sẽ là code không ai canh.
-
-Antigravity đã hoạt động lại sau hai lượt trắng liên tiếp.
-
-Năm quyết định của Task 2 đã ghi trong plan; ba cái quan trọng nhất:
-
-- Type `Template` phải có **đủ mười hai trường** của `TemplateDto`, dùng `| null` cho cột nullable
-  chứ không dùng `?` (Jackson ghi ra khoá với giá trị `null`, không bỏ khoá).
-- `trackEvent` chỉ gửi ba khoá; `userAgent`/`referrer` backend đọc từ header.
-- `trackEvent` phải luôn resolve, `getTemplates` phải có `AbortSignal.timeout(5000)`.
+Ngoài ra plan 12 gánh: **V-03** (`three-mesh-bvh@0.7.8` deprecated, vào qua `drei`), và mọi bài
+học về dữ liệu do người gửi đặt nếu carousel render tên/mô tả template.
 
 ---
 
@@ -130,6 +117,9 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | ~~**L-01 (p07t2)**~~ | MAJOR | Mail đồng bộ trong transaction + JavaMail không timeout | **Đã đóng** — timeout ở `0fbf9f1`, `AFTER_COMMIT` ở `0f53317`. Nhưng xem R-14 |
 | ~~**R-14 (p09)**~~ | MINOR | Pha `AFTER_COMMIT` chưa có test nào phân biệt được | **Đã đóng** — `c10adee`, test đếm qua transaction `REQUIRES_NEW`, mutation đỏ |
 | ~~**U-01 (p10)**~~ | MAJOR | `audit_logs.entity_id` của User CREATE là null vì service trả DTO | **Đã đóng** — `c10adee` |
+| **V-02 (p11t2)** | MAJOR | Sau khi nâng `next` lên 14.2.35 vẫn còn 9 advisory; dải bị ảnh hưởng kéo tới `16.3.0-preview.10` nên chỉ Next **16.3.5+** mới sạch — nhảy hai major, kéo React 19 và có thể R3F 9 | **Plan 12 phải chốt**: ở lại 14 hay lên 16 |
+| ~~**V-01 (p11t2)**~~ | MAJOR | `next@14.2.15` mà plan ghim dính GHSA-f82v-jwr5-mffw (Authorization Bypass in Middleware) — phá đúng thiết kế của plan 13 | **Đã đóng** — nâng 14.2.35, advisory biến mất |
+| V-03 (p11t2) | INFO | `three-mesh-bvh@0.7.8` deprecated vì lệch phiên bản three.js, vào qua `drei` | Plan 12 nhìn đầu tiên nếu `drei` lỗi lạ |
 | ~~**F-11 (p11t1)**~~ | MINOR | `@PageableDefault` chỉ đặt mặc định chứ không đặt trần; `?size=100000` trả về 2000 dòng trên cả leads lẫn users | **Đã đóng** — `6a39589`, `max-page-size: 100`, có test |
 | F-13 (p11t1) | INFO | Thêm khoá trùng nhánh vào `application.yml` ghi đè im lặng (tôi tự vấp: thêm `data:` thứ hai làm mất cấu hình Redis, 74 error) | Plan 15/16 phải kiểm nhánh cha trước khi thêm |
 | U-03 (p10) | INFO | `deactivate` ghi `action = "DELETE"`, thực chất là soft-delete | Plan 14 render đúng nhãn |

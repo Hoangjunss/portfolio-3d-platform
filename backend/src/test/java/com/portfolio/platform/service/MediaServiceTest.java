@@ -2,7 +2,9 @@ package com.portfolio.platform.service;
 
 import com.portfolio.platform.config.MediaStorageProperties;
 import com.portfolio.platform.converter.MediaConverter;
+import com.portfolio.platform.dto.MediaDto;
 import com.portfolio.platform.exception.InvalidRequestException;
+import com.portfolio.platform.exception.ResourceNotFoundException;
 import com.portfolio.platform.model.Media;
 import com.portfolio.platform.repository.MediaRepository;
 import com.portfolio.platform.service.impl.MediaServiceImpl;
@@ -15,6 +17,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -216,5 +222,65 @@ class MediaServiceTest {
         verify(mediaRepository).save(captor.capture());
         Media saved = captor.getValue();
         assertThat(saved.getUploadedBy()).isEqualTo(42L);
+    }
+
+    @Test
+    void list_returnsPagedMediaDtos() {
+        Media media = new Media();
+        media.setFileName("thumb.webp");
+        media.setUrl("/media/abc.webp");
+        media.setMimeType("image/webp");
+        media.setSizeBytes(1024);
+
+        Pageable pageable = PageRequest.of(0, 20);
+        when(mediaRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(media), pageable, 1));
+        when(mediaConverter.toDto(media)).thenReturn(new MediaDto(1L, "thumb.webp", "/media/abc.webp", "image/webp", 1024));
+
+        Page<MediaDto> page = mediaService.list(pageable);
+
+        assertThat(page.getContent()).extracting(MediaDto::fileName).contains("thumb.webp");
+    }
+
+    @Test
+    void delete_removesRowAndDoesNotThrowWhenFileAlreadyMissing() {
+        Media media = new Media();
+        media.setId(42L);
+        media.setFileName("gone.webp");
+        media.setUrl("/media/does-not-exist-on-disk.webp");
+        media.setMimeType("image/webp");
+        media.setSizeBytes(1);
+
+        when(mediaRepository.findById(42L)).thenReturn(Optional.of(media));
+
+        mediaService.delete(42L, "admin");
+
+        verify(mediaRepository).delete(media);
+    }
+
+    @Test
+    void delete_whenFileExists_deletesFileFromDisk(@TempDir Path tempDir) throws Exception {
+        mediaStorageProperties.setUploadDir(tempDir.toString());
+        Path fileOnDisk = tempDir.resolve("sample.webp");
+        Files.writeString(fileOnDisk, "dummy data");
+        assertThat(Files.exists(fileOnDisk)).isTrue();
+
+        Media media = new Media();
+        media.setId(50L);
+        media.setUrl("/media/sample.webp");
+
+        when(mediaRepository.findById(50L)).thenReturn(Optional.of(media));
+
+        mediaService.delete(50L, "admin");
+
+        verify(mediaRepository).delete(media);
+        assertThat(Files.exists(fileOnDisk)).isFalse();
+    }
+
+    @Test
+    void delete_unknownId_throwsResourceNotFound() {
+        when(mediaRepository.findById(999_999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> mediaService.delete(999_999L, "admin"))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }

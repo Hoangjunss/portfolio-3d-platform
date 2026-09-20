@@ -10,6 +10,8 @@ import com.portfolio.platform.model.Media;
 import com.portfolio.platform.repository.MediaRepository;
 import com.portfolio.platform.service.MediaService;
 import com.portfolio.platform.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -149,5 +151,36 @@ public class MediaServiceImpl implements MediaService {
         Media media = mediaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Media", id));
         return mediaConverter.toDto(media);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<MediaDto> list(Pageable pageable) {
+        return mediaRepository.findAll(pageable).map(mediaConverter::toDto);
+    }
+
+    @Audited(entityType = "Media", action = "DELETE")
+    @Transactional
+    @Override
+    public void delete(Long id, String username) {
+        Media media = mediaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Media", id));
+        mediaRepository.delete(media);
+        deleteFileQuietly(media.getUrl());
+    }
+
+    // Best-effort: a file already missing on disk must not turn a valid DB delete into a 500.
+    private void deleteFileQuietly(String url) {
+        if (url == null || mediaStorageProperties.getUploadDir() == null) {
+            return;
+        }
+        try {
+            Path fileName = Path.of(url).getFileName();
+            if (fileName != null) {
+                Path path = Path.of(mediaStorageProperties.getUploadDir()).resolve(fileName);
+                Files.deleteIfExists(path);
+            }
+        } catch (IOException ignored) {
+        }
     }
 }

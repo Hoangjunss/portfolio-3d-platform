@@ -1,7 +1,7 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `9ed973b` — plan 13 xong cả hai task, review PASS, **chưa push**
+**Commit cuối:** `c36a72e` — plan 13 shipped; plan 14–17 đã rà, **chưa implement**
 **Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **29/29 PASS**; `npm run build` xanh
 
 ---
@@ -104,43 +104,60 @@ vẫn là thư mục anh em độc lập, không cần route group riêng vì n�
 
 ---
 
-## Bước kế tiếp — plan 14 (admin dashboard CRUD), **CHƯA RÀ**
+## Bước kế tiếp — plan 14 (SẴN SÀNG GIAO); plan 15–17 rà xong nhưng **không verify được ở máy này**
 
-Plan 13 **xong cả hai task**, review PASS (`docs/reviews/2026-09-20-code-review-plan-13.md`).
-Lượt Antigravity tốt nhất từ trước tới nay: đủ 20 step, hai commit đúng ranh giới plan chia,
-0 file backend, báo cáo mutation khớp tuyệt đối khi tôi chạy lại cả bốn.
+Plan 13 shipped. Đã rà một lượt cả **14, 15, 16, 17** —
+`docs/reviews/2026-09-20-plan-review-14-to-17.md`. **14 MAJOR, 9 MINOR, 2 INFO.** Cả bốn plan
+đã được viết lại.
 
-Kiểm chứng đã làm, ngoài test suite:
+Rà bốn plan cùng lúc là cố ý, và đó là chỗ trả về nhiều nhất: **sáu finding nặng nhất không
+nhìn thấy được khi đọc từng plan riêng lẻ** — chúng là chỗ plan A hứa một thứ mà plan B không giao:
 
-- **4/4 mutation tự chạy lại đều ĐỎ**, số test đỏ khớp từng con số Antigravity báo (4/1/4/2).
-- **7 request thật vào `npm start`** — vì build xanh không nói gì về Edge runtime, nơi
-  middleware thật sự chạy. Plan cảnh báo `Buffer` có thể không tồn tại ở đó và cho sẵn đường lui
-  `atob`; Antigravity giữ `Buffer`, và **kiểm thật thì nó chạy đúng**, kể cả với payload
-  base64url chứa ký tự `-`. Token hợp lệ → 404 (đúng, `/admin` là của plan 14); hết hạn / rác /
-  thiếu `exp` → 307 về login; `/admin/login` → 200 (không vòng lặp); `/administrator` → 404
-  (matcher không rò).
+| Plan hứa | Plan khác không giao | Hậu quả |
+|---|---|---|
+| 15 đặt `NEXT_PUBLIC_API_BASE_URL` lúc **chạy** | Next.js inline biến đó lúc **build** | Mọi trình duyệt gọi `http://localhost:8080` |
+| 16 "đóng N-01" | 16 đặt `X-Real-IP` (không ai đọc), không đặt `X-Forwarded-For` | **Cả internet chung một rate-limit bucket** |
+| 16 phục vụ `/media/` từ `/data/media/` | 15 không mount `media-data` vào nginx | Mọi ảnh upload 404, carousel mất sạch thumbnail |
+| 13 đặt cookie `Secure` khi production | 16 chỉ có `listen 80` | **Vòng lặp đăng nhập ở production**, mọi bước đều báo thành công |
+| 17 đẩy image lên GHCR | 15 dùng `build:` không có khoá `image:` | `docker compose pull` không có gì để pull, deploy chết |
+| 11 đổi `/api/admin/leads` sang phân trang | 14 vẫn đọc như mảng phẳng | `leads.map is not a function`, màn trắng |
 
-**Trước khi giao plan 14, phải rà nó** — bảy plan gần đây rà cái nào cũng ra lỗi sống, và bản
-thân plan 13 ra 4 MAJOR. Hai thứ đã biết trước sẽ phải vào plan 14:
+### Plan 14 — viết lại, giao được ngay
 
-1. **Y-01 (MAJOR, từ review plan 13).** `app/admin/login/page.tsx` không có một dòng test nào.
-   Tôi tự chạy thêm hai mutation: bỏ nhánh 429 → **XANH**; bỏ dòng lưu refresh token cookie →
-   **XANH**. Nghĩa là bản vá X-01 — finding nặng nhất của vòng rà plan 13 — không có gì canh.
-   Đây là lần thứ **tư** dự án gặp khuôn này (C-02 → W-01 → X-03 → Y-01), và lần này lỗi là của
-   plan: plan 13 liệt kê file test cho `auth.ts`/`middleware.ts`/`templateTexture.ts` rồi quên
-   login page. Sửa theo đúng công thức đã dùng cho W-01: tách `loginErrorMessage(status)` và
-   `persistSession(tokens)` thành hàm thuần rồi test.
-2. **Plan 14 phải import `ACCESS_TOKEN_COOKIE`/`REFRESH_TOKEN_COOKIE` từ `lib/auth.ts`**, không
-   gõ lại chuỗi. Và theo quyết định (b) của plan 13, **auto-refresh chưa tồn tại** — `adminFetch`
-   là nơi phải làm, plan 14 không được giả định đã có.
+Ba MAJOR đáng chú ý ngoài bảng trên:
 
-Ngoài ra plan 14 còn nợ sẵn từ các vòng trước: **A-09** (cache TTL ngắn cho
-`/api/admin/analytics/summary`), **U-03** (render đúng nhãn cho soft-delete ghi `action=DELETE`),
-**C-04** (escape `media.file_name` — tên do người gửi đặt), **L-03** (test audit row đang lấy
-`findAll().get(size-1)`, phải lọc theo `entityType`).
+- **Z-02** — `app/admin/layout.tsx` bọc luôn `/admin/login`, nên trang đăng nhập hiện sidebar
+  Dashboard/Templates/Leads trong khi **chưa đăng nhập**. Đúng khuôn lỗi mà 18b phải sinh ra để
+  chặn ở tầng root. Sửa bằng route group `app/admin/(dashboard)/`.
+- **Z-03** — không lời gọi nào kiểm `res.ok`. Token sống 15 phút; mở tab rồi quay lại là 401,
+  `ApiErrorDto` bị nhét vào state rồi `.map` trên object → crash thay vì đăng nhập lại.
+- **Z-04** — **Y-01 không có trong plan 14**, dù review plan 13 giao cho nó. Đây là **lần thứ hai
+  liên tiếp** một finding được giao cho plan kế tiếp rồi không ai ghi vào plan đó (lần đầu: W-01
+  → plan 13, phát hiện khi rà). Cần đổi thói quen: giao finding thì phải sửa plan đích ngay lúc
+  đó, không chỉ ghi vào review.
 
-**Thứ tự chạy:** 14 → 18b → 19. **19 không được chạy trước 18b**, nếu không `SiteNav`/`SiteFooter`
-mount vào root layout và rò sang `/admin/**`.
+Plan 14 giờ có 3 task / 23 step, 6 quyết định, 6 mutation bắt buộc.
+
+### Plan 15–17 — viết lại xong, nhưng **không ai xác nhận được nó chạy**
+
+| Plan | Bước verify | Chạy được ở máy này? |
+|---|---|---|
+| 14 | `vitest`, `npm run build`, `npm run dev` | **Được** |
+| 15 | `docker compose up --build -d` | **Không** — không có Docker |
+| 16 | cần stack của plan 15 | **Không** |
+| 17 | `act` hoặc VPS staging | **Không** — cần VPS + secrets |
+
+Điểm sáng: **plan 15 Step 7 kiểm chứng số 3 chính là chỗ đóng F-01, R-03 và A-11** — lần đầu
+tiên trong lịch sử dự án Flyway gặp Postgres thật thay vì H2. Ba finding đó treo từ đầu dự án
+đúng vì lý do này.
+
+**Ba lựa chọn, cần người chủ dự án chọn:**
+
+1. **Cài Docker Desktop lên máy này** — mở khoá cả F-01/R-03/A-11 lẫn verify của 15/16. Đề xuất
+   của tôi, nó trả nợ nhiều nhất.
+2. **Ship 15/16/17 đánh dấu "chưa verify"** — rủi ro: ba plan hạ tầng chưa chạy chồng lên nhau,
+   lỗi lộ hết một lần ở lần deploy đầu.
+3. **Dừng ở plan 14**, làm nốt roadmap frontend (18b–28) trước.
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -198,8 +215,8 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | ~~**C-01 (p06)**~~ | MAJOR | Upload bị từ chối → 500 + ghi `system_error_logs`; EDITOR bơm được bảng | **Đã đóng** — `c7a3a0d`, M3 đỏ |
 | ~~**C-02 (p06)**~~ | MAJOR | Test sniffed-type không canh giá trị `mime_type` lưu xuống | **Đã đóng** — `c7a3a0d`, M1 đỏ |
 | ~~C-03 (p06)~~ | MINOR | `in.read(header)` có thể đọc thiếu → WEBP hợp lệ bị từ chối | **Đã đóng** — `c7a3a0d`, M2 đỏ |
-| **N-01 (p09 rà plan)** | — | Rate limit khoá `getRemoteAddr()`; sau nginx thì cả site chung một bucket nếu không có `forward-headers-strategy` | **Plan 16** — thứ thứ ba plan 16 nợ |
-| **A-08 (p08t2)** | MAJOR khi deploy | `analytics.ip-hash-secret` và `jwt.access-secret` đều có default nằm công khai trong repo, không gì fail nếu env không đặt | **Plan 15 phải bắt buộc env thật, fail startup nếu còn giá trị dev** |
+| **N-01 (p09 rà plan)** | MAJOR khi deploy | Rate limit khoá `getRemoteAddr()`; sau nginx thì cả site chung một bucket | **Plan 16 Step 1–2** — đã ghi vào plan kèm test và bẫy `$proxy_add_x_forwarded_for` |
+| **A-08 (p08t2)** | MAJOR khi deploy | `analytics.ip-hash-secret` và `jwt.access-secret` đều có default nằm công khai trong repo, không gì fail nếu env không đặt | **Plan 15 Step 6** — `SecretsGuard` + 4 test, đã ghi vào plan. Bản cũ của plan 15 còn **không truyền `ANALYTICS_IP_HASH_SECRET`** |
 | A-09 (p08t2) | INFO | `/api/admin/analytics/summary` không cache, 3 query mỗi lần gọi | Plan 14 — cache TTL ngắn |
 | A-10 (p08t2) | INFO | `existsById` bỏ qua soft-delete của `TemplateService` | Ghi nhận |
 | A-11 (p08t2) | — | `V3__analytics_indexes.sql` chưa từng chạy thật | Gia nhập R-03/F-01 |
@@ -234,11 +251,22 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | ~~**R-08 (p03b)**~~ | MINOR | Không giới hạn số refresh token sống mỗi user | **Đã đóng** — `4339067`, cap 5 |
 | R-09 (p03b) | MINOR | Test job không chứng minh `@EnableScheduling` còn đó | Hoãn |
 | R-10 (p03b) | INFO | H2 sinh `timestamp with time zone`, migration khai `TIMESTAMP` | Thuộc F-08 |
-| F-01 | — | Migration và entity chưa từng được đối chiếu | Cần Docker. **Phải đóng trước plan 15** |
+| F-01 | — | Migration và entity chưa từng được đối chiếu | **Plan 15 Step 7 kiểm chứng 3** đóng nó — lần đầu Flyway gặp Postgres thật. Cần Docker |
 | F-08 | — | `TIMESTAMP` vs `Instant` lệch timezone | Chốt trước deploy thật |
 | F-09 | — | JWT sống thêm tối đa 15 phút sau khi deactivate | Chấp nhận theo spec |
 | ~~**W-01 (p12t2)**~~ | MAJOR | `TemplateCarousel3D` không có test nào chạm tới (jsdom không có WebGL); M8 xanh | **Đã đóng** — `77ede20`, M4 đỏ |
-| **Y-01 (p13)** | MAJOR | `app/admin/login/page.tsx` không có test nào; M5 (bỏ nhánh 429) và M6 (bỏ lưu refresh token) đều **XANH** — bản vá X-01 không có gì canh | **Plan 14** — tách `loginErrorMessage` + `persistSession` thành hàm thuần |
+| **Y-01 (p13)** | MAJOR | `app/admin/login/page.tsx` không có test nào; M5 (bỏ nhánh 429) và M6 (bỏ lưu refresh token) đều **XANH** — bản vá X-01 không có gì canh | **Plan 14 Task 1** — đã ghi vào plan |
+| **Z-01 (rà p14)** | MAJOR | `/api/admin/leads` trả `Page` envelope, plan đọc như mảng → `leads.map is not a function` | **Plan 14** — `unwrapPage`, M1/M2 |
+| **Z-02 (rà p14)** | MAJOR | `app/admin/layout.tsx` bọc cả `/admin/login` → trang đăng nhập hiện sidebar admin | **Plan 14** — route group `(dashboard)` |
+| **Z-03 (rà p14)** | MAJOR | Không lời gọi nào kiểm `res.ok`; 401 giữa phiên cho ra crash chứ không phải đăng nhập lại | **Plan 14** — `useAdminResource` |
+| **Z-10 (rà p15)** | MAJOR | `NEXT_PUBLIC_API_BASE_URL` đặt lúc chạy, Next inline lúc build → bundle nhúng cứng `localhost:8080` | **Plan 15** — `ARG` + `build.args` |
+| **Z-16 (rà p16)** | MAJOR | nginx đặt `X-Real-IP` (không ai đọc), không đặt `X-Forwarded-For`; cả internet chung một bucket | **Plan 16** — overwrite XFF + `forward-headers-strategy`, có test |
+| **Z-17 (rà p16)** | MAJOR | nginx phục vụ `/media/` từ volume nó không mount → mọi ảnh 404 | **Plan 16** + mount trong plan 15 |
+| **Z-18 (rà p16)** | MAJOR | Không có TLS; cookie `Secure` của plan 13 bị trình duyệt bỏ qua trên http → vòng lặp đăng nhập | **Plan 16** — mọi block là 443 |
+| **Z-21 (rà p17)** | MAJOR | CI đẩy image lên GHCR nhưng compose không có khoá `image:`; VPS không có source để build | **Plan 17** + `image:` trong plan 15 |
+| **Z-22 (rà p17)** | MAJOR | Không bước nào đặt secrets lên VPS; `Keys.hmacShaKeyFor("")` ném, backend không khởi động | **Plan 17** — ghi `.env` khi deploy |
+| **Z-23 (rà p17)** | MAJOR | Workflow không chạy một test nào trước khi deploy | **Plan 17** — job `test` gate |
+| **Z-20 (rà p17)** | MAJOR | Workflow trỏ nhánh `main`; repo chỉ có `master` → không bao giờ chạy | **Plan 17** — đổi sang `master` |
 | Y-02 (p13) | MINOR | `res.json()` không kiểm gì; response thiếu trường → cookie `"undefined"` → login thành công nhưng bị đá về login, không thông báo | Gộp vào lượt sửa Y-01 |
 | Y-03 (p13) | INFO | `15 * 60` chép tay từ `jwt.access-ttl-minutes`; khuôn D-02. Tự giới hạn vì `hasValidSession` đọc `exp` thật | Ghi nhận |
 | ~~**X-01 (rà plan 13)**~~ | MAJOR | Bản cũ của plan 13 vứt `refreshToken`; phiên chết sau 15 phút, logout không gọi được, token 7 ngày không thu hồi được | **Đã đóng** — `9ed973b` lưu cả hai cookie (nhưng xem Y-01) |

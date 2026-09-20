@@ -49,8 +49,15 @@
 - Create: `backend/src/main/java/com/portfolio/platform/dto/SystemErrorLogDto.java`
 - Create: `backend/src/main/java/com/portfolio/platform/converter/SystemErrorLogConverter.java`
 - Create: `backend/src/main/java/com/portfolio/platform/converter/impl/SystemErrorLogConverterImpl.java`
-- Create: `backend/src/main/java/com/portfolio/platform/service/SystemErrorLogService.java`
-- Create: `backend/src/main/java/com/portfolio/platform/service/impl/SystemErrorLogServiceImpl.java`
+- **Modify (NOT create):** `backend/src/main/java/com/portfolio/platform/service/SystemErrorLogService.java`
+- **Modify (NOT create):** `backend/src/main/java/com/portfolio/platform/service/impl/SystemErrorLogServiceImpl.java`
+
+> **Corrected 2026-09-20.** Both were labelled `Create:` in the original draft and both already
+> exist. The interface declares two `record(...)` overloads that `GlobalExceptionHandler` calls to
+> write a `system_error_logs` row for every 5xx — a Global Constraint of this project. Replacing
+> the files deletes those overloads. Unlike the equivalent trap in plan 25 this one **will not
+> compile**, because `GlobalExceptionHandler` still calls them; do **not** resolve that by editing
+> `GlobalExceptionHandler`. **Add the read method to the existing files and leave `record` alone.**
 - Create: `backend/src/main/java/com/portfolio/platform/controller/AdminErrorLogController.java`
 - Modify: `backend/src/main/java/com/portfolio/platform/repository/SystemErrorLogRepository.java` — extend `JpaRepository<SystemErrorLog, Long>` with `Page<SystemErrorLog> findAllByOrderByCreatedAtDesc(Pageable pageable)`.
 - Test: `backend/src/test/java/com/portfolio/platform/controller/AdminErrorLogControllerTest.java`
@@ -131,7 +138,7 @@ void listErrorLogs_rejectsUnauthenticated() throws Exception {
 Run: `mvn -f backend/pom.xml test -Dtest=AdminErrorLogControllerTest`
 Expected: FAIL — `AdminErrorLogController` does not exist.
 
-- [ ] **Step 8: Create `SystemErrorLogService`/`SystemErrorLogServiceImpl` and `AdminErrorLogController`**
+- [ ] **Step 8: Add the read method to the EXISTING `SystemErrorLogService`/`SystemErrorLogServiceImpl`, and create `AdminErrorLogController`**
 
 Service method: `Page<SystemErrorLogDto> list(Pageable pageable)` — clamps `pageable.getPageSize()` to 100 (mirror `AdminLeadController`'s cap), calls `findAllByOrderByCreatedAtDesc`, maps via converter. Controller: `@RestController @RequestMapping("/api/admin/error-logs")`, single `@GetMapping` delegating to the service. **Controller must not call the repository or converter directly** — only the service (5.1 dependency rule).
 

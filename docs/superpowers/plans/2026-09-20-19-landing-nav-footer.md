@@ -54,16 +54,91 @@ html, body {
 }
 ```
 
-- [ ] **Step 3: Verify the build picks up the tokens**
+- [ ] **Step 3: Actually load the three fonts — declaring them in `tokens.css` does not fetch them**
+
+`tokens.css` names Fraunces, EB Garamond and Geist Mono, but **nothing in the repo loads them**:
+no `next/font`, no stylesheet link. Every one of the three therefore falls through to its fallback
+(`ui-serif, Georgia, serif` / `ui-monospace`), and spec line 175 — "No Inter/Roboto/system-ui
+default" — fails **silently**: no error in the build, none in the browser console, just the wrong
+typeface. Fixing this is inside this plan's Goal ("wire `tokens.css` into the app"), because tokens
+that resolve to a fallback are not wired.
+
+Use `next/font/google`, which is built into Next 15 (no new dependency) and self-hosts the files, so
+there is no runtime request to Google.
+
+Modify `frontend/app/layout.tsx`:
+
+```tsx
+import { Fraunces, EB_Garamond, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+const fraunces = Fraunces({ subsets: ["latin", "vietnamese"], display: "swap", variable: "--font-display-face" });
+const ebGaramond = EB_Garamond({ subsets: ["latin", "vietnamese"], display: "swap", variable: "--font-body-face" });
+const geistMono = Geist_Mono({ subsets: ["latin"], display: "swap", variable: "--font-wordmark-face" });
+
+export const metadata = {
+  title: "Portfolio",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="vi" className={`${fraunces.variable} ${ebGaramond.variable} ${geistMono.variable}`}>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+Then point the three font tokens at the loaded faces, keeping the fallback chain
+(`frontend/tokens.css`, lines 22-24 — **do not touch the Hallmark stamp comment at the top**):
+
+```css
+  --font-display:  var(--font-display-face), ui-serif, Georgia, serif;
+  --font-body:     var(--font-body-face), ui-serif, Georgia, serif;
+  --font-wordmark: var(--font-wordmark-face), ui-monospace, monospace;
+```
+
+**`subsets` must include `vietnamese`.** All public copy is Vietnamese ("Xem template",
+"Đăng nhập quản trị", "Một xưởng, hai mươi bản thiết kế."). With `subsets: ["latin"]` only, every
+diacritic falls back to a different font mid-word — visibly mismatched glyphs. If `next build` rejects
+`vietnamese` for a family ("Unknown subset"), drop to `["latin", "latin-ext"]` **for that family
+only** and write down in the commit body which family lost the subset and why.
+
+**`lang` changes `"en"` → `"vi"`.** The site's content is Vietnamese; `lang="en"` mis-declares it to
+screen readers and to the browser's hyphenation. Plan 18b deliberately left this alone to keep its
+own diff to the route-group move — this is the plan where the Vietnamese-facing chrome lands, so it
+is the right place to correct it.
+
+- [ ] **Step 4: Verify the build picks up the tokens and the fonts**
 
 Run: `cd frontend && npm run build`
-Expected: build succeeds; no "unresolved import" or PostCSS error for `tokens.css`.
+Expected: build succeeds; no "unresolved import" or PostCSS error for `tokens.css`; no "Unknown
+subset" error from `next/font`.
 
-- [ ] **Step 4: Commit**
+Then confirm the fonts actually resolve, rather than assuming:
 
 ```bash
-git add frontend/app/globals.css
-git commit -m "chore: wire Hallmark design tokens into globals.css"
+cd frontend
+npm start & SERVER_PID=$!
+for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 1; done
+curl -s http://localhost:3000/ | grep -o 'lang="[a-z]*"'
+curl -s http://localhost:3000/ | grep -c "__variable\|font-display-face"
+kill $SERVER_PID
+```
+
+Expected: `lang="vi"`, and a non-zero count — `next/font` injects a generated class carrying the
+`--font-*-face` variables onto `<html>`. A zero count means the fonts are declared but not loaded,
+which is the exact failure this step exists to catch.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add frontend/app/globals.css frontend/app/layout.tsx frontend/tokens.css
+git commit -m "chore: wire Hallmark design tokens and load the three fonts they name"
 ```
 
 ---
@@ -80,25 +155,36 @@ git commit -m "chore: wire Hallmark design tokens into globals.css"
 
 - [ ] **Step 1: Write the failing test — wordmark and CTA are both present and the CTA points at `#templates`**
 
+**Test idiom — read this before writing the file.** This repo has **no DOM test environment**:
+`vitest.config.mjs` sets no `environment`, so tests run in Node with no `document`, and
+`@testing-library/react`, `@testing-library/jest-dom` and `jsdom` are **not** in `package.json`.
+All 9 existing test files render with `renderToString` from `react-dom/server` and assert on the
+returned HTML string. Follow that idiom. **Do not `npm install` a testing library** — adding one is
+an unapproved dependency + lockfile change, and `npm ci` in CI would fail on a stale lockfile.
+
 ```tsx
+import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
 import { SiteNav } from "./SiteNav";
 
 describe("SiteNav", () => {
   it("renders the wordmark and a CTA linking to the templates section", () => {
-    render(<SiteNav />);
-    expect(screen.getByText("PORTFOLIO")).toBeInTheDocument();
-    const cta = screen.getByRole("link", { name: "Xem template" });
-    expect(cta).toHaveAttribute("href", "#templates");
+    const html = renderToString(<SiteNav />);
+    expect(html).toContain("PORTFOLIO");
+    expect(html).toContain('href="#templates"');
+    expect(html).toContain("Xem template");
   });
 
-  it("has no visible link row besides the CTA (N9 has no nav-link list)", () => {
-    render(<SiteNav />);
-    expect(screen.queryAllByRole("link")).toHaveLength(1);
+  // N9 is defined by the absence of a nav-link row, so the count is the assertion.
+  it("renders exactly one anchor", () => {
+    const html = renderToString(<SiteNav />);
+    expect(html.match(/<a\s/g) ?? []).toHaveLength(1);
   });
 });
 ```
+
+`SiteNav` is a `"use client"` component, which `renderToString` still renders — `useEffect` simply
+does not run, so what the test sees is the pre-scroll state. That is exactly the state being asserted.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -175,22 +261,26 @@ git commit -m "feat: add SiteNav (Hallmark N9 edge-aligned minimal)"
 
 - [ ] **Step 1: Write the failing test**
 
+Same idiom as Task 2 — `renderToString`, no testing library.
+
 ```tsx
+import { renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
 import { SiteFooter } from "./SiteFooter";
 
 describe("SiteFooter", () => {
   it("renders the wordmark, the admin login link, and the contact anchor", () => {
-    render(<SiteFooter />);
-    expect(screen.getByText("PORTFOLIO")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Đăng nhập quản trị" })).toHaveAttribute("href", "/admin/login");
-    expect(screen.getByRole("link", { name: "Liên hệ" })).toHaveAttribute("href", "#contact");
+    const html = renderToString(<SiteFooter />);
+    expect(html).toContain("PORTFOLIO");
+    expect(html).toContain('href="/admin/login"');
+    expect(html).toContain("Đăng nhập quản trị");
+    expect(html).toContain('href="#contact"');
+    expect(html).toContain("Liên hệ");
   });
 
   it("does not render a social icon row (none exist yet)", () => {
-    render(<SiteFooter />);
-    expect(screen.queryByRole("list")).not.toBeInTheDocument();
+    const html = renderToString(<SiteFooter />);
+    expect(html).not.toContain("<ul");
   });
 });
 ```
@@ -238,6 +328,12 @@ export function SiteFooter() {
   );
 }
 ```
+
+**Note on `new Date().getFullYear()`:** the home page prerenders as static (`○ (Static)` in the
+build output), so this year is frozen at **build time**, not request time. On 1 January the footer
+silently shows last year until the next deploy. Accepted for now — the site redeploys on every push
+to `master` — but do not "fix" it by making the footer a client component, which would ship React
+state for a constant.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -313,3 +409,19 @@ git commit -m "feat: mount SiteNav and SiteFooter in the (public) route group la
 - **Token discipline:** zero hard-coded colours/fonts; every visual value is a `var(--token)` reference back to `frontend/tokens.css`.
 - **`/admin` isolation:** handled by plan 18b, which must run first. `SiteNav`/`SiteFooter` mount in `app/(public)/layout.tsx`; `app/admin/**` sits outside that route group, so Next.js never applies the public chrome to it. **This supersedes the earlier open risk recorded here** -- that text was written when the fix was still undecided, and when `app/admin/` was believed not to exist. It does exist (`app/admin/login/`, `app/admin/(dashboard)/`), and it needs no change: only the public tree moves.
 - **This is the first of three landing-page plans.** Next: `2026-09-20-20-landing-hero-about.md`.
+
+## Review findings applied (2026-09-20)
+
+See `docs/reviews/2026-09-20-plan-review-19.md`. Two were blocking:
+
+1. **Tests used `@testing-library/react` + `toBeInTheDocument()`, neither installed**, and
+   `vitest.config.mjs` declares no DOM environment. Both test files rewritten to the
+   `renderToString` idiom the other 9 test files already use.
+2. **The three fonts were never loaded.** New Task 1 Step 3 loads them via `next/font/google` with
+   the `vietnamese` subset, and corrects `lang="en"` → `"vi"`.
+
+**Open decision, affects plans 20-23, not this plan:** plans 22 and 23 test with `fireEvent`
+(click, change), which `renderToString` cannot do — those genuinely need a DOM. Before plan 22 runs,
+the project owner has to decide whether to add `jsdom` + `@testing-library/react` +
+`@testing-library/jest-dom` and set `environment: "jsdom"`. Plans 20 and 21 assert static markup
+only and can be converted to `renderToString` like this plan was.

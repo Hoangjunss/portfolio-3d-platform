@@ -40,7 +40,7 @@
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **plan 19 XONG 4/4**. **Toàn bộ plan 20–28 đã được rà** — 6 lỗi, 3 trong số đó là lỗi chặn trải trên nhiều plan; đã vá hết, lượt quét cuối sạch (`docs/reviews/2026-09-20-plan-review-20-to-28.md`). Sinh thêm plan mới **19b** (DOM test environment) làm tiền đề cho 20/21/22/23. **Thứ tự chạy: 19b → 20 → 21 → 22 → 23 → 24 → 25 → 26 → 27 → 28.** Mọi plan giờ đều đã qua rà.
+Tiến độ: **plan 19 XONG 4/4**; **plan 19b XONG 2/2** (`acebf9e`, `de61502`) — jsdom + testing-library pin chính xác, opt-in từng file, **47/47**. Toàn bộ plan 20–28 đã rà (6 lỗi, 3 chặn — `docs/reviews/2026-09-20-plan-review-20-to-28.md`). **Kế tiếp: plan 20.** Thứ tự còn lại: 20 → 21 → 22 → 23 → 24 → 25 → 26 → 27 → 28.
 
 ---
 

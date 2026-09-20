@@ -3,17 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "@/lib/apiClient";
-import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/auth";
-
-const ACCESS_TOKEN_MAX_AGE_SECONDS = 15 * 60; // matches jwt.access-ttl-minutes
-const REFRESH_TOKEN_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // matches jwt.refresh-ttl-days
-
-// Not HttpOnly on purpose: the backend's JwtAuthFilter reads only the Authorization header, so
-// plan 14's adminFetch has to read this value from JS to build that header. Decision (f).
-function setCookie(name: string, value: string, maxAgeSeconds: number) {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  document.cookie = `${name}=${value}; path=/; max-age=${maxAgeSeconds}; SameSite=Strict${secure}`;
-}
+import { persistSession } from "@/lib/auth";
+import { loginErrorMessage } from "@/lib/loginError";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -34,22 +25,12 @@ export default function AdminLoginPage() {
       });
 
       if (!res.ok) {
-        // 429 is reachable in normal use: rate-limit allows 10 login attempts per IP per 15
-        // minutes, so a user who mistypes repeatedly then types it right must be told to wait
-        // instead of being shown "invalid credentials" again.
-        if (res.status === 429) {
-          setError("Too many attempts. Try again in a few minutes.");
-        } else if (res.status === 401) {
-          setError("Invalid credentials");
-        } else {
-          setError("Login is unavailable right now. Try again shortly.");
-        }
+        setError(loginErrorMessage(res.status));
         return;
       }
 
-      const { accessToken, refreshToken } = await res.json();
-      setCookie(ACCESS_TOKEN_COOKIE, accessToken, ACCESS_TOKEN_MAX_AGE_SECONDS);
-      setCookie(REFRESH_TOKEN_COOKIE, refreshToken, REFRESH_TOKEN_MAX_AGE_SECONDS);
+      const body = await res.json();
+      persistSession(body);
       router.push("/admin");
     } catch {
       setError("Cannot reach the server.");

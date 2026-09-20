@@ -40,7 +40,7 @@
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **18b / 19 / 19b / 20 / 21 XONG** — landing page hoàn chỉnh, **64/64**. Hai lỗi sau plan 21 đã đóng (`e65bd7d`, `3e8dfb1`): form không còn đứng cứng khi backend chết, và `:focus-visible` dùng `--color-focus` đã có. **Kế tiếp: plan 22** — plan đầu tiên có backend, **nhớ `export JAVA_HOME` JDK 21 trước khi `mvn`**. Còn lại: 22 → 23 → 24 → 25 → 26 → 27 → 28. **Nợ kỹ thuật:** 4 `!important` trong `contact-form.css` bị ép bởi inline style của `ContactForm` — gộp vào một lượt dọn CSS trước production (`docs/reviews/2026-09-20-code-review-plan-21-fixes.md`).
+Tiến độ: **18b / 19 / 19b / 20 / 21 / 22 XONG** — backend **140/140**, frontend **73/73**. Plan 22 cả hai task PASS; task 1 từng commit ở trạng thái **không compile** (thiếu `import java.util.List`), tôi vá ở `4cbe41f`. **Kế tiếp: plan 23.** Còn lại: 23 → 24 → 25 → 26 → 27 → 28. **Nhớ `export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"` trước mọi lệnh `mvn`** — mặc định máy là JDK 8. **Nợ kỹ thuật:** 4 `!important` trong `contact-form.css` (lượt dọn CSS trước production).
 
 ---
 

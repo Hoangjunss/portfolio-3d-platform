@@ -8,15 +8,20 @@ so mounting the public nav/footer in a layout can never leak into `/admin/**`.
 
 **Why now:** plan 19 (landing nav/footer) flagged in its Self-Review Notes that mounting `SiteNav`/
 `SiteFooter` directly in the true root `app/layout.tsx` would leak them onto every `/admin/**` route,
-because `app/admin/` today is a plain subdirectory, not an isolated route-group layout. This plan is
-a prerequisite for plan 19 Task 4 and must run before it. `app/admin/` does not exist on disk yet
-(plan 13/14 haven't run), so this is a clean move, not a refactor of existing admin code.
+because `app/admin/` is a plain subdirectory, not an isolated route-group layout. This plan is a
+prerequisite for plan 19 Task 4 and must run before it.
+
+**Corrected premise (2026-09-20):** an earlier draft of this plan claimed `app/admin/` did not exist
+yet. It does -- plan 13/14 have run, and the tree is `app/admin/login/page.tsx` plus
+`app/admin/(dashboard)/{layout,page,leads,templates}`. Nothing below changes because of that: this
+plan only moves the public page, and `admin/` is already a sibling outside `(public)`, which is
+exactly the end state we want. Do not touch it.
 
 **Architecture:** Next.js App Router route groups (`(folder)`) create additional root-level layouts
 without adding a URL segment. `app/layout.tsx` stays the single true root (`<html>`/`<body>`,
 metadata) and renders *only* `{children}` — no nav, no footer. `app/(public)/layout.tsx` (created by
 plan 19, not this plan) will be where `SiteNav`/`SiteFooter` mount, wrapping every public page.
-`app/admin/**` (created later by plan 13) stays a plain sibling directory outside `(public)` — Next.js
+`app/admin/**` (already created by plan 13/14) stays a plain sibling directory outside `(public)` — Next.js
 does not apply a route group's layout to siblings outside that group, so `/admin/**` never sees the
 public chrome, with zero extra config.
 
@@ -27,9 +32,7 @@ public-only chrome).
 
 **Depends on:** `2026-09-19-11-frontend-scaffold.md` (needs `app/page.tsx` to exist). **Required by:**
 `2026-09-20-19-landing-nav-footer.md` Task 4 (targets `app/(public)/layout.tsx`, not `app/layout.tsx`).
-**Must run before:** `2026-09-19-13-admin-auth-middleware.md` if that plan has not yet created
-`app/admin/**` — if it already has by the time this runs, verify `app/admin/` is NOT accidentally
-nested inside `(public)` before proceeding (Step 1 checks this).
+Plan 13/14 have already created `app/admin/**`; Step 1 verifies it is not nested inside `(public)`.
 
 ## Global Constraints
 
@@ -55,9 +58,10 @@ nested inside `(public)` before proceeding (Step 1 checks this).
 - [ ] **Step 1: Confirm current state before moving anything**
 
 Run: `ls frontend/app` and `cat frontend/app/layout.tsx`
-Expected: `app/` contains `globals.css`, `layout.tsx`, `page.tsx` only — no `admin/` directory yet.
-If `admin/` already exists, stop and confirm it sits at `frontend/app/admin/`, not
-`frontend/app/(public)/admin/`, before continuing.
+Expected: `app/` contains `admin/`, `globals.css`, `layout.tsx`, `page.tsx`. The `admin/` directory
+**is supposed to be there** -- plan 13/14 created it. The only thing to confirm is that it sits at
+`frontend/app/admin/` and NOT at `frontend/app/(public)/admin/`. If that holds, continue; this plan
+never touches it.
 
 - [ ] **Step 2: Create the route group and move the page**
 
@@ -95,22 +99,40 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );
 }
 ```
 
+This step is a read-only check. `lang` is `"en"` on disk and stays `"en"` -- do not "fix" it to
+`"vi"` or anything else; changing it is outside this plan's scope.
+
 If plan 19 already ran and added `SiteNav`/`SiteFooter` directly to this file, move those two lines
 into `app/(public)/layout.tsx` from Step 3 instead, and revert this file to the shape above.
 
 - [ ] **Step 5: Verify the URL is unaffected by the route group**
 
-Run: `cd frontend && npm run build && npm run dev &` then `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/`
-Expected: `next build` succeeds (route groups never appear in the generated route manifest as a URL
-segment); `curl` returns `200` for `/` — the route group folder name `(public)` does not become part
-of the path.
+Run:
+
+```bash
+cd frontend
+npm run build
+npm start & SERVER_PID=$!
+for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 1; done
+curl -s -o /dev/null -w "%{http_code}
+" http://localhost:3000/
+kill $SERVER_PID
+```
+
+Expected: `next build` succeeds and its route table lists `/` (not `/(public)/`); the final `curl`
+prints `200`.
+
+The readiness loop and the `kill` both matter: a bare `npm run dev &` followed immediately by `curl`
+races the server's startup and reports a false failure, and without the `kill` the server outlives
+the step and holds port 3000 against every later run. Use `npm start` (the production server over the
+build you just made), not `npm run dev`.
 
 - [ ] **Step 6: Run the existing test suite as a regression check**
 

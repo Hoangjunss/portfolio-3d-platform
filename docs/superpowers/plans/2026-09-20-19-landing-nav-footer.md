@@ -4,7 +4,7 @@
 
 **Goal:** Wire `frontend/tokens.css` into the app, then build `SiteNav` (Hallmark N9 Edge-aligned minimal) and `SiteFooter` (Hallmark Ft1 Mast-headed) as the shared chrome every landing page section mounts inside.
 
-**Architecture:** `SiteNav` and `SiteFooter` are server components (no client state except the scroll-triggered background swap on `SiteNav`, which needs `"use client"`). Both render inside `app/layout.tsx`, wrapping `{children}` so every route (including future `/admin` pages, which already have their own nav from plan 13) gets the public nav/footer only on the public route group.
+**Architecture:** `SiteNav` and `SiteFooter` are server components (no client state except the scroll-triggered background swap on `SiteNav`, which needs `"use client"`). Both render inside `app/(public)/layout.tsx` (created by plan 18b), wrapping `{children}` so only the public tree gets this chrome. `app/admin/**` is a plain sibling outside `(public)` and keeps its own nav from plan 13/14 -- it never sees `SiteNav`/`SiteFooter`. Do NOT mount either component in the true root `app/layout.tsx`.
 
 **Tech Stack:** Next.js App Router, TailwindCSS (tokens via CSS custom properties, not Tailwind theme extension), Vitest + Testing Library.
 
@@ -76,7 +76,7 @@ git commit -m "chore: wire Hallmark design tokens into globals.css"
 
 **Interfaces:**
 - Consumes: nothing (static wordmark + anchor link — no API call).
-- Produces: `<SiteNav />`, mounted once in `app/layout.tsx`.
+- Produces: `<SiteNav />`, mounted once in `app/(public)/layout.tsx` (Task 4) -- never in the true root `app/layout.tsx`.
 
 - [ ] **Step 1: Write the failing test — wordmark and CTA are both present and the CTA points at `#templates`**
 
@@ -171,7 +171,7 @@ git commit -m "feat: add SiteNav (Hallmark N9 edge-aligned minimal)"
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `<SiteFooter />`, mounted once in `app/layout.tsx`.
+- Produces: `<SiteFooter />`, mounted once in `app/(public)/layout.tsx` (Task 4) -- never in the true root `app/layout.tsx`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -311,5 +311,5 @@ git commit -m "feat: mount SiteNav and SiteFooter in the (public) route group la
 
 - **Spec coverage:** implements design spec §4.1 (Nav) and §4.7 (Footer) in full — wordmark, single CTA, no link row, admin login + contact links, no fabricated social row.
 - **Token discipline:** zero hard-coded colours/fonts; every visual value is a `var(--token)` reference back to `frontend/tokens.css`.
-- **`/admin` isolation:** confirmed `app/admin/layout.tsx` (plan 13) is a separate layout segment — Next.js App Router does not nest the root layout's `SiteNav`/`SiteFooter` inside a route group that defines its own layout only when using route groups `(public)`/`(admin)`. **Open risk flagged, not fixed here:** the current `app/admin/` tree is a plain subdirectory, not a route group — mounting `SiteNav`/`SiteFooter` in the root layout WILL currently leak the public nav/footer onto every `/admin/**` page too. Fixing this (moving `admin/` under a `(admin)` route group, and the public sections under a `(public)` route group) is a **prerequisite** this plan's Task 4 depends on; flagged for the operator to confirm before merging Task 4, or fold into this task if approved.
+- **`/admin` isolation:** handled by plan 18b, which must run first. `SiteNav`/`SiteFooter` mount in `app/(public)/layout.tsx`; `app/admin/**` sits outside that route group, so Next.js never applies the public chrome to it. **This supersedes the earlier open risk recorded here** -- that text was written when the fix was still undecided, and when `app/admin/` was believed not to exist. It does exist (`app/admin/login/`, `app/admin/(dashboard)/`), and it needs no change: only the public tree moves.
 - **This is the first of three landing-page plans.** Next: `2026-09-20-20-landing-hero-about.md`.

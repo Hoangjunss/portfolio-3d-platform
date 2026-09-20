@@ -17,3 +17,6 @@ out/
 .vscode/
 *.iml
 .DS_Store
+
+# Certificates
+nginx/certs/*.pem

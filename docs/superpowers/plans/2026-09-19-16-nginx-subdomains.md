@@ -103,7 +103,7 @@ text, not in what was implemented from it — so fix them here rather than blami
 - Create: `backend/.dockerignore`
 - Create: `backend/src/test/java/com/portfolio/platform/config/SecretsGuardWiringTest.java`
 
-- [ ] **Step 0.1: Give each build context its own `.dockerignore` (AB-01)**
+- [x] **Step 0.1: Give each build context its own `.dockerignore` (AB-01)**
 
 Docker reads `.dockerignore` from the **root of the build context**, not the root of the repo.
 `docker-compose.yml` declares `context: ./frontend` and `build: ./backend`, so the existing
@@ -139,7 +139,7 @@ target
 Keep the repo-root `.dockerignore` as-is — it is harmless and would apply if anyone later builds
 with the repository root as context. It simply cannot substitute for these two.
 
-- [ ] **Step 0.2: Write a test that fails when the secrets guard is unwired (AB-02)**
+- [x] **Step 0.2: Write a test that fails when the secrets guard is unwired (AB-02)**
 
 `SecretsGuardTest` calls `new SecretsGuard(env).verify()` directly. That proves the *logic* and
 proves nothing about whether the class runs at startup. Both of these mutations currently leave
@@ -181,7 +181,7 @@ class SecretsGuardWiringTest {
 }
 ```
 
-- [ ] **Step 0.3: Verify — and prove the new test has weight**
+- [x] **Step 0.3: Verify — and prove the new test has weight**
 
 ```bash
 export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"
@@ -199,7 +199,7 @@ so this stays green. Catching that needs a test that activates the `prod` profil
 context to refuse to start, which drags in real database configuration. **Leave that as an open
 finding** rather than half-building it here — say so in the commit body.
 
-- [ ] **Step 0.4: Commit**
+- [x] **Step 0.4: Commit**
 
 ```bash
 git add frontend/.dockerignore backend/.dockerignore backend/src/test/java/com/portfolio/platform/config/SecretsGuardWiringTest.java
@@ -226,7 +226,7 @@ git commit -m "fix: give each Docker build context its own ignore file and prove
   `*.portfolio.com` → `/var/www/templates/<subdomain>` — which is what plan 17 rsyncs into and
   what plan 12's `TemplatePreviewModal` iframe points at.
 
-- [ ] **Step 1: Teach the backend to trust the proxy header (half 2 of N-01)**
+- [x] **Step 1: Teach the backend to trust the proxy header (half 2 of N-01)**
 
 Add to `backend/src/main/resources/application.yml` under the existing `server:` key — check the
 parent key before adding, per F-13; a second `server:` block silently overwrites the first and
@@ -241,7 +241,7 @@ server:
   forward-headers-strategy: framework
 ```
 
-- [ ] **Step 2: Write the failing test that proves the rate limiter keys on the forwarded IP**
+- [x] **Step 2: Write the failing test that proves the rate limiter keys on the forwarded IP**
 
 `RateLimitForwardedIpTest` — the point is that two different forwarded IPs get two different
 buckets, and the same forwarded IP shares one:
@@ -282,7 +282,7 @@ writing this, do not guess the field names.
 Run `mvn -f backend/pom.xml test`: this test must **FAIL** before Step 1 is applied and **PASS**
 after. If it passes both ways the test is not measuring anything; fix it before moving on.
 
-- [ ] **Step 3: Create `nginx/conf.d/00-redirect.conf`**
+- [x] **Step 3: Create `nginx/conf.d/00-redirect.conf`**
 
 ```nginx
 # Decision (a): the session cookie carries the Secure flag in production, and browsers discard
@@ -302,7 +302,7 @@ server {
 }
 ```
 
-- [ ] **Step 4: Create `nginx/conf.d/portfolio.conf`**
+- [x] **Step 4: Create `nginx/conf.d/portfolio.conf`**
 
 ```nginx
 server {
@@ -324,7 +324,7 @@ server {
 }
 ```
 
-- [ ] **Step 5: Create `nginx/conf.d/api.conf`**
+- [x] **Step 5: Create `nginx/conf.d/api.conf`**
 
 ```nginx
 server {
@@ -357,7 +357,7 @@ server {
 }
 ```
 
-- [ ] **Step 6: Create `nginx/conf.d/templates.conf`**
+- [x] **Step 6: Create `nginx/conf.d/templates.conf`**
 
 ```nginx
 # Decision (d): regex server_names are matched only after every exact name, so portfolio.com,
@@ -383,7 +383,7 @@ server {
 }
 ```
 
-- [ ] **Step 7: Create the mount placeholders**
+- [x] **Step 7: Create the mount placeholders**
 
 ```bash
 mkdir -p templates-static nginx/certs
@@ -433,7 +433,7 @@ Then the three checks that matter, none of which a 200 proves:
    from the nginx service in `docker-compose.yml`, and every template thumbnail in the carousel
    is broken.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add nginx templates-static/.gitkeep .gitignore backend/src/main/resources/application.yml backend/src/test/java/com/portfolio/platform/filter/RateLimitForwardedIpTest.java

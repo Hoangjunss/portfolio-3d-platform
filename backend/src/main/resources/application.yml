@@ -1,5 +1,9 @@
 server:
   port: 8080
+  # N-01: behind Nginx, getRemoteAddr() is the proxy's container IP, so every client in the world
+  # would share one rate-limit bucket. Safe only because nginx overwrites X-Forwarded-For with
+  # $remote_addr rather than appending to what the client sent -- see nginx/conf.d/api.conf.
+  forward-headers-strategy: framework
 
 spring:
   datasource:

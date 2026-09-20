@@ -67,15 +67,16 @@ class UserManagementServiceTest {
         when(passwordEncoder.encode("secretPassword123")).thenReturn("$2a$10$encodedHashValue");
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        when(userRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
-        when(userConverter.toDto(any())).thenAnswer(inv -> {
+        when(userRepository.save(captor.capture())).thenAnswer(inv -> {
             User u = inv.getArgument(0);
-            return new UserDto(1L, u.getUsername(), u.getEmail(), u.getRole(), u.isActive(), null, Instant.now(), Instant.now());
+            u.setId(1L);
+            return u;
         });
 
-        UserDto result = userManagementService.create(form);
+        Long result = userManagementService.create(form);
 
-        assertThat(result).isNotNull();
+        // The id, not the DTO: AuditAspect fills audit_logs.entity_id from this return value.
+        assertThat(result).isEqualTo(1L);
         User savedUser = captor.getValue();
         assertThat(savedUser.getPasswordHash()).isEqualTo("$2a$10$encodedHashValue");
         assertThat(savedUser.getPasswordHash()).isNotEqualTo("secretPassword123");

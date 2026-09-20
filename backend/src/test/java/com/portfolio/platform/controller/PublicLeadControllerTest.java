@@ -19,11 +19,16 @@ import org.springframework.http.MediaType;
 import org.springframework.mail.MailSendException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
+import java.util.concurrent.atomic.AtomicLong;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -120,6 +125,36 @@ class PublicLeadControllerTest {
         assertThat(leads).hasSize(1);
         assertThat(leads.get(0).getName()).isEqualTo("Jane Doe");
         verify(notificationService).notifyNewLead(any());
+    }
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
+    @Test
+    void submit_notifiesOnlyAfterTheLeadIsCommitted() throws Exception {
+        TransactionTemplate requiresNew = new TransactionTemplate(transactionManager);
+        requiresNew.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        AtomicLong visibleFromAnotherTransaction = new AtomicLong(-1L);
+
+        // Runs inside the listener. A separate transaction can only count the new lead if the
+        // submit transaction has already committed — which is exactly what AFTER_COMMIT means and
+        // BEFORE_COMMIT does not. Asserting on a thrown exception cannot tell the two apart,
+        // because LeadNotificationListener deliberately swallows everything (finding R-14).
+        doAnswer(inv -> {
+            visibleFromAnotherTransaction.set(requiresNew.execute(status -> leadRepository.count()));
+            return null;
+        }).when(notificationService).notifyNewLead(any());
+
+        LeadCreateForm form = new LeadCreateForm(
+                "Committed Already", "committed@example.com", "0123456789", "Hi", null);
+
+        mockMvc.perform(post("/api/public/leads")
+                        .with(req -> { req.setRemoteAddr("10.0.2." + IP_COUNTER.incrementAndGet()); return req; })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(form)))
+                .andExpect(status().isAccepted());
+
+        assertThat(visibleFromAnotherTransaction.get()).isEqualTo(1L);
     }
 
     @Test

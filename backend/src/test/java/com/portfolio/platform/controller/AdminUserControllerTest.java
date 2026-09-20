@@ -3,6 +3,8 @@ package com.portfolio.platform.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.platform.enums.Role;
 import com.portfolio.platform.form.UserCreateForm;
+import com.portfolio.platform.model.AuditLog;
+import com.portfolio.platform.repository.AuditLogRepository;
 import com.portfolio.platform.repository.SystemErrorLogRepository;
 import com.portfolio.platform.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +33,9 @@ class AdminUserControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private AuditLogRepository auditLogRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -63,6 +68,30 @@ class AdminUserControllerTest {
                 .andExpect(jsonPath("$.role").value("EDITOR"))
                 .andExpect(jsonPath("$.active").value(true))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser(username = "admin_user", roles = "ADMIN")
+    void create_writesAuditRowCarryingTheNewUserId() throws Exception {
+        UserCreateForm form = new UserCreateForm(
+                "auditeditor", "auditeditor@portfolio.com", "securePassword123", Role.EDITOR);
+
+        String body = mockMvc.perform(post("/api/admin/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(form)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        Long createdId = objectMapper.readTree(body).get("id").asLong();
+
+        AuditLog row = auditLogRepository.findAll().stream()
+                .filter(l -> "User".equals(l.getEntityType()) && "CREATE".equals(l.getAction()))
+                .reduce((first, second) -> second)
+                .orElseThrow(() -> new AssertionError("Expected an audit row for User CREATE"));
+
+        // AuditAspect reads entity_id from the service return value and only understands Long.
+        // A service returning UserDto silently left this null — spec section 6 requires the row.
+        assertThat(row.getEntityId()).isEqualTo(createdId);
     }
 
     @Test

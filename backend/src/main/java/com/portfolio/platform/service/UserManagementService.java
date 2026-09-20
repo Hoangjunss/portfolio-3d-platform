@@ -7,7 +7,12 @@ import org.springframework.data.domain.Pageable;
 
 public interface UserManagementService {
 
-    UserDto create(UserCreateForm form);
+    // Returns the id, not the DTO: AuditAspect reads audit_logs.entity_id from the return value
+    // and only understands Long. Returning UserDto here left every user-creation audit row with a
+    // null entity_id — same contract Template, Media and Lead already follow.
+    Long create(UserCreateForm form);
+
+    UserDto getById(Long id);
 
     Page<UserDto> list(Pageable pageable);
 

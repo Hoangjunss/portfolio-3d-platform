@@ -27,8 +27,8 @@ public class AdminUserController {
 
     @PostMapping
     public ResponseEntity<UserDto> create(@Valid @RequestBody UserCreateForm form) {
-        UserDto dto = userManagementService.create(form);
-        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
+        Long id = userManagementService.create(form);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userManagementService.getById(id));
     }
 
     @GetMapping

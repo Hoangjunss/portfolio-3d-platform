@@ -38,7 +38,7 @@ public class UserManagementServiceImpl implements UserManagementService {
     @Override
     @Transactional
     @Audited(entityType = "User", action = "CREATE")
-    public UserDto create(UserCreateForm form) {
+    public Long create(UserCreateForm form) {
         if (userRepository.existsByUsername(form.username())) {
             throw new InvalidRequestException("Username already taken");
         }
@@ -54,7 +54,15 @@ public class UserManagementServiceImpl implements UserManagementService {
         user.setActive(true);
 
         User saved = userRepository.save(user);
-        return userConverter.toDto(saved);
+        return saved.getId();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDto getById(Long id) {
+        return userRepository.findById(id)
+                .map(userConverter::toDto)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
     }
 
     @Override

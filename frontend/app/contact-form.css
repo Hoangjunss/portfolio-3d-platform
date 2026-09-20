@@ -1,0 +1,26 @@
+/* Contact form focus-visible and hover layer */
+
+.contact-form-input:focus-visible,
+.contact-form-textarea:focus-visible,
+.contact-form-button:focus-visible,
+.contact-form-submit:focus-visible,
+.contact-form input:focus-visible,
+.contact-form textarea:focus-visible,
+.contact-form button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.contact-form-input:hover,
+.contact-form-textarea:hover,
+.contact-form input:hover,
+.contact-form textarea:hover {
+  border-color: var(--color-neutral) !important;
+}
+
+.contact-form-button:hover:not(:disabled),
+.contact-form-submit:hover:not(:disabled),
+.contact-form button:hover:not(:disabled) {
+  background: var(--color-paper-2) !important;
+  border-color: var(--color-focus) !important;
+}

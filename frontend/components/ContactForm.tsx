@@ -38,7 +38,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-[var(--space-md)]" style={{ maxWidth: "480px" }}>
+    <form onSubmit={handleSubmit} className="contact-form flex flex-col gap-[var(--space-md)]" style={{ maxWidth: "480px" }}>
       <label className="flex flex-col gap-[var(--space-2xs)]">
         <span style={{ fontFamily: "var(--font-body)", color: "var(--color-ink)" }}>Họ tên</span>
         <input
@@ -46,7 +46,7 @@ export function ContactForm() {
           onChange={(e) => setName(e.target.value)}
           disabled={status === "loading"}
           required
-          className="min-h-[44px] px-[var(--space-sm)]"
+          className="contact-form-input min-h-[44px] px-[var(--space-sm)]"
           style={{ border: "1px solid var(--color-rule)", background: "var(--color-paper)", color: "var(--color-ink)" }}
         />
       </label>
@@ -58,7 +58,7 @@ export function ContactForm() {
           onChange={(e) => setEmail(e.target.value)}
           disabled={status === "loading"}
           required
-          className="min-h-[44px] px-[var(--space-sm)]"
+          className="contact-form-input min-h-[44px] px-[var(--space-sm)]"
           style={{ border: "1px solid var(--color-rule)", background: "var(--color-paper)", color: "var(--color-ink)" }}
         />
       </label>
@@ -68,7 +68,7 @@ export function ContactForm() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           disabled={status === "loading"}
-          className="min-h-[44px] px-[var(--space-sm)]"
+          className="contact-form-input min-h-[44px] px-[var(--space-sm)]"
           style={{ border: "1px solid var(--color-rule)", background: "var(--color-paper)", color: "var(--color-ink)" }}
         />
       </label>
@@ -80,7 +80,7 @@ export function ContactForm() {
           disabled={status === "loading"}
           required
           rows={4}
-          className="px-[var(--space-sm)] py-[var(--space-xs)]"
+          className="contact-form-textarea contact-form-input px-[var(--space-sm)] py-[var(--space-xs)]"
           style={{ border: "1px solid var(--color-rule)", background: "var(--color-paper)", color: "var(--color-ink)" }}
         />
       </label>
@@ -97,7 +97,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={status === "loading"}
-        className="min-h-[44px]"
+        className="contact-form-button contact-form-submit min-h-[44px]"
         style={{
           fontFamily: "var(--font-body)",
           border: "1px solid var(--color-accent)",

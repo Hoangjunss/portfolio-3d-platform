@@ -23,6 +23,10 @@ nginx **overwrites** rather than appends to.
 **Depends on:** `2026-09-19-15-docker.md` (the compose network, service hostnames, and the
 `media-data` volume mount this plan reads from).
 
+> **Task 0 is not optional and comes first.** It repairs two defects plan 15 shipped with, both
+> of them errors in plan 15's own text: a `.dockerignore` that Docker never reads, and a secrets
+> guard that can be unwired without a single test noticing.
+
 ## Global Constraints
 
 - Backend must run within `-Xmx350m` (spec section 7 RAM budget) — no unbounded in-memory collections, use pagination on list endpoints.
@@ -89,7 +93,122 @@ and neither is optional.
 
 ---
 
-### Task: Nginx reverse proxy, TLS, real client IP, and wildcard template subdomains
+### Task 0: Fix two defects plan 15 shipped with (do this first)
+
+Both come from `docs/reviews/2026-09-20-code-review-plan-15.md`. Both are errors in plan 15's
+text, not in what was implemented from it — so fix them here rather than blaming the code.
+
+**Files:**
+- Create: `frontend/.dockerignore`
+- Create: `backend/.dockerignore`
+- Create: `backend/src/test/java/com/portfolio/platform/config/SecretsGuardWiringTest.java`
+
+- [ ] **Step 0.1: Give each build context its own `.dockerignore` (AB-01)**
+
+Docker reads `.dockerignore` from the **root of the build context**, not the root of the repo.
+`docker-compose.yml` declares `context: ./frontend` and `build: ./backend`, so the existing
+repo-root `.dockerignore` is never read by either build.
+
+The consequence is not slowness, it is a hard failure. `frontend/Dockerfile` does:
+
+```dockerfile
+RUN npm ci          # installs @next/swc-linux-x64-musl inside alpine
+COPY . .            # overwrites node_modules with the host's copy
+RUN npm run build   # dies here
+```
+
+The host tree is 560MB and `frontend/node_modules/@next/` contains only
+`swc-win32-x64-msvc`. Copying that over the Alpine install makes Next unable to load its SWC
+binary, so `docker compose build frontend` has never worked as written.
+
+`frontend/.dockerignore`:
+
+```
+node_modules
+.next
+.env
+.env.local
+```
+
+`backend/.dockerignore`:
+
+```
+target
+```
+
+Keep the repo-root `.dockerignore` as-is — it is harmless and would apply if anyone later builds
+with the repository root as context. It simply cannot substitute for these two.
+
+- [ ] **Step 0.2: Write a test that fails when the secrets guard is unwired (AB-02)**
+
+`SecretsGuardTest` calls `new SecretsGuard(env).verify()` directly. That proves the *logic* and
+proves nothing about whether the class runs at startup. Both of these mutations currently leave
+the suite **GREEN at 135/135**:
+
+- delete `@Component` from `SecretsGuard` — it is no longer a bean, `@PostConstruct` never fires
+- delete `@PostConstruct` — the bean exists but `verify()` is never called
+
+Either deletion reopens A-08 in full: production goes back to
+`dev-only-analytics-secret-change-me`, which is published in this repository, and every test
+stays green. This is the same gap as **R-09** (nothing proves `@EnableScheduling` is still
+there), which has been open since plan 03b — but with a worse consequence, because this guard is
+the only thing standing between a deploy and a public secret.
+
+```java
+package com.portfolio.platform.config;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest
+class SecretsGuardWiringTest {
+
+    @Autowired(required = false)
+    private SecretsGuard secretsGuard;
+
+    // SecretsGuardTest calls verify() directly, so it stays green even if the class is no longer
+    // a bean. Without this test, deleting one annotation silently reopens A-08 and lets a deploy
+    // run on the development secret that is committed to this repository.
+    @Test
+    void theGuardIsRegisteredAsABeanSoItRunsAtStartup() {
+        assertThat(secretsGuard)
+                .as("SecretsGuard must be a Spring bean, or its @PostConstruct check never runs")
+                .isNotNull();
+    }
+}
+```
+
+- [ ] **Step 0.3: Verify — and prove the new test has weight**
+
+```bash
+export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"
+mvn -f backend/pom.xml test
+```
+
+Expected: **136/136 PASS**.
+
+Then run the mutation that this test exists for: delete `@Component` from `SecretsGuard`, re-run
+`mvn -f backend/pom.xml -Dtest=SecretsGuardWiringTest test`, and confirm it is **RED**. Restore
+it. Report the result.
+
+Note what this test does **not** catch: deleting `@PostConstruct` alone leaves the bean present,
+so this stays green. Catching that needs a test that activates the `prod` profile and expects the
+context to refuse to start, which drags in real database configuration. **Leave that as an open
+finding** rather than half-building it here — say so in the commit body.
+
+- [ ] **Step 0.4: Commit**
+
+```bash
+git add frontend/.dockerignore backend/.dockerignore backend/src/test/java/com/portfolio/platform/config/SecretsGuardWiringTest.java
+git commit -m "fix: give each Docker build context its own ignore file and prove the secrets guard is wired"
+```
+
+---
+
+### Task 1: Nginx reverse proxy, TLS, real client IP, and wildcard template subdomains
 
 **Files:**
 - Create: `nginx/conf.d/00-redirect.conf`

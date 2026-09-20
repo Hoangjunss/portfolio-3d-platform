@@ -1,7 +1,7 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `cb1adf1` — plan 17 xong. **Bộ 18 plan gốc chỉ còn plan 18 (debug SSH)**
+**Commit cuối:** `ea20cad` — review plan 17. **Plan 18 đã rà xong và viết lại (Task 0 + Task 1), chưa implement**
 **Test:** backend `mvn clean test` → **137/137 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
 
 ---
@@ -111,39 +111,63 @@ vẫn là thư mục anh em độc lập, không cần route group riêng vì n�
 
 ---
 
-## Bước kế tiếp — sửa AD-01 trước bất kỳ deploy thật nào, rồi plan 18
+## Bước kế tiếp — plan 18 đã rà xong, Task 0 + Task 1 chờ giao
 
-Plan 17 xong cả hai task, review PASS có điều kiện
-(`docs/reviews/2026-09-20-code-review-plan-17.md`). **Bộ 18 plan gốc chỉ còn plan 18.**
+Plan 18 là plan **duy nhất của bộ 18 chưa từng được rà**, và rà ra **8 finding, 3 MAJOR**
+(`docs/reviews/2026-09-20-plan-review-18.md`). Plan đã được viết lại: **Task 0** sửa bốn lỗi
+plan 17 để lại (AD-01…AD-04) cộng AE-08, **Task 1** là debug SSH user nhưng có hàng rào thật.
 
-### AD-01 — phải sửa trước lần deploy thật đầu tiên (MAJOR)
+### AE-01 — bản vá AD-01 mà chính STATUS.md này kê đơn thì **sai** (MAJOR)
 
-`deploy/deploy.sh` kiểm sức khoẻ bằng `curl -fsS http://localhost/api/public/templates`. Nhưng
-sau plan 16, cổng 80 chỉ còn `return 301 https://...`. Tôi dựng server trả 301 rồi chạy đúng lệnh
-đó: **`curl -fsS` thoát 0**. Và nginx trả 301 ngay lập tức, không phụ thuộc backend.
+Bản trước của mục này bảo sửa health check thành
+`docker compose exec -T backend wget -qO- http://localhost:8080/actuator/health`, kèm lý lẽ
+"`/actuator/health` là `permitAll`". Câu đó đúng — `SecurityConfig.java:45` có nó — nhưng
+`backend/pom.xml` **không có `spring-boot-starter-actuator`**. Không starter thì không endpoint:
+request rơi vào `NoHandlerFoundException`, trả 404, `wget` thoát 1.
 
-Nên vòng lặp thành công ở lần lặp đầu **bất kể backend sống hay chết**. `deploy.sh` in `deploy ok`
-cho một container crash-loop, và Actions vẫn xanh. Tệ hơn cả không có health check, vì comment
-ngay phía trên khẳng định là có.
+Nên bản vá đó biến một deploy **luôn xanh sai** thành một deploy **luôn đỏ sai**. Cùng khuôn với
+lỗi nó đang sửa: một dòng khẳng định năng lực không tồn tại. Lỗi xuyên plan thứ tám, cũng của tôi.
 
-Sửa: hỏi thẳng backend, bỏ qua nginx —
-`docker compose exec -T backend wget -qO- http://localhost:8080/actuator/health`
-(`/actuator/health` là `permitAll`, và alpine có `wget` busybox).
+**Bản vá thật (plan 18 Task 0 Step 0.1):**
 
-**Đây là lỗi xuyên plan thứ bảy trong nhóm này, và là của tôi** — tôi viết cả `deploy.sh` lẫn
-block redirect của plan 16, trong hai lượt khác nhau, sau khi vừa viết một bài review tìm ra sáu
-lỗi cùng loại.
+```bash
+curl -fsS --resolve api.portfolio.com:443:127.0.0.1      https://api.portfolio.com/api/public/templates >/dev/null 2>&1
+```
 
-### Ba finding nhỏ hơn của plan 17
+`/api/public/templates` tồn tại thật, `permitAll`, không rate-limit, trả `200 []` trên DB rỗng.
+`redis` không có volume → cache trắng sau mỗi `up -d` → lần gọi đầu chạm Postgres. Một `200` ở đây
+chứng minh nginx + Spring + Redis + Postgres + Flyway đều sống. `--resolve` (không phải
+`-H 'Host:'`) để curl gửi đúng SNI, cert wildcard verify được, và routing không phụ thuộc thứ tự
+alphabet của `conf.d` (AC-03).
 
-- **AD-02** — heredoc `<<EOF` không trích dẫn, secret bị shell VPS diễn giải. Mật khẩu đặt tay có
-  `$` sẽ âm thầm thành giá trị khác; triệu chứng giống hệt gõ sai mật khẩu.
-- **AD-03** — ops doc thiếu `mkdir`/`chown` và **`docker login ghcr.io`**. Package GHCR mặc định
-  private, nên `docker compose pull` — lệnh đầu tiên của `deploy.sh` — trả 401 và **lần deploy đầu
-  tiên hỏng**.
-- **AD-04** — secret `PUBLIC_API_BASE_URL` chưa đặt → build-arg thành chuỗi rỗng → `API_BASE = ""`
-  vì `??` **không** rơi về mặc định với chuỗi rỗng → mọi lời gọi thành URL tương đối tới
-  `portfolio.com` và nhận 404. Build xanh, container `Up`, landing page trống. Đúng khuôn A-08.
+### Ba MAJOR của plan 18 (Task 1)
+
+- **AE-02** — `usermod -aG docker claude-debug` là **tương đương root**
+  (`docker run -v /:/host` ghi được mọi file, tự thêm dòng sudoers được). Plan và SKILL.md đều
+  khai "read-only, no sudo access" — sai, không phải thiếu chính xác. Hàng rào duy nhất là một
+  file markdown. **Vá:** forced command trong `authorized_keys`
+  (`restrict,command="/usr/local/bin/claude-debug-cmd"`) + wrapper khớp allow-list rồi `exec`
+  argv tự dựng, không `eval`, không `sh -c`.
+- **AE-03** — bước verify phủ định (`ssh ... "docker compose restart"`, chờ nó hỏng) hỏng vì
+  `$HOME` không có `docker-compose.yml`, **không** vì quyền. Bỏ hẳn `usermod -aG docker` thì kết
+  quả vẫn y nguyên — đúng khuôn AB-02/W-01. Câu trả lời thật thì ngược: `docker restart
+  <container>` không cần file nào và chạy ngon với nhóm `docker`. **Vá:** điều kiện đậu là
+  **exit 77 + dòng `refused:`** từ wrapper, và ca kiểm là `docker restart <container thật>`.
+- **AE-04/05/06** — `journalctl -u docker` ngoài tầm user chỉ có nhóm `docker`; không bước nào
+  sinh/lưu keypair mà Step 3 lại dùng nó; `useradd` không idempotent và `authorized_keys` bị nối
+  thêm khi chạy lại.
+
+### Ba finding nhỏ của plan 17 — bản vá đã chốt trong plan 18 Task 0
+
+- **AD-02** — bỏ heredoc trên VPS hẳn: dựng `.env` **trên runner** bằng
+  `printf '%s=%s
+' "$key" "${!key-}"` rồi scp. Secret không đi qua lần parse nào của shell VPS.
+  `<<'EOF'` không sửa được vì `IMAGE_TAG` cần expand.
+- **AD-03** — không thêm secret nào: job `deploy` khai `permissions: packages: read`, truyền
+  `GITHUB_TOKEN` + `github.actor` qua `envs:`, `deploy.sh` tự `docker login`/`logout` quanh
+  `pull`. Ops doc thêm `mkdir`/`chown` và yêu cầu `curl` có trên VPS.
+- **AD-04** — job `build` fail sớm bằng `test -n "$PUBLIC_API_BASE_URL"`. **Không** đổi `??`
+  thành `||`: rơi về `localhost:8080` trong production cũng hỏng, chỉ hỏng khác kiểu.
 
 ### Trạng thái thật của hạ tầng
 
@@ -254,10 +278,18 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | ~~**AB-01 (p15)**~~ | MAJOR | `.dockerignore` ở gốc repo nhưng build context là `./frontend`/`./backend`; Docker không đọc nó. `COPY . .` đè `node_modules` win32 của host lên → `docker compose build frontend` chết | **Đã đóng** — `93a4ee6` |
 | ~~**AB-02 (p15)**~~ | MAJOR | Không gì chứng minh `SecretsGuard` được nối vào startup; bỏ `@Component` hoặc `@PostConstruct` đều **XANH 135/135** → A-08 mở lại im lặng | **Đã đóng** — `93a4ee6`, MC đỏ. Mutation bỏ `@PostConstruct` **vẫn mở** |
 | ~~AC-01 (p16)~~ | MINOR | Block `/.well-known/acme-challenge/` trỏ `/var/www/certbot` — thư mục không mount, và cert là wildcard/DNS-01 nên đường HTTP-01 đó không bao giờ dùng | **Đã đóng** — `416b58e` |
-| **AD-01 (p17)** | MAJOR | `deploy.sh` kiểm sức khoẻ qua `curl -fsS http://localhost/...`, mà cổng 80 giờ chỉ trả 301 — `curl -fsS` thoát 0 nên deploy luôn báo thành công kể cả khi backend chết | **Phải sửa trước deploy thật** — hỏi `/actuator/health` của backend |
-| AD-02 (p17) | MINOR | Heredoc `<<EOF` không trích dẫn; secret chứa `$`/backtick bị VPS diễn giải | Dùng `<<'EOF'` + `envs:` |
-| AD-03 (p17) | MINOR | Ops doc thiếu `docker login ghcr.io`; package GHCR private nên `docker compose pull` 401, lần deploy đầu hỏng | Bổ sung ops doc |
-| AD-04 (p17) | MINOR | `PUBLIC_API_BASE_URL` rỗng → `API_BASE=""` (vì `??` không bắt chuỗi rỗng) → URL tương đối, 404, trang trống | Job `build` fail sớm khi secret rỗng |
+| **AD-01 (p17)** | MAJOR | `deploy.sh` kiểm sức khoẻ qua `curl -fsS http://localhost/...`, mà cổng 80 giờ chỉ trả 301 — `curl -fsS` thoát 0 nên deploy luôn báo thành công kể cả khi backend chết | **Plan 18 Task 0 Step 0.1** — `curl --resolve` tới `/api/public/templates`; bản vá `/actuator/health` cũ **sai**, xem AE-01 |
+| AD-02 (p17) | MINOR | Heredoc `<<EOF` không trích dẫn; secret chứa `$`/backtick bị VPS diễn giải | **Plan 18 Task 0 Step 0.2** — dựng `.env` trên runner rồi scp |
+| AD-03 (p17) | MINOR | Ops doc thiếu `docker login ghcr.io`; package GHCR private nên `docker compose pull` 401, lần deploy đầu hỏng | **Plan 18 Task 0 Step 0.1/0.5** — `GITHUB_TOKEN` + `packages: read` |
+| AD-04 (p17) | MINOR | `PUBLIC_API_BASE_URL` rỗng → `API_BASE=""` (vì `??` không bắt chuỗi rỗng) → URL tương đối, 404, trang trống | **Plan 18 Task 0 Step 0.2** — `test -n` trong job `build` |
+| **AE-01 (rà p18)** | MAJOR | Bản vá AD-01 trỏ `/actuator/health` — `pom.xml` không có actuator, nên 404 và deploy sẽ **luôn đỏ** | **Plan 18 Task 0 Step 0.1** |
+| **AE-02 (rà p18)** | MAJOR | Nhóm `docker` = root-equivalent; plan và SKILL.md khai "read-only, no sudo" — sai. Hàng rào duy nhất là một file markdown | **Plan 18 Task 1** — forced command wrapper |
+| **AE-03 (rà p18)** | MAJOR | Bước verify phủ định hỏng vì `$HOME` không có compose file, không vì quyền — khuôn AB-02/W-01 | **Plan 18 Task 1 Step 1.6** — đậu = exit 77 + `refused:` |
+| AE-04 (rà p18) | MINOR | `journalctl -u docker` ngoài tầm user chỉ có nhóm `docker`; allow-list không phải subset như Self-Review Notes tự đòi | **Plan 18 Task 1** — bỏ khỏi allow-list |
+| AE-05 (rà p18) | MINOR | Không bước nào sinh/lưu `claude_debug_key`; `.gitignore` không phủ nên private key có thể bị commit | **Plan 18** Task 0 Step 0.4 + Task 1 Step 1.6 |
+| AE-06 (rà p18) | MINOR | `useradd` không idempotent (exit 9 dưới `set -e`), `authorized_keys` nối thêm khi xoay key | **Plan 18 Task 1 Step 1.2** |
+| AE-07 (rà p18) | INFO | Global Constraints của plan 18 là boilerplate backend trong một plan infra | **Plan 18** — đã thay bằng ràng buộc thật |
+| AE-08 (rà p18) | MINOR | `permitAll` cho `/actuator/health` là config chết, và chính nó làm tôi tin có health endpoint (AE-01) | **Plan 18 Task 0 Step 0.3** — xoá matcher |
 | AC-03 (p16) | INFO | Không block 443 nào khai `default_server`; HTTPS không khớp host rơi vào `api.conf` theo thứ tự alphabet của conf.d | Khai có chủ đích |
 | AC-04 (p16) | INFO | Không có HSTS, dù toàn bộ bản vá Z-18 dựa trên HTTPS | Quyết định của plan deploy |
 | AB-03 (p15) | INFO | `@PostConstruct` trên method trả `boolean`; JSR-250 đòi `void`, Spring dễ dãi nên chạy được | Tách `void` gọi `verify()` khi chạm lại |

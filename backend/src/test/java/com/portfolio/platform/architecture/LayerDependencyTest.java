@@ -21,7 +21,10 @@ class LayerDependencyTest {
             entry("aspect", Set.of("service", "annotation")),
             entry("exception", Set.of("service", "dto")),
             entry("facade", Set.of("service", "converter", "helper", "util", "dto", "form", "model", "enums", "exception")),
-            entry("service", Set.of("repository", "converter", "helper", "util", "dto", "model", "enums", "exception", "form", "annotation")),
+            // "constant" was declared as a leaf layer below but appeared in no allowed-set, so nothing
+            // could import it. Plan 27 is the first code to create the package; service is its only
+            // importer, so it is added here alone rather than everywhere.
+            entry("service", Set.of("repository", "converter", "helper", "util", "dto", "model", "enums", "exception", "form", "annotation", "constant")),
             entry("converter", Set.of("util", "helper", "dto", "form", "model", "enums")),
             entry("helper", Set.of("repository", "model")),
             entry("repository", Set.of("model", "enums", "dto")),

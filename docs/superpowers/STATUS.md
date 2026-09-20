@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `b33d7da` — plan 11 xong, toolchain frontend đã nâng, **đã push**
-**Test:** backend `mvn clean test` → **126/126 PASS**; frontend `npx vitest run` → **5/5 PASS**
+**Commit cuối:** `d72f715` — plan 12 task 1 xong, **đã push**
+**Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **5/5 PASS**; `npm run build` xanh
 
 ---
 
@@ -27,35 +27,29 @@
 | 11 task 1 | `GET /api/admin/leads` phân trang đúng spec 5.1 + trần page size | `136a486`, `6a39589` |
 | 11 task 2 | Next.js scaffold + `lib/apiClient.ts` có kiểu khớp DTO thật | `b12cb83` |
 | — | Nâng toolchain: Next 15.5.25 / React 19 / R3F 9 / drei 10 (đóng V-02) | `b33d7da` |
+| 12 task 1 | `thumbnailUrl` trong `TemplateDto`, resolve một truy vấn cho cả trang | `a181faf`, `d72f715` |
 
-Tiến độ: **13/19 task — backend xong hẳn, còn frontend (12–14) và hạ tầng (15–18)**. Backend 126/126, frontend 5/5.
+Tiến độ: **14/19 task — còn plan 12 task 2, plan 13–14 (frontend) và 15–18 (hạ tầng)**. Backend 131/131, frontend 5/5.
 
 ---
 
-## Bước kế tiếp — plan 12 — ĐÃ RÀ XONG, ĐANG GIAO
+## Bước kế tiếp — plan 12 **task 2** (carousel)
 
-**V-02 đã chốt bằng dữ liệu, không bằng cảm tính** (`b33d7da`). Đọc từng advisory còn áp dụng cho
-`next@14.2.35`: **23 cái, hai cái là RCE không cần xác thực**. Điều quyết định là **mọi dải bị
-ảnh hưởng đều kết thúc dưới `15.5.24`** — nên không cần nhảy lên Next 16 như tôi ước lượng ban
-đầu, 15.5.x là đủ. Đó là lý do phải đọc từng dải thay vì nhìn con số "9 vulnerabilities".
+Task 1 xong, review PASS (`docs/reviews/2026-09-20-code-review-plan-12-task-1.md`).
+**Task 2 chưa bắt đầu, 0/10 step.**
 
-Kết quả đo: `next` biến mất hoàn toàn khỏi audit, 9 vulnerability → **2** (đều là công cụ dev,
-và cái `postcss` còn lại nằm **bên trong** `node_modules/next/` chứ không phải direct dep),
-`vitest run` 5/5, `npm run build` thành công.
+Sáu quyết định (f)–(l) đã ghi trong plan; ba cái dễ làm sai nhất:
 
-**`docs/superpowers/plans/2026-09-19-12-3d-carousel.md`** — đã viết lại. Bản cũ có sáu lỗ:
+- **(f)** `sessionId` sinh ở client và lưu `sessionStorage`. Bản plan cũ sinh trong server
+  component nên mỗi render một id khác — cột `session_id` mất sạch công dụng.
+- **(g)** phải gửi `PAGE_VIEW`. Plan 08 nối `view_count` vào đúng sự kiện đó để đóng T-02; không
+  gửi thì `view_count` đứng yên 0 và T-02 mở lại trên thực tế.
+- **(h)** 2D render ở server, 3D là bản nâng cấp phía client. Bản cũ trả `null` tới khi probe
+  xong nên server gửi trang rỗng.
 
-- **Sinh `sessionId` trong server component**, nên mỗi lần render ra một id mới — cột
-  `analytics_events.session_id` sẽ không bao giờ nối được hai sự kiện, tức mất đúng công dụng của nó.
-- **Không gửi `PAGE_VIEW` nào.** Plan 08 nối `view_count` vào đúng sự kiện đó để đóng T-02. Không
-  có `PAGE_VIEW` thì `view_count` đứng yên 0 vĩnh viễn và T-02 mở lại trên thực tế.
-- **Thumbnail lấy từ `/thumbnails/{slug}.webp`** — đường dẫn không tồn tại và không khớp mô hình
-  dữ liệu. Rà ra luôn P-05: **không có endpoint công khai nào** đổi `thumbnailMediaId` thành URL.
-- **Trả `null` cho tới khi probe WebGL xong**, nên server gửi về một trang rỗng: không có gì cho
-  crawler, không có gì khi tắt JS, và nháy trắng ở đúng trang để bán hàng.
-- **Không có test component nào và không có mục mutation check** — plan duy nhất trong bộ thiếu cả hai.
-- **Kết thúc bằng "tự kiểm trong trình duyệt"**, thứ không có gì trong quy trình này kiểm được.
-  Thay bằng `npm run build`, vì nó type-check và chạy server render thật.
+Và **T-11 đã tự kiểm**: `@CacheEvict` hiện có là đủ, cache không thể cũ vì media (`media.url` đặt
+một lần lúc upload, không có endpoint sửa/xoá media; `thumbnailMediaId` chỉ đổi qua `update`, mà
+`update` đã evict).
 
 ---
 
@@ -127,7 +121,8 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | ~~**R-14 (p09)**~~ | MINOR | Pha `AFTER_COMMIT` chưa có test nào phân biệt được | **Đã đóng** — `c10adee`, test đếm qua transaction `REQUIRES_NEW`, mutation đỏ |
 | ~~**U-01 (p10)**~~ | MAJOR | `audit_logs.entity_id` của User CREATE là null vì service trả DTO | **Đã đóng** — `c10adee` |
 | ~~**V-02 (p11t2)**~~ | MAJOR | 23 advisory còn áp dụng cho 14.2.35, hai cái là RCE không cần xác thực | **Đã đóng** — `b33d7da`. Đọc từng dải thì mọi cái đều kết thúc **dưới 15.5.24**, nên chỉ cần lên 15.5.25 chứ không phải 16. `next` biến mất khỏi audit; 9 vulnerability → 2, đều là công cụ dev |
-| **P-05 (rà plan 12)** | MAJOR | Không có endpoint công khai nào đổi `thumbnailMediaId` thành URL ảnh — `/api/admin/media` chỉ có POST, nên khách ẩn danh không có đường lấy thumbnail | **Plan 12 task 1** |
+| ~~**P-05 (rà plan 12)**~~ | MAJOR | Không có endpoint công khai nào đổi `thumbnailMediaId` thành URL ảnh | **Đã đóng** — `a181faf`, `thumbnailUrl` trong `TemplateDto`, không phải mở endpoint media công khai |
+| ~~**T-10 (p12t1)**~~ | MAJOR | `listAllForAdmin` không resolve `thumbnailUrl` nên `/api/admin/templates` luôn trả null — cùng DTO, hai hành vi | **Đã đóng** — `d72f715` |
 | P-06 (rà plan 12) | MAJOR | Bản cũ của plan 12 không gửi `PAGE_VIEW` nào, nên `view_count` đứng yên 0 mãi và T-02 coi như mở lại dù trên giấy đã đóng | **Plan 12 task 2**, quyết định (g) |
 | ~~**V-01 (p11t2)**~~ | MAJOR | `next@14.2.15` mà plan ghim dính GHSA-f82v-jwr5-mffw (Authorization Bypass in Middleware) — phá đúng thiết kế của plan 13 | **Đã đóng** — nâng 14.2.35, advisory biến mất |
 | V-03 (p11t2) | INFO | `three-mesh-bvh@0.7.8` deprecated vì lệch phiên bản three.js, vào qua `drei` | Plan 12 nhìn đầu tiên nếu `drei` lỗi lạ |

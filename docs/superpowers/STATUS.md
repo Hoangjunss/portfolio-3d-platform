@@ -40,7 +40,7 @@
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **18b / 19 / 19b / 20 / 21 / 22 / 23 / 24 XONG** — backend **150/150**, frontend **89/89**. Plan 24 review **không finding nào**. **Kế tiếp: plan 25** (audit log viewer — cần backend mới, `AdminAuditLogController` chưa từng có). Còn lại: 25 → 26 → 27 → 28. **Nhớ `export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"` trước mọi `mvn`.** **Handoff:** viết file + commit TRƯỚC, verify SAU; không nêu lệnh full `mvn test` hay tổng số pass. **Nợ dọn dẹp admin (4 mục):** tham số `username` chết trong `MediaService.delete`; alert "Unauthorized" nháy khi điều hướng; `MediaGrid` báo "Đã sao chép" khi không có Clipboard API; hai chuỗi lỗi tiếng Anh ("Not allowed", "Cannot deactivate the last active admin") trong UI tiếng Việt. **Nợ CSS:** 4 `!important` trong `contact-form.css`.
+Tiến độ: **18b → 25 XONG** (18b, 19, 19b, 20, 21, 22, 23, 24, 25) — backend **167/167**, frontend **95/95**. Plan 24 và 25 đều review **không finding nào**. **Kế tiếp: plan 26** (error log viewer — cần backend mới). Còn lại: 26 → 27 → 28. **Nhớ `export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"` trước mọi `mvn`.** **Handoff:** viết file + commit TRƯỚC, verify SAU; không nêu lệnh full `mvn test` hay tổng số pass. **CẢNH BÁO plan 26/27:** kiểm `git log --diff-filter=A` trước khi tin nhãn `Create:` — plan 25 gán `Create:` cho 4 file đã tồn tại, làm theo sẽ xoá `AuditLogServiceImpl.record()` và giết toàn bộ audit log. **Nợ dọn dẹp admin (4 mục)** + **nợ CSS** (4 `!important` trong `contact-form.css`).
 
 ---
 

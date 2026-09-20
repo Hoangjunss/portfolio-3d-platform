@@ -30,10 +30,27 @@ Tiến độ: **12/19 task — backend xong hẳn, còn frontend (11 task 2, 12�
 
 ---
 
-## Bước kế tiếp — plan 11 **task 2** (dựng Next.js)
+## Bước kế tiếp — plan 11 task 2, **còn dở: thiếu đúng file chính**
 
 Task 1 xong, review PASS (`docs/reviews/2026-09-20-code-review-plan-11-task-1.md`).
-**Task 2 chưa bắt đầu, 0/9 step** — `frontend/` vẫn chưa tồn tại.
+
+Task 2 làm được **4/9 step** và dừng ở chỗ tệ nhất có thể:
+
+| Có | Thiếu |
+|---|---|
+| `package.json`, `next.config.mjs`, `tsconfig.json`, `tailwind.config.ts`, `postcss.config.js` | — |
+| `app/globals.css`, `app/layout.tsx`, `app/page.tsx` | — |
+| `lib/apiClient.test.ts` — viết tốt, phủ đúng bốn ca | **`lib/apiClient.ts` KHÔNG TỒN TẠI** |
+| — | chưa `npm install`, chưa chạy vitest, chưa mutation, **chưa commit** |
+
+Nghĩa là bài test đã có nhưng thứ nó kiểm thì chưa. Đây cũng là module mà plan 12, 13, 14 đều
+import. `frontend/` hiện vẫn là untracked, chưa commit — cố ý giữ vậy, vì commit một cây có test
+import module không tồn tại là commit một trạng thái hỏng.
+
+Tôi đã tự chạy `npm install` (việc chạy lệnh build là phần của tôi, không phải phần giao đi).
+
+Một thiếu sót của bộ test cần vá khi làm nốt: **không ca nào kiểm `AbortSignal.timeout(5000)`**
+của quyết định (i), nên timeout sẽ là code không ai canh.
 
 Antigravity đã hoạt động lại sau hai lượt trắng liên tiếp.
 

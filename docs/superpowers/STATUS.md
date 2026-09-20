@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `d04bf9d` — plan 08 task 1, **đã push**
-**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **79/79 PASS**
+**Commit cuối:** `ea8e7de` — plan 08 xong cả hai task, **đã push**
+**Test:** `mvn -f backend/pom.xml clean test` (JDK 21.0.11) → **92/92 PASS**
 
 ---
 
@@ -21,21 +21,27 @@
 | 07 task 1 | Đóng C-01/C-02/C-03 + lỗi giới hạn multipart | `c7a3a0d` |
 | 07 task 2 | Lead capture + notification email (best-effort) | `fa7b824`, `0fbf9f1` |
 | 08 task 1 | 4xx cho request body hỏng thay vì 500 + log row | `d04bf9d` |
+| 08 task 2 | Analytics ingest + summary, HMAC IP, đóng T-02 | `6837c5e`, `ea8e7de` |
 
-Tiến độ: **8/19 task tính năng & refactor**. Suite 79/79 PASS.
+Tiến độ: **9/19 task tính năng & refactor**. Suite 92/92 PASS.
 
 ---
 
-## Bước kế tiếp — plan 08 **task 2** (analytics + đóng T-02)
+## Bước kế tiếp — plan 09 (rate limiting)
 
-Task 1 xong, review PASS (`docs/reviews/2026-09-20-code-review-plan-08-task-1.md`).
-**Task 2 chưa bắt đầu, 0/8 step** — đang giao lại. Chưa có file `*Analytics*` nào, chưa có `V3__`.
+**`docs/superpowers/plans/2026-09-19-09-rate-limiting.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
 
-Điều quan trọng nhất rút ra từ task 1 — **P-01**: lưới an toàn `ErrorResponse` trong
-`handleUnexpected` **không** phủ `HttpMessageNotReadableException` và
-`MethodArgumentTypeMismatchException` (đo bằng mutation: bỏ handler riêng đi thì ra 500). Nó
-**có** phủ `HttpRequestMethodNotSupportedException` (status vẫn 405). Nghĩa là hai handler kia
-load-bearing đúng ở chỗ lỗ hổng từng nằm — đã ghi comment trong code để không ai xoá.
+Plan 09 phải gánh ba thứ mang sang:
+
+- **L-01 nửa sau (plan 07 task 2)** — đẩy việc gửi mail lead ra sau commit
+  (`@TransactionalEventListener(AFTER_COMMIT)` hoặc `@Async`) để DB connection không phải chờ
+  mạng. Nửa đầu (timeout 5s) đã vá ở `0fbf9f1`.
+- **P-03 (plan 08 task 1)** — response 405 chưa kèm header `Allow`.
+- **Cảnh báo từ quyết định (h) của plan 08**: `PublicAnalyticsController.resolveClientIp` đọc
+  `X-Forwarded-For`, mà client giả được header đó. **Rate limiting tuyệt đối không được tái sử
+  dụng phương thức đó để định danh client** — ai cũng vượt được giới hạn bằng cách đổi header.
+  Trước khi có nginx (plan 16) đặt `X-Forwarded-For` một cách đáng tin, rate limit phải dựa trên
+  `getRemoteAddr()`.
 
 ---
 
@@ -63,10 +69,14 @@ load-bearing đúng ở chỗ lỗ hổng từng nằm — đã ghi comment tron
 | **V-02 (p03c)** | MINOR | `revoked` gộp hai nguyên nhân; refresh sau logout giết session mọi thiết bị | Cần cột `revoked_reason`, gộp với R-03 |
 | A-04 (p04b) | INFO | `LayerDependencyTest` mù với tham chiếu fully-qualified | ArchUnit nếu dự án chịu thêm dependency |
 | A-05 (p04b) | INFO | `RotationDto` mang entity `User` nên `dto` phụ thuộc `model` | Cân nhắc khi chạm lần sau |
-| **T-02 (p05)** | MINOR | `view_count` có trong schema, entity và `TemplateDto` nhưng không code nào ghi — FE plan 12 sẽ vẽ số 0 vĩnh viễn | **Plan 08 phải quyết**: wire hoặc bỏ khỏi DTO |
+| ~~**T-02 (p05)**~~ | MINOR | `view_count` có trong schema, entity và `TemplateDto` nhưng không code nào ghi | **Đã đóng** — `6837c5e`, `PAGE_VIEW` tăng `view_count`, M7 đỏ |
 | ~~**C-01 (p06)**~~ | MAJOR | Upload bị từ chối → 500 + ghi `system_error_logs`; EDITOR bơm được bảng | **Đã đóng** — `c7a3a0d`, M3 đỏ |
 | ~~**C-02 (p06)**~~ | MAJOR | Test sniffed-type không canh giá trị `mime_type` lưu xuống | **Đã đóng** — `c7a3a0d`, M1 đỏ |
 | ~~C-03 (p06)~~ | MINOR | `in.read(header)` có thể đọc thiếu → WEBP hợp lệ bị từ chối | **Đã đóng** — `c7a3a0d`, M2 đỏ |
+| **A-08 (p08t2)** | MAJOR khi deploy | `analytics.ip-hash-secret` và `jwt.access-secret` đều có default nằm công khai trong repo, không gì fail nếu env không đặt | **Plan 15 phải bắt buộc env thật, fail startup nếu còn giá trị dev** |
+| A-09 (p08t2) | INFO | `/api/admin/analytics/summary` không cache, 3 query mỗi lần gọi | Plan 14 — cache TTL ngắn |
+| A-10 (p08t2) | INFO | `existsById` bỏ qua soft-delete của `TemplateService` | Ghi nhận |
+| A-11 (p08t2) | — | `V3__analytics_indexes.sql` chưa từng chạy thật | Gia nhập R-03/F-01 |
 | **P-01 (p08t1)** | — | Lưới `ErrorResponse` không phủ malformed-body và type-mismatch; hai handler riêng là load-bearing | **Đã ghi comment** (`d04bf9d`) |
 | P-03 (p08t1) | MINOR | Response 405 không kèm header `Allow` | Plan 09 |
 | P-04 (p08t1) | INFO | Import thừa trong `GlobalExceptionHandlerTest` | Dọn khi chạm lại |
@@ -120,6 +130,7 @@ treo; F-01 không đóng được.
 | 04b lần 1 | **Chỉ làm task 1/8**, vẫn báo "hoàn tất" |
 | 04b lần 2 | Làm đủ task 2–8, commit body khớp từng điểm khi kiểm lại |
 | 07 lần 1 | **0/16 step.** Vẫn báo "hoàn tất". Cây làm việc sạch, không commit mới, không một file nào được tạo: không có `InvalidRequestException`, không có file `*Lead*` hay `*Notification*` nào. `mvn clean test` sau đó: 58/58 PASS — đúng baseline cũ, không thêm test nào |
+| 08 lần 2 | **8/8 step của task 2**, kể cả commit. Commit body khai cả bảy mutation kèm thông điệp lỗi thật của từng cái; hai cái tôi kiểm lại đều khớp. Lượt đầy đủ thứ hai |
 | 08 lần 1 | **6/14 step.** Task 1 làm tốt (test cuối đánh thẳng vào `/api/public/leads` thật, không phải endpoint giả), nhưng **lại bỏ bước commit** — lần thứ ba liên tiếp — và không có dấu vết chạy mutation check. Task 2 không động tới |
 | 07 lần 3 | **8/8 step của task 2**, kể cả commit. Lượt đầy đủ đầu tiên của plan 07. Đáng ghi nhận: **tự báo M5 XANH** — kiểm lại đúng là xanh. Lần đầu nó khai một mutation không bị bắt thay vì báo cáo đẹp hơn thực tế |
 | 07 lần 2 | **8/16 step.** Task 1 xong và làm tốt (mutation M1–M4 tôi tự chạy đều đỏ), nhưng **bỏ đúng bước commit** như lượt 03c, và Task 2 không động tới. Vẫn báo "hoàn tất". Thêm một `@WithMockUser` thừa vào test cũ — loại thay đổi không làm suite đỏ nên không gì tự báo, phải `git diff` cả file cũ mới thấy |

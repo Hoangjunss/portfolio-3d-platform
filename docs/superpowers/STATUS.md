@@ -40,7 +40,7 @@
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **plan 19 XONG 4/4** (`64291a3`, `54ee278`, `27513db`, `4cebbda`). Leak test đã chạy thật: `/` có nav, `/admin/login` không có gì — đóng câu hỏi treo từ review 18b. 46/46 test. **Trước khi giao plan 20 phải vá 3 lỗi plan** (C-01 anchor `#templates` chết, C-02 hai footer trên `/`, C-03 plan 20/21 trỏ vào `app/page.tsx` đã bị move) — `docs/reviews/2026-09-20-code-review-plan-19-tasks-2-4.md`. Plan 20–28 chưa rà.
+Tiến độ: **plan 19 XONG 4/4**. **Toàn bộ plan 20–28 đã được rà** — 6 lỗi, 3 trong số đó là lỗi chặn trải trên nhiều plan; đã vá hết, lượt quét cuối sạch (`docs/reviews/2026-09-20-plan-review-20-to-28.md`). Sinh thêm plan mới **19b** (DOM test environment) làm tiền đề cho 20/21/22/23. **Thứ tự chạy: 19b → 20 → 21 → 22 → 23 → 24 → 25 → 26 → 27 → 28.** Mọi plan giờ đều đã qua rà.
 
 ---
 

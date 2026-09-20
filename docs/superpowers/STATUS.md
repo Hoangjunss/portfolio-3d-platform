@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `d72f715` — plan 12 task 1 xong, **đã push**
-**Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **5/5 PASS**; `npm run build` xanh
+**Commit cuối:** `d39d384` — plan 12 xong cả hai task; plan 13 đã rà, **chưa implement**
+**Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **15/15 PASS**; `npm run build` xanh
 
 ---
 
@@ -28,8 +28,9 @@
 | 11 task 2 | Next.js scaffold + `lib/apiClient.ts` có kiểu khớp DTO thật | `b12cb83` |
 | — | Nâng toolchain: Next 15.5.25 / React 19 / R3F 9 / drei 10 (đóng V-02) | `b33d7da` |
 | 12 task 1 | `thumbnailUrl` trong `TemplateDto`, resolve một truy vấn cho cả trang | `a181faf`, `d72f715` |
+| 12 task 2 | Carousel 3D + fallback 2D + modal preview; `PAGE_VIEW` gửi đúng một lần | `1428981` |
 
-Tiến độ: **14/19 task — còn plan 12 task 2, plan 13–14 (frontend) và 15–18 (hạ tầng)**. Backend 131/131, frontend 5/5.
+Tiến độ: **15/19 task — còn plan 13–14 (frontend) và 15–18 (hạ tầng)**. Backend 131/131, frontend 15/15.
 
 ---
 
@@ -101,25 +102,33 @@ vẫn là thư mục anh em độc lập, không cần route group riêng vì n�
 
 ---
 
-## Bước kế tiếp — plan 12 **task 2** (carousel)
+## Bước kế tiếp — plan 13 (admin login + middleware), ĐÃ RÀ, SẴN SÀNG GIAO
 
-Task 1 xong, review PASS (`docs/reviews/2026-09-20-code-review-plan-12-task-1.md`).
-**Task 2 chưa bắt đầu, 0/10 step.**
+Plan 12 **xong cả hai task**, review PASS (`docs/reviews/2026-09-20-code-review-plan-12-task-2.md`).
 
-Sáu quyết định (f)–(l) đã ghi trong plan; ba cái dễ làm sai nhất:
+Plan 13 đã rà — `docs/reviews/2026-09-20-plan-review-13.md`. **4 MAJOR, 3 MINOR, 1 INFO và một
+task bị bỏ sót**; plan đã được viết lại, giờ có 2 task / 20 step. Ba cái nặng nhất:
 
-- **(f)** `sessionId` sinh ở client và lưu `sessionStorage`. Bản plan cũ sinh trong server
-  component nên mỗi render một id khác — cột `session_id` mất sạch công dụng.
-- **(g)** phải gửi `PAGE_VIEW`. Plan 08 nối `view_count` vào đúng sự kiện đó để đóng T-02; không
-  gửi thì `view_count` đứng yên 0 và T-02 mở lại trên thực tế.
-- **(h)** 2D render ở server, 3D là bản nâng cấp phía client. Bản cũ trả `null` tới khi probe
-  xong nên server gửi trang rỗng.
+- **X-01** — bản cũ vứt `refreshToken` đi. Access token sống 15 phút, `POST /api/auth/logout`
+  **bắt buộc** có refresh token trong body → không nút logout nào gọi được, và mỗi lần login đẻ
+  một token 7 ngày không bao giờ bị thu hồi. Quyết định (a): lưu cả hai làm cookie.
+- **X-02** — `hasValidSession` cũ là `Boolean(x)` đội tên khác, không đọc `exp`. Token hết hạn
+  vẫn qua cửa → "đăng nhập giả": middleware nói ok, backend trả 401. Giờ decode `exp`, **không**
+  verify chữ ký (quyết định (c): secret không được ra Edge runtime).
+- **X-03** — bản cũ không có một dòng test nào chạm `middleware.ts`. Đảo dấu `!` của guard →
+  suite **XANH**. Đúng khuôn C-02 (plan 06) và W-01 (plan 12 task 2). Đã thêm
+  `middleware.test.ts`, 5 ca, trong đó ca miễn trừ `/admin/login` chặn vòng lặp redirect vô hạn.
 
-Và **T-11 đã tự kiểm**: `@CacheEvict` hiện có là đủ, cache không thể cũ vì media (`media.url` đặt
-một lần lúc upload, không có endpoint sửa/xoá media; `thumbnailMediaId` chỉ đổi qua `update`, mà
-`update` đã evict).
+Còn **X-04** (`process.env.NEXT_PUBLIC_API_BASE_URL` trần, mất fallback của `apiClient.ts` → URL
+thành `undefined/api/auth/login` vì repo không có `.env.local`) và **X-09**: W-01 của review plan
+12 được giao cho "plan 13 task 1" nhưng plan 13 không hề có task đó — nay là Task 1
+(`shouldRenderTexture` + 3 test).
 
----
+Bốn mutation bắt buộc: M1 (đảo guard), M2 (bỏ miễn trừ login), M3 (bỏ so `exp`), M4
+(`shouldRenderTexture` luôn `true`) — **cả bốn phải ĐỎ**.
+
+**Thứ tự chạy:** 13 không bị 18b chặn. Nhưng **19 không được chạy trước 18b**, nếu không
+`SiteNav`/`SiteFooter` mount vào root layout và rò sang `/admin/login`. An toàn: `13 → 14 → 18b → 19`.
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -191,7 +200,7 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | ~~**V-02 (p11t2)**~~ | MAJOR | 23 advisory còn áp dụng cho 14.2.35, hai cái là RCE không cần xác thực | **Đã đóng** — `b33d7da`. Đọc từng dải thì mọi cái đều kết thúc **dưới 15.5.24**, nên chỉ cần lên 15.5.25 chứ không phải 16. `next` biến mất khỏi audit; 9 vulnerability → 2, đều là công cụ dev |
 | ~~**P-05 (rà plan 12)**~~ | MAJOR | Không có endpoint công khai nào đổi `thumbnailMediaId` thành URL ảnh | **Đã đóng** — `a181faf`, `thumbnailUrl` trong `TemplateDto`, không phải mở endpoint media công khai |
 | ~~**T-10 (p12t1)**~~ | MAJOR | `listAllForAdmin` không resolve `thumbnailUrl` nên `/api/admin/templates` luôn trả null — cùng DTO, hai hành vi | **Đã đóng** — `d72f715` |
-| P-06 (rà plan 12) | MAJOR | Bản cũ của plan 12 không gửi `PAGE_VIEW` nào, nên `view_count` đứng yên 0 mãi và T-02 coi như mở lại dù trên giấy đã đóng | **Plan 12 task 2**, quyết định (g) |
+| ~~**P-06 (rà plan 12)**~~ | MAJOR | Bản cũ của plan 12 không gửi `PAGE_VIEW` nào, nên `view_count` đứng yên 0 mãi và T-02 coi như mở lại dù trên giấy đã đóng | **Đã đóng** — `1428981`, M5 đỏ |
 | ~~**V-01 (p11t2)**~~ | MAJOR | `next@14.2.15` mà plan ghim dính GHSA-f82v-jwr5-mffw (Authorization Bypass in Middleware) — phá đúng thiết kế của plan 13 | **Đã đóng** — nâng 14.2.35, advisory biến mất |
 | V-03 (p11t2) | INFO | `three-mesh-bvh@0.7.8` deprecated vì lệch phiên bản three.js, vào qua `drei` | Plan 12 nhìn đầu tiên nếu `drei` lỗi lạ |
 | ~~**F-11 (p11t1)**~~ | MINOR | `@PageableDefault` chỉ đặt mặc định chứ không đặt trần; `?size=100000` trả về 2000 dòng trên cả leads lẫn users | **Đã đóng** — `6a39589`, `max-page-size: 100`, có test |
@@ -216,6 +225,11 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | F-01 | — | Migration và entity chưa từng được đối chiếu | Cần Docker. **Phải đóng trước plan 15** |
 | F-08 | — | `TIMESTAMP` vs `Instant` lệch timezone | Chốt trước deploy thật |
 | F-09 | — | JWT sống thêm tối đa 15 phút sau khi deactivate | Chấp nhận theo spec |
+| **W-01 (p12t2)** | MAJOR | `TemplateCarousel3D` không có test nào chạm tới (jsdom không có WebGL); M8 xanh | **Plan 13 Task 1** — tách `shouldRenderTexture` thành hàm thuần |
+| **X-01 (rà plan 13)** | MAJOR | Bản cũ của plan 13 vứt `refreshToken`; phiên chết sau 15 phút, logout không gọi được, token 7 ngày không thu hồi được | **Plan 13 Task 2**, quyết định (a)(b) |
+| **X-02 (rà plan 13)** | MAJOR | `hasValidSession` không đọc `exp` → middleware cho qua token hết hạn | **Plan 13 Task 2**, quyết định (c)(d) |
+| **X-03 (rà plan 13)** | MAJOR | Không test nào chạm `middleware.ts`; đảo dấu `!` của guard vẫn xanh | **Plan 13 Task 2**, M1/M2 |
+| X-06 (rà plan 13) | MINOR | Cookie không `HttpOnly` được vì `JwtAuthFilter` chỉ đọc header `Authorization`; XSS trên `/admin/**` lấy được token | Đánh đổi có chủ đích, đã ghi vào plan 13 quyết định (f) |
 | **M-01 (p06)** | INFO | Đường dẫn `/media/<name>` chưa có endpoint/static resource mapping | Plan 16 (nginx) quản lý phục vụ path này; phải phục vụ với `Content-Disposition: attachment` hoặc từ origin riêng nếu allow-list mở rộng |
 
 ---

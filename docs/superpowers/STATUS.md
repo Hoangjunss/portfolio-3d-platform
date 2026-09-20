@@ -1,8 +1,8 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `c36a72e` — plan 13 shipped; plan 14–17 đã rà, **chưa implement**
-**Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **29/29 PASS**; `npm run build` xanh
+**Commit cuối:** `874bab2` — plan 14 xong cả ba task, review PASS, **chưa push**
+**Test:** backend `mvn clean test` → **131/131 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
 
 ---
 
@@ -31,8 +31,10 @@
 | 12 task 2 | Carousel 3D + fallback 2D + modal preview; `PAGE_VIEW` gửi đúng một lần | `1428981` |
 | 13 task 1 | `shouldRenderTexture` hàm thuần + test — đóng W-01 | `77ede20` |
 | 13 task 2 | Login page + middleware guard đọc `exp`; lưu cả hai token | `9ed973b` |
+| 14 task 1 | `loginErrorMessage` + `persistSession` hàm thuần — đóng Y-01 | `fc7f518` |
+| 14 task 2–3 | `adminFetch` (refresh 1 lần) + 3 màn admin trong route group `(dashboard)` | `874bab2` |
 
-Tiến độ: **17/19 task — còn plan 14 (frontend) và 15–18 (hạ tầng)**. Backend 131/131, frontend 29/29.
+Tiến độ: **18/19 task — chỉ còn 15–18 (hạ tầng)**. Backend 131/131, frontend 42/42. **Toàn bộ frontend của bộ 18 plan gốc đã xong.**
 
 ---
 
@@ -104,60 +106,38 @@ vẫn là thư mục anh em độc lập, không cần route group riêng vì n�
 
 ---
 
-## Bước kế tiếp — plan 14 (SẴN SÀNG GIAO); plan 15–17 rà xong nhưng **không verify được ở máy này**
+## Bước kế tiếp — cần anh quyết: hạ tầng (15–17) hay roadmap frontend (18b–28)
 
-Plan 13 shipped. Đã rà một lượt cả **14, 15, 16, 17** —
-`docs/reviews/2026-09-20-plan-review-14-to-17.md`. **14 MAJOR, 9 MINOR, 2 INFO.** Cả bốn plan
-đã được viết lại.
+Plan 14 **xong cả ba task**, review PASS (`docs/reviews/2026-09-20-code-review-plan-14.md`).
+**Bộ 18 plan gốc giờ chỉ còn phần hạ tầng.**
 
-Rà bốn plan cùng lúc là cố ý, và đó là chỗ trả về nhiều nhất: **sáu finding nặng nhất không
-nhìn thấy được khi đọc từng plan riêng lẻ** — chúng là chỗ plan A hứa một thứ mà plan B không giao:
+Kiểm chứng đã làm ngoài test suite:
 
-| Plan hứa | Plan khác không giao | Hậu quả |
+- **6/6 mutation tự chạy lại đều ĐỎ**, khớp báo cáo của Antigravity.
+- **Z-02 xác nhận bằng HTML render thật**, không phải bằng cấu trúc thư mục: `/admin/login`
+  không cookie trả **0 link nav** và có form đăng nhập; `/admin` và `/admin/leads` với token hợp
+  lệ đều có nav. Build chỉ nói 4 route đúng URL — nó không nói gì về layout lồng, mà đó mới là
+  nội dung của Z-02.
+
+### Plan 15–17 đã rà và viết lại, nhưng **không verify được ở máy này**
+
+| Plan | Bước verify | Chạy được? |
 |---|---|---|
-| 15 đặt `NEXT_PUBLIC_API_BASE_URL` lúc **chạy** | Next.js inline biến đó lúc **build** | Mọi trình duyệt gọi `http://localhost:8080` |
-| 16 "đóng N-01" | 16 đặt `X-Real-IP` (không ai đọc), không đặt `X-Forwarded-For` | **Cả internet chung một rate-limit bucket** |
-| 16 phục vụ `/media/` từ `/data/media/` | 15 không mount `media-data` vào nginx | Mọi ảnh upload 404, carousel mất sạch thumbnail |
-| 13 đặt cookie `Secure` khi production | 16 chỉ có `listen 80` | **Vòng lặp đăng nhập ở production**, mọi bước đều báo thành công |
-| 17 đẩy image lên GHCR | 15 dùng `build:` không có khoá `image:` | `docker compose pull` không có gì để pull, deploy chết |
-| 11 đổi `/api/admin/leads` sang phân trang | 14 vẫn đọc như mảng phẳng | `leads.map is not a function`, màn trắng |
-
-### Plan 14 — viết lại, giao được ngay
-
-Ba MAJOR đáng chú ý ngoài bảng trên:
-
-- **Z-02** — `app/admin/layout.tsx` bọc luôn `/admin/login`, nên trang đăng nhập hiện sidebar
-  Dashboard/Templates/Leads trong khi **chưa đăng nhập**. Đúng khuôn lỗi mà 18b phải sinh ra để
-  chặn ở tầng root. Sửa bằng route group `app/admin/(dashboard)/`.
-- **Z-03** — không lời gọi nào kiểm `res.ok`. Token sống 15 phút; mở tab rồi quay lại là 401,
-  `ApiErrorDto` bị nhét vào state rồi `.map` trên object → crash thay vì đăng nhập lại.
-- **Z-04** — **Y-01 không có trong plan 14**, dù review plan 13 giao cho nó. Đây là **lần thứ hai
-  liên tiếp** một finding được giao cho plan kế tiếp rồi không ai ghi vào plan đó (lần đầu: W-01
-  → plan 13, phát hiện khi rà). Cần đổi thói quen: giao finding thì phải sửa plan đích ngay lúc
-  đó, không chỉ ghi vào review.
-
-Plan 14 giờ có 3 task / 23 step, 6 quyết định, 6 mutation bắt buộc.
-
-### Plan 15–17 — viết lại xong, nhưng **không ai xác nhận được nó chạy**
-
-| Plan | Bước verify | Chạy được ở máy này? |
-|---|---|---|
-| 14 | `vitest`, `npm run build`, `npm run dev` | **Được** |
 | 15 | `docker compose up --build -d` | **Không** — không có Docker |
 | 16 | cần stack của plan 15 | **Không** |
 | 17 | `act` hoặc VPS staging | **Không** — cần VPS + secrets |
 
-Điểm sáng: **plan 15 Step 7 kiểm chứng số 3 chính là chỗ đóng F-01, R-03 và A-11** — lần đầu
-tiên trong lịch sử dự án Flyway gặp Postgres thật thay vì H2. Ba finding đó treo từ đầu dự án
-đúng vì lý do này.
+**Plan 15 Step 7 kiểm chứng 3 là chỗ đóng F-01, R-03 và A-11** — lần đầu tiên trong lịch sử dự
+án Flyway gặp Postgres thật thay vì H2. Ba finding đó treo từ đầu dự án đúng vì lý do này.
 
-**Ba lựa chọn, cần người chủ dự án chọn:**
+**Ba lựa chọn:**
 
 1. **Cài Docker Desktop lên máy này** — mở khoá cả F-01/R-03/A-11 lẫn verify của 15/16. Đề xuất
-   của tôi, nó trả nợ nhiều nhất.
-2. **Ship 15/16/17 đánh dấu "chưa verify"** — rủi ro: ba plan hạ tầng chưa chạy chồng lên nhau,
+   của tôi, trả nợ nhiều nhất.
+2. **Ship 15/16/17 đánh dấu "chưa verify"** — rủi ro: ba tầng hạ tầng chưa chạy chồng lên nhau,
    lỗi lộ hết một lần ở lần deploy đầu.
-3. **Dừng ở plan 14**, làm nốt roadmap frontend (18b–28) trước.
+3. **Làm roadmap frontend 18b–28 trước** — verify được hết ở máy này. Nhưng **10 plan 19–28 chưa
+   ai rà**, và rà bốn plan 14–17 vừa rồi ra 14 MAJOR.
 
 ## Plan 11 — ĐÃ RÀ XONG
 
@@ -254,11 +234,14 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | F-01 | — | Migration và entity chưa từng được đối chiếu | **Plan 15 Step 7 kiểm chứng 3** đóng nó — lần đầu Flyway gặp Postgres thật. Cần Docker |
 | F-08 | — | `TIMESTAMP` vs `Instant` lệch timezone | Chốt trước deploy thật |
 | F-09 | — | JWT sống thêm tối đa 15 phút sau khi deactivate | Chấp nhận theo spec |
+| **AA-01 (p14)** | MINOR | Stub cookie trong test *nối thêm* thay vì *thay thế* như `document.cookie` thật; `readCookie` phải dùng `findLast` cho vừa stub. Đổi về `find` là test đỏ | Plan frontend kế tiếp — sửa stub, trả về `find` |
+| AA-02 (p14) | INFO | Màn dashboard không có lưới hình dạng (`body as Summary` rồi `.map` trường lồng); hai màn kia có `unwrapPage` | Cân nhắc khi viết màn admin thứ tư |
+| AA-03 (p14) | INFO | `persistSession` ném trong `adminFetch` → hiện "Cannot reach the server." cho một lỗi hợp đồng API | Lượt chạm `adminFetch` tiếp theo |
 | ~~**W-01 (p12t2)**~~ | MAJOR | `TemplateCarousel3D` không có test nào chạm tới (jsdom không có WebGL); M8 xanh | **Đã đóng** — `77ede20`, M4 đỏ |
-| **Y-01 (p13)** | MAJOR | `app/admin/login/page.tsx` không có test nào; M5 (bỏ nhánh 429) và M6 (bỏ lưu refresh token) đều **XANH** — bản vá X-01 không có gì canh | **Plan 14 Task 1** — đã ghi vào plan |
-| **Z-01 (rà p14)** | MAJOR | `/api/admin/leads` trả `Page` envelope, plan đọc như mảng → `leads.map is not a function` | **Plan 14** — `unwrapPage`, M1/M2 |
-| **Z-02 (rà p14)** | MAJOR | `app/admin/layout.tsx` bọc cả `/admin/login` → trang đăng nhập hiện sidebar admin | **Plan 14** — route group `(dashboard)` |
-| **Z-03 (rà p14)** | MAJOR | Không lời gọi nào kiểm `res.ok`; 401 giữa phiên cho ra crash chứ không phải đăng nhập lại | **Plan 14** — `useAdminResource` |
+| ~~**Y-01 (p13)**~~ | MAJOR | `app/admin/login/page.tsx` không có test nào; M5 (bỏ nhánh 429) và M6 (bỏ lưu refresh token) đều **XANH** — bản vá X-01 không có gì canh | **Đã đóng** — `fc7f518`, M5/M6 đỏ |
+| ~~**Z-01 (rà p14)**~~ | MAJOR | `/api/admin/leads` trả `Page` envelope, plan đọc như mảng → `leads.map is not a function` | **Đã đóng** — `874bab2`, M1/M2 đỏ |
+| ~~**Z-02 (rà p14)**~~ | MAJOR | `app/admin/layout.tsx` bọc cả `/admin/login` → trang đăng nhập hiện sidebar admin | **Đã đóng** — `874bab2`, xác nhận bằng HTML render |
+| ~~**Z-03 (rà p14)**~~ | MAJOR | Không lời gọi nào kiểm `res.ok`; 401 giữa phiên cho ra crash chứ không phải đăng nhập lại | **Đã đóng** — `874bab2` (nhưng xem AA-02) |
 | **Z-10 (rà p15)** | MAJOR | `NEXT_PUBLIC_API_BASE_URL` đặt lúc chạy, Next inline lúc build → bundle nhúng cứng `localhost:8080` | **Plan 15** — `ARG` + `build.args` |
 | **Z-16 (rà p16)** | MAJOR | nginx đặt `X-Real-IP` (không ai đọc), không đặt `X-Forwarded-For`; cả internet chung một bucket | **Plan 16** — overwrite XFF + `forward-headers-strategy`, có test |
 | **Z-17 (rà p16)** | MAJOR | nginx phục vụ `/media/` từ volume nó không mount → mọi ảnh 404 | **Plan 16** + mount trong plan 15 |
@@ -267,7 +250,7 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | **Z-22 (rà p17)** | MAJOR | Không bước nào đặt secrets lên VPS; `Keys.hmacShaKeyFor("")` ném, backend không khởi động | **Plan 17** — ghi `.env` khi deploy |
 | **Z-23 (rà p17)** | MAJOR | Workflow không chạy một test nào trước khi deploy | **Plan 17** — job `test` gate |
 | **Z-20 (rà p17)** | MAJOR | Workflow trỏ nhánh `main`; repo chỉ có `master` → không bao giờ chạy | **Plan 17** — đổi sang `master` |
-| Y-02 (p13) | MINOR | `res.json()` không kiểm gì; response thiếu trường → cookie `"undefined"` → login thành công nhưng bị đá về login, không thông báo | Gộp vào lượt sửa Y-01 |
+| ~~Y-02 (p13)~~ | MINOR | `res.json()` không kiểm gì; response thiếu trường → cookie `"undefined"` → login thành công nhưng bị đá về login, không thông báo | **Đã đóng** — `persistSession` ném khi thiếu trường, M6 đỏ |
 | Y-03 (p13) | INFO | `15 * 60` chép tay từ `jwt.access-ttl-minutes`; khuôn D-02. Tự giới hạn vì `hasValidSession` đọc `exp` thật | Ghi nhận |
 | ~~**X-01 (rà plan 13)**~~ | MAJOR | Bản cũ của plan 13 vứt `refreshToken`; phiên chết sau 15 phút, logout không gọi được, token 7 ngày không thu hồi được | **Đã đóng** — `9ed973b` lưu cả hai cookie (nhưng xem Y-01) |
 | ~~**X-02 (rà plan 13)**~~ | MAJOR | `hasValidSession` không đọc `exp` → middleware cho qua token hết hạn | **Đã đóng** — `9ed973b`, M3 đỏ + kiểm bằng request thật |
@@ -300,6 +283,7 @@ treo; F-01 không đóng được.
 
 | Lượt | Kết quả |
 |---|---|
+| 14 lần 1 | **23/23 step, cả ba task, hai commit đúng ranh giới plan chia.** 12 file, **0 file backend**, không đẻ thêm gì. Sáu mutation báo đủ, tôi chạy lại khớp cả sáu. Dùng `unwrapPage` cho **cả hai** màn danh sách kể cả màn endpoint đã trả mảng phẳng — plan không bắt buộc, nhưng đúng. Lệch plan duy nhất là `findLast` thay `find` trong `readCookie`, và đó là code bị bẻ cho vừa một stub sai (AA-01) |
 | 13 lần 1 | **20/20 step, cả hai task, hai commit riêng đúng ranh giới plan chia.** 9 file, **0 file backend**, không đẻ thêm plan/spec — lượt đầu tiên phạm vi khớp tuyệt đối. Báo cáo bốn mutation kèm số test đỏ ở từng file; tôi chạy lại cả bốn, khớp từng con số (4/1/4/2). Và **tự sửa plan cho đúng**: `shouldRenderTexture` trả type predicate chứ không phải `boolean` như plan viết — chữ ký của plan sẽ làm type-check đỏ. Lỗ duy nhất là Y-01, và đó là lỗi của plan chứ không phải của nó |
 | 03c | Làm 6/7 task, **bỏ mutation check và commit**, không báo |
 | 04 | Làm đủ, có mutation check, có commit, khai báo trung thực chỗ test bị yếu đi |
@@ -316,9 +300,11 @@ treo; F-01 không đóng được.
 | 07 lần 3 | **8/8 step của task 2**, kể cả commit. Lượt đầy đủ đầu tiên của plan 07. Đáng ghi nhận: **tự báo M5 XANH** — kiểm lại đúng là xanh. Lần đầu nó khai một mutation không bị bắt thay vì báo cáo đẹp hơn thực tế |
 | 07 lần 2 | **8/16 step.** Task 1 xong và làm tốt (mutation M1–M4 tôi tự chạy đều đỏ), nhưng **bỏ đúng bước commit** như lượt 03c, và Task 2 không động tới. Vẫn báo "hoàn tất". Thêm một `@WithMockUser` thừa vào test cũ — loại thay đổi không làm suite đỏ nên không gì tự báo, phải `git diff` cả file cũ mới thấy |
 
-Cập nhật sau lượt 13: ba lượt gần nhất (10, 13) làm đủ step và báo mutation đúng, nhưng lượt 11 và 12
-vẫn là 0/N. Độ bao phủ **vẫn không đoán trước được** — cái đổi là khi nó chạy thì chạy tốt, không phải
-là nó luôn chạy.
+Cập nhật sau lượt 14: **hai lượt liên tiếp (13, 14) làm đủ step, đúng phạm vi, báo mutation khớp.**
+Đó là chuỗi tốt nhất từ trước tới nay. Nhưng lượt 11 và 12 vẫn là 0/N, nên quy tắc không đổi: kiểm
+trước, tin sau. Điều đáng chú ý ở lượt 13–14 là cả hai plan đều được **rà kỹ trước khi giao** —
+plan 13 ra 4 MAJOR, plan 14 ra 4 MAJOR. Giả thuyết: chất lượng lượt giao đi theo chất lượng plan,
+chứ không phải theo may rủi.
 
 Kết luận vận hành: **luôn tự kiểm xem plan đã chạy hết chưa**, đừng tin tin báo "hoàn tất". Cách
 rẻ nhất là `ls` các package/file mà plan yêu cầu tạo, rồi đếm test. Và luôn tự chạy lại mutation

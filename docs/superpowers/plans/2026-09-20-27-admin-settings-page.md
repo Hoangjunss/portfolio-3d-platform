@@ -18,6 +18,21 @@
 - `form/SettingUpsertForm.java` is `record SettingUpsertForm(@NotBlank String valueJson)` — the value is a raw JSON string per key, not a typed object. `dto/SettingDto.java` is `record SettingDto(String key, String valueJson, Instant updatedAt)`.
 - `service/impl/SettingsServiceImpl.get(key)` throws `ResourceNotFoundException` for a key with no row yet — **the list endpoint must not do the same**; a fresh install has zero `settings` rows and the screen must still render with empty fields, not 404.
 
+> **Admin tree correction (2026-09-20).** An earlier draft of this plan placed the new screen at
+> `frontend/app/admin/<name>/page.tsx` and edited `frontend/app/admin/layout.tsx`. Both are wrong
+> against the repo:
+>
+> - The real tree is `frontend/app/admin/(dashboard)/{layout,page}.tsx` plus
+>   `(dashboard)/leads/` and `(dashboard)/templates/`, with `frontend/app/admin/login/page.tsx`
+>   as a sibling **outside** the group. New admin screens go in
+>   **`frontend/app/admin/(dashboard)/<name>/page.tsx`** — placed outside the group they render
+>   with no sidebar at all.
+> - **`frontend/app/admin/layout.tsx` does not exist and must not be created.** It would become the
+>   parent of *both* `login/` and `(dashboard)/`, so the admin sidebar — a list of links to
+>   protected pages — would render on the login screen for anonymous visitors, and the dashboard
+>   layout would nest inside it as a second sidebar. The nav to edit is
+>   **`frontend/app/admin/(dashboard)/layout.tsx`**.
+
 ## Global Constraints
 
 - Backend must run within `-Xmx350m` (spec section 7) — the list endpoint returns at most 4 rows (fixed key set), no pagination needed.
@@ -152,7 +167,7 @@ Expected: PASS, no regression on the existing 126+ tests.
 ### Task 2: Frontend — `/admin/settings` form (site title, SEO meta, social links, contact email)
 
 **Files:**
-- Create: `frontend/app/admin/settings/page.tsx`
+- Create: `frontend/app/admin/(dashboard)/settings/page.tsx`
 - Create: `frontend/lib/settingsApiClient.ts`
 - Test: `frontend/lib/settingsApiClient.test.ts`
 
@@ -246,7 +261,7 @@ Expected: PASS.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add backend/src/main/java/com/portfolio/platform/constant/SettingKeys.java backend/src/main/java/com/portfolio/platform/service/SettingsService.java backend/src/main/java/com/portfolio/platform/service/impl/SettingsServiceImpl.java backend/src/main/java/com/portfolio/platform/controller/SettingsController.java backend/src/main/java/com/portfolio/platform/repository/SettingRepository.java backend/src/test/java/com/portfolio/platform/service/SettingsServiceListAllTest.java backend/src/test/java/com/portfolio/platform/controller/SettingsControllerListTest.java frontend/app/admin/settings frontend/lib/settingsApiClient.ts frontend/lib/settingsApiClient.test.ts
+git add backend/src/main/java/com/portfolio/platform/constant/SettingKeys.java backend/src/main/java/com/portfolio/platform/service/SettingsService.java backend/src/main/java/com/portfolio/platform/service/impl/SettingsServiceImpl.java backend/src/main/java/com/portfolio/platform/controller/SettingsController.java backend/src/main/java/com/portfolio/platform/repository/SettingRepository.java backend/src/test/java/com/portfolio/platform/service/SettingsServiceListAllTest.java backend/src/test/java/com/portfolio/platform/controller/SettingsControllerListTest.java frontend/app/admin/(dashboard)/settings frontend/lib/settingsApiClient.ts frontend/lib/settingsApiClient.test.ts
 git commit -m "feat: add admin settings page (list-all endpoint + form UI)"
 ```
 
@@ -255,5 +270,5 @@ git commit -m "feat: add admin settings page (list-all endpoint + form UI)"
 - **Spec coverage:** closes the "Settings page" bullet of design spec section 4.
 - **Type consistency:** `SettingRow`/`SETTING_KEYS` mirror `SettingDto`/`SettingKeys` exactly; `social_links`'s internal shape (array of `{label, url}`) is a frontend-only convention layered on top of the generic `valueJson` string — document it as a comment at the `social_links` field's parse/stringify site (the one place a "why" comment is warranted: the shape isn't visible from the backend type).
 - **Security:** relies entirely on the existing `hasRole("ADMIN")` matcher on `/api/admin/settings/**` — this plan adds no new security rule and must not weaken that one.
-- **Nav gap this plan intentionally does not close:** the admin nav (`frontend/app/admin/layout.tsx`, from plan 14) needs a "Settings" link added — call this out if plan 14's nav isn't touched by a later plan; a hidden feature reachable only by URL is a real but separate gap from this plan's scope.
+- **Nav gap this plan intentionally does not close:** the admin nav (`frontend/app/admin/(dashboard)/layout.tsx`, from plan 14) needs a "Settings" link added — call this out if plan 14's nav isn't touched by a later plan; a hidden feature reachable only by URL is a real but separate gap from this plan's scope.
 - **Next plan:** the remaining admin-screen backlog (content editor, media library, user management UI, audit log viewer) tracked as separate numbered plans (`2026-09-20-2{2,3,4,5}-admin-*.md`).

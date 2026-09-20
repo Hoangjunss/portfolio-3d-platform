@@ -12,6 +12,22 @@
 
 **Depends on:** `2026-09-20-19-landing-nav-footer.md` (tokens, shared layout); `2026-09-20-20-landing-hero-about.md` (`getContentSection`, `RevealOnScroll`). **Consumes:** `POST /api/public/leads` (plan 07 — `LeadForm { name, email, phone?, message }`, rate-limited via Bucket4j).
 
+> **DOM test environment (2026-09-20).** This plan's component tests need a real DOM
+> (`@testing-library/react`, and in places `fireEvent` / `IntersectionObserver`). That environment
+> is **not** on by default here: `vitest.config.mjs` deliberately stays on the Node environment so
+> `lib/webgl.test.ts` can keep deleting `window`/`document` to assert its SSR branch. Run
+> **`2026-09-20-19b-dom-test-environment.md` first**, then start every DOM-requiring test file in
+> this plan with exactly these two lines:
+>
+> ```
+> // @vitest-environment jsdom
+> import "@testing-library/jest-dom/vitest";
+> ```
+>
+> A file missing the docblock runs in Node and fails with `document is not defined`, which reads
+> like a component bug rather than a missing header. Do **not** run `npm install` yourself — plan
+> 19b owns the dependency change.
+
 ## Global Constraints
 
 - Public POST endpoints (`leads`, `analytics/events`, `auth/login`) are rate-limited via Bucket4j (spec section 5) — the form must surface a `429` as a real error state, not a generic failure.
@@ -37,6 +53,8 @@
 - [ ] **Step 1: Write the failing test — three numbered steps render in order, no icon-grid markup**
 
 ```tsx
+// @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { ServicesSection } from "./ServicesSection";
@@ -209,6 +227,8 @@ git commit -m "feat: add leadClient with typed rate-limit/validation/server-erro
 - [ ] **Step 1: Write the failing tests — one per required behaviour**
 
 ```tsx
+// @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { ContactForm } from "./ContactForm";

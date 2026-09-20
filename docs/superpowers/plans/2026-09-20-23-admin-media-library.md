@@ -18,6 +18,37 @@ Converter → Repository, spec 5.1).
 **Depends on:** `2026-09-19-06-content-media-settings.md` (upload endpoint, `MediaStorageProperties`,
 `MediaService`).
 
+> **Admin tree correction (2026-09-20).** An earlier draft of this plan placed the new screen at
+> `frontend/app/admin/<name>/page.tsx` and edited `frontend/app/admin/layout.tsx`. Both are wrong
+> against the repo:
+>
+> - The real tree is `frontend/app/admin/(dashboard)/{layout,page}.tsx` plus
+>   `(dashboard)/leads/` and `(dashboard)/templates/`, with `frontend/app/admin/login/page.tsx`
+>   as a sibling **outside** the group. New admin screens go in
+>   **`frontend/app/admin/(dashboard)/<name>/page.tsx`** — placed outside the group they render
+>   with no sidebar at all.
+> - **`frontend/app/admin/layout.tsx` does not exist and must not be created.** It would become the
+>   parent of *both* `login/` and `(dashboard)/`, so the admin sidebar — a list of links to
+>   protected pages — would render on the login screen for anonymous visitors, and the dashboard
+>   layout would nest inside it as a second sidebar. The nav to edit is
+>   **`frontend/app/admin/(dashboard)/layout.tsx`**.
+
+> **DOM test environment (2026-09-20).** This plan's component tests need a real DOM
+> (`@testing-library/react`, and in places `fireEvent` / `IntersectionObserver`). That environment
+> is **not** on by default here: `vitest.config.mjs` deliberately stays on the Node environment so
+> `lib/webgl.test.ts` can keep deleting `window`/`document` to assert its SSR branch. Run
+> **`2026-09-20-19b-dom-test-environment.md` first**, then start every DOM-requiring test file in
+> this plan with exactly these two lines:
+>
+> ```
+> // @vitest-environment jsdom
+> import "@testing-library/jest-dom/vitest";
+> ```
+>
+> A file missing the docblock runs in Node and fails with `document is not defined`, which reads
+> like a component bug rather than a missing header. Do **not** run `npm install` yourself — plan
+> 19b owns the dependency change.
+
 ## Global Constraints
 
 - Backend must run within `-Xmx350m` (spec section 7 RAM budget) — no unbounded in-memory collections, use pagination on list endpoints.
@@ -204,10 +235,10 @@ Expected: PASS
 ### Task 2: Frontend — media grid with copy-URL and delete
 
 **Files:**
-- Create: `frontend/app/admin/media/page.tsx`
+- Create: `frontend/app/admin/(dashboard)/media/page.tsx`
 - Create: `frontend/components/admin/MediaGrid.tsx`
 - Test: `frontend/components/admin/MediaGrid.test.tsx`
-- Modify: `frontend/app/admin/layout.tsx` — add "Media" nav link
+- Modify: `frontend/app/admin/(dashboard)/layout.tsx` — add "Media" nav link
 
 **Interfaces:**
 - Consumes: `GET /api/admin/media`, `DELETE /api/admin/media/{id}`, existing `POST /api/admin/media`
@@ -222,6 +253,8 @@ Expected: PASS
 - [ ] **Step 1: Write the failing `MediaGrid` test — copy URL**
 
 ```tsx
+// @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MediaGrid } from "./MediaGrid";
@@ -291,7 +324,7 @@ Expected: both PASS.
 - [ ] **Step 7: Commit**
 
 ```bash
-git add backend/src/main/java/com/portfolio/platform/service/MediaService.java backend/src/main/java/com/portfolio/platform/service/impl/MediaServiceImpl.java backend/src/main/java/com/portfolio/platform/controller/MediaController.java backend/src/test frontend/app/admin/media frontend/components/admin/MediaGrid.tsx frontend/components/admin/MediaGrid.test.tsx frontend/app/admin/layout.tsx
+git add backend/src/main/java/com/portfolio/platform/service/MediaService.java backend/src/main/java/com/portfolio/platform/service/impl/MediaServiceImpl.java backend/src/main/java/com/portfolio/platform/controller/MediaController.java backend/src/test frontend/app/admin/(dashboard)/media frontend/components/admin/MediaGrid.tsx frontend/components/admin/MediaGrid.test.tsx frontend/app/admin/(dashboard)/layout.tsx
 git commit -m "feat: add admin media library list, delete, and grid UI"
 ```
 

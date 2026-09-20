@@ -4,15 +4,30 @@
 
 **Goal:** Let ADMIN/EDITOR read recent 5xx errors (`system_error_logs`) from `/admin/errors` without SSH access, per design spec section 4 ("System error log viewer: recent 5xx errors with stack trace, without needing SSH access to read log files").
 
-**Architecture:** New read-only `AdminErrorLogController` exposes a paginated list backed by the existing `SystemErrorLogRepository` (rows are already written by the global `@RestControllerAdvice` since plan 04/04b — this plan does not touch that write path). `frontend/app/admin/errors/page.tsx` lists rows in a table; clicking a row expands an inline collapsible `<pre>` block with the full stack trace (collapsed by default — stack traces are long and would otherwise dominate the screen).
+**Architecture:** New read-only `AdminErrorLogController` exposes a paginated list backed by the existing `SystemErrorLogRepository` (rows are already written by the global `@RestControllerAdvice` since plan 04/04b — this plan does not touch that write path). `frontend/app/admin/(dashboard)/errors/page.tsx` lists rows in a table; clicking a row expands an inline collapsible `<pre>` block with the full stack trace (collapsed by default — stack traces are long and would otherwise dominate the screen).
 
 **Tech Stack:** Spring Boot (Controller/Service/Repository/Converter/Dto per spec 5.1), Next.js App Router client component, Vitest.
 
 **Spec:** `docs/superpowers/specs/2026-09-19-portfolio-3d-platform-design.md` (section 4 feature description, section 5.1 layered architecture, section 6 `system_error_logs` schema).
 
-**Depends on:** `2026-09-19-04-audit-error-logging.md` (writes the rows this plan reads); `2026-09-19-13-admin-auth-middleware.md` (needs `portfolio_access_token` cookie); `2026-09-19-14-admin-dashboard-crud.md` (needs `frontend/lib/adminApiClient.ts` and `frontend/app/admin/layout.tsx`).
+**Depends on:** `2026-09-19-04-audit-error-logging.md` (writes the rows this plan reads); `2026-09-19-13-admin-auth-middleware.md` (needs `portfolio_access_token` cookie); `2026-09-19-14-admin-dashboard-crud.md` (needs `frontend/lib/adminApiClient.ts` and `frontend/app/admin/(dashboard)/layout.tsx`).
 
 **Confirmed by direct code read (2026-09-20):** `controller/` has no `AdminErrorLogController` or `SystemErrorLogController` today — only the model (`model/SystemErrorLog.java`) and repository (`repository/SystemErrorLogRepository.java`) exist. `application.yml`'s `/api/admin/**` matcher already allows `ADMIN` and `EDITOR` (`config/SecurityConfig.java` line 47); no new security rule is needed. `P-01` in STATUS.md (malformed-body/type-mismatch not covered by the error grid) is a pre-existing note about the *write* side and is out of scope here.
+
+> **Admin tree correction (2026-09-20).** An earlier draft of this plan placed the new screen at
+> `frontend/app/admin/<name>/page.tsx` and edited `frontend/app/admin/layout.tsx`. Both are wrong
+> against the repo:
+>
+> - The real tree is `frontend/app/admin/(dashboard)/{layout,page}.tsx` plus
+>   `(dashboard)/leads/` and `(dashboard)/templates/`, with `frontend/app/admin/login/page.tsx`
+>   as a sibling **outside** the group. New admin screens go in
+>   **`frontend/app/admin/(dashboard)/<name>/page.tsx`** — placed outside the group they render
+>   with no sidebar at all.
+> - **`frontend/app/admin/layout.tsx` does not exist and must not be created.** It would become the
+>   parent of *both* `login/` and `(dashboard)/`, so the admin sidebar — a list of links to
+>   protected pages — would render on the login screen for anonymous visitors, and the dashboard
+>   layout would nest inside it as a second sidebar. The nav to edit is
+>   **`frontend/app/admin/(dashboard)/layout.tsx`**.
 
 ## Global Constraints
 
@@ -135,8 +150,9 @@ Expected: PASS, no regression on the existing 126 tests + the new ones.
 ### Task 2: Frontend — `/admin/errors` list + expandable stack trace
 
 **Files:**
-- Create: `frontend/app/admin/errors/page.tsx`
-- Modify: `frontend/lib/adminApiClient.ts` — no change needed (existing `adminFetch` is generic); add a typed helper if the project's convention (established in plan 11's `lib/apiClient.ts`) is to keep one typed fetch function per resource: `frontend/lib/errorLogsApiClient.ts`.
+- Create: `frontend/app/admin/(dashboard)/errors/page.tsx`
+- Create: `frontend/lib/errorLogsApiClient.ts` — one typed fetch function per resource, matching `apiClient.ts` (plan 11) and the sibling `userApiClient.ts` / `auditLogApiClient.ts` / `settingsApiClient.ts` in plans 24, 25 and 27. Step 3 creates this file unconditionally; an earlier draft phrased it as optional ("add a typed helper **if** the project's convention is...") while Step 3 and the `git add` line both required it.
+- `frontend/lib/adminApiClient.ts` needs **no change** — its `adminFetch` is already generic.
 - Test: `frontend/lib/errorLogsApiClient.test.ts`
 
 **Interfaces:**
@@ -215,7 +231,7 @@ Expected: PASS, no regression on the existing 5 tests + the new one.
 - [ ] **Step 8: Commit**
 
 ```bash
-git add backend/src/main/java/com/portfolio/platform/dto/SystemErrorLogDto.java backend/src/main/java/com/portfolio/platform/converter/SystemErrorLogConverter.java backend/src/main/java/com/portfolio/platform/converter/impl/SystemErrorLogConverterImpl.java backend/src/main/java/com/portfolio/platform/service/SystemErrorLogService.java backend/src/main/java/com/portfolio/platform/service/impl/SystemErrorLogServiceImpl.java backend/src/main/java/com/portfolio/platform/controller/AdminErrorLogController.java backend/src/main/java/com/portfolio/platform/repository/SystemErrorLogRepository.java backend/src/test/java/com/portfolio/platform/controller/AdminErrorLogControllerTest.java backend/src/test/java/com/portfolio/platform/converter/SystemErrorLogConverterTest.java frontend/app/admin/errors frontend/lib/errorLogsApiClient.ts frontend/lib/errorLogsApiClient.test.ts
+git add backend/src/main/java/com/portfolio/platform/dto/SystemErrorLogDto.java backend/src/main/java/com/portfolio/platform/converter/SystemErrorLogConverter.java backend/src/main/java/com/portfolio/platform/converter/impl/SystemErrorLogConverterImpl.java backend/src/main/java/com/portfolio/platform/service/SystemErrorLogService.java backend/src/main/java/com/portfolio/platform/service/impl/SystemErrorLogServiceImpl.java backend/src/main/java/com/portfolio/platform/controller/AdminErrorLogController.java backend/src/main/java/com/portfolio/platform/repository/SystemErrorLogRepository.java backend/src/test/java/com/portfolio/platform/controller/AdminErrorLogControllerTest.java backend/src/test/java/com/portfolio/platform/converter/SystemErrorLogConverterTest.java frontend/app/admin/(dashboard)/errors frontend/lib/errorLogsApiClient.ts frontend/lib/errorLogsApiClient.test.ts
 git commit -m "feat: add admin error log viewer (list endpoint + UI)"
 ```
 

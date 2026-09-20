@@ -30,6 +30,21 @@ validation), plan 11 task 2 (`Template` TypeScript type, twelve fields), plan 12
 `thumbnailUrl` resolved from `thumbnailMediaId` — the seed rows in task 1 intentionally leave
 `thumbnail_media_id` NULL; see decision (a)).
 
+> **DOM test environment + CI (2026-09-20).** Two corrections found while reviewing this plan.
+>
+> 1. **This plan does NOT depend on `2026-09-20-19b-dom-test-environment.md`.** That plan adds
+>    jsdom and Testing Library to `frontend/`, and `template-kit/` is a separate workspace package
+>    with its own `package.json` and its own `vitest.config.ts` (Step 3). Add the DOM dependencies
+>    to `template-kit/package.json` and set `environment: "jsdom"` **globally** in
+>    `template-kit/vitest.config.ts` — the per-file docblock that `frontend/` needs exists only to
+>    protect `frontend/lib/webgl.test.ts`, which has no counterpart here.
+> 2. **CI will not run any of these tests as things stand.** The `test` job in
+>    `.github/workflows/deploy.yml` runs `mvn -B -f backend/pom.xml test` and then, in `frontend/`,
+>    `npm ci && npx vitest run && npm run build`. Nothing touches `template-kit/`. Nine components
+>    with tests that no pipeline executes are not covered, they are only believed to be. This plan
+>    must add a `template-kit` step to that job — `npm ci` and `npx vitest run` in
+>    `template-kit/` — in the same commit that creates the package.
+
 ## Global Constraints
 
 - Backend must run within `-Xmx350m` — no unbounded in-memory collections; this plan adds no new

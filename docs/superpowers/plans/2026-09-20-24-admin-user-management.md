@@ -16,7 +16,22 @@ a client component that fetches the paginated user list on mount and re-fetches 
 create/deactivate admin & editor accounts, role assignment"; §5 "only ADMIN may manage users and settings").
 
 **Depends on:** `2026-09-19-13-admin-auth-middleware.md` (JWT cookie), `2026-09-19-14-admin-dashboard-crud.md`
-(`adminApiClient.ts`, `app/admin/layout.tsx` nav).
+(`adminApiClient.ts`, `app/admin/(dashboard)/layout.tsx` nav).
+
+> **Admin tree correction (2026-09-20).** An earlier draft of this plan placed the new screen at
+> `frontend/app/admin/<name>/page.tsx` and edited `frontend/app/admin/layout.tsx`. Both are wrong
+> against the repo:
+>
+> - The real tree is `frontend/app/admin/(dashboard)/{layout,page}.tsx` plus
+>   `(dashboard)/leads/` and `(dashboard)/templates/`, with `frontend/app/admin/login/page.tsx`
+>   as a sibling **outside** the group. New admin screens go in
+>   **`frontend/app/admin/(dashboard)/<name>/page.tsx`** — placed outside the group they render
+>   with no sidebar at all.
+> - **`frontend/app/admin/layout.tsx` does not exist and must not be created.** It would become the
+>   parent of *both* `login/` and `(dashboard)/`, so the admin sidebar — a list of links to
+>   protected pages — would render on the login screen for anonymous visitors, and the dashboard
+>   layout would nest inside it as a second sidebar. The nav to edit is
+>   **`frontend/app/admin/(dashboard)/layout.tsx`**.
 
 ## Global Constraints
 
@@ -50,10 +65,10 @@ create/deactivate admin & editor accounts, role assignment"; §5 "only ADMIN may
 ### Task: Admin dashboard — user management screen
 
 **Files:**
-- Create: `frontend/app/admin/users/page.tsx`
+- Create: `frontend/app/admin/(dashboard)/users/page.tsx`
 - Create: `frontend/lib/userApiClient.ts`
 - Test: `frontend/lib/userApiClient.test.ts`
-- Modify: `frontend/app/admin/layout.tsx` — add a "Users" nav link (only `AdminUserController` is
+- Modify: `frontend/app/admin/(dashboard)/layout.tsx` — add a "Users" nav link (only `AdminUserController` is
   ADMIN-only server-side; the link is shown to everyone, the server 403s EDITOR — do not hide the
   link based on client-decoded JWT claims, that's a spoofable client check, not a security boundary).
 
@@ -289,7 +304,7 @@ Run: `cd frontend && npx vitest run` — expect all frontend tests, including th
 - [ ] **Step 8: Commit**
 
 ```bash
-git add frontend/app/admin/users frontend/lib/userApiClient.ts frontend/lib/userApiClient.test.ts frontend/app/admin/layout.tsx
+git add frontend/app/admin/(dashboard)/users frontend/lib/userApiClient.ts frontend/lib/userApiClient.test.ts frontend/app/admin/(dashboard)/layout.tsx
 git commit -m "feat: add admin user management screen (create, list, deactivate)"
 ```
 

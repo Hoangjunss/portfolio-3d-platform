@@ -24,6 +24,21 @@ who changed what, when, before/after values"; §5.1 layered architecture; §6 `a
 aspect that writes rows — already in production use by plans 07/08/09/10); `2026-09-19-13-admin-auth-middleware.md`;
 `2026-09-19-14-admin-dashboard-crud.md` (`adminApiClient.ts`, admin layout/nav).
 
+> **Admin tree correction (2026-09-20).** An earlier draft of this plan placed the new screen at
+> `frontend/app/admin/<name>/page.tsx` and edited `frontend/app/admin/layout.tsx`. Both are wrong
+> against the repo:
+>
+> - The real tree is `frontend/app/admin/(dashboard)/{layout,page}.tsx` plus
+>   `(dashboard)/leads/` and `(dashboard)/templates/`, with `frontend/app/admin/login/page.tsx`
+>   as a sibling **outside** the group. New admin screens go in
+>   **`frontend/app/admin/(dashboard)/<name>/page.tsx`** — placed outside the group they render
+>   with no sidebar at all.
+> - **`frontend/app/admin/layout.tsx` does not exist and must not be created.** It would become the
+>   parent of *both* `login/` and `(dashboard)/`, so the admin sidebar — a list of links to
+>   protected pages — would render on the login screen for anonymous visitors, and the dashboard
+>   layout would nest inside it as a second sidebar. The nav to edit is
+>   **`frontend/app/admin/(dashboard)/layout.tsx`**.
+
 ## Global Constraints
 
 - Backend must run within `-Xmx350m` (spec section 7 RAM budget) — no unbounded in-memory collections, use pagination on list endpoints.
@@ -341,10 +356,10 @@ Expected: PASS
 ### Task: Frontend — audit log viewer screen
 
 **Files:**
-- Create: `frontend/app/admin/audit-log/page.tsx`
+- Create: `frontend/app/admin/(dashboard)/audit-log/page.tsx`
 - Create: `frontend/lib/auditLogApiClient.ts`
 - Test: `frontend/lib/auditLogApiClient.test.ts`
-- Modify: `frontend/app/admin/layout.tsx` — add an "Audit log" nav link.
+- Modify: `frontend/app/admin/(dashboard)/layout.tsx` — add an "Audit log" nav link.
 
 **Interfaces:**
 - Consumes: `GET /api/admin/audit-logs?entityType=&entityId=&page=` (this plan, Task 1).
@@ -517,8 +532,8 @@ git add backend/src/main/java/com/portfolio/platform/dto/AuditLogDto.java \
         backend/src/main/java/com/portfolio/platform/repository/AuditLogRepository.java \
         backend/src/test/java/com/portfolio/platform/service/AuditLogServiceTest.java \
         backend/src/test/java/com/portfolio/platform/controller/AdminAuditLogControllerTest.java \
-        frontend/app/admin/audit-log frontend/lib/auditLogApiClient.ts frontend/lib/auditLogApiClient.test.ts \
-        frontend/app/admin/layout.tsx
+        frontend/app/admin/(dashboard)/audit-log frontend/lib/auditLogApiClient.ts frontend/lib/auditLogApiClient.test.ts \
+        frontend/app/admin/(dashboard)/layout.tsx
 git commit -m "feat: add admin audit log viewer (backend list endpoint + UI with readable diff)"
 ```
 
@@ -534,6 +549,6 @@ git commit -m "feat: add admin audit log viewer (backend list endpoint + UI with
   for every field, which would misrepresent a brand-new record as having had 10 fields silently changed
   from empty.
 - **Type consistency:** `AuditLog`/`AuditLogPage` TypeScript types mirror `AuditLogDto` exactly.
-- **Open item carried forward, not fixed here:** `frontend/app/admin/templates/page.tsx` (plan 14)
+- **Open item carried forward, not fixed here:** `frontend/app/admin/(dashboard)/templates/page.tsx` (plan 14)
   currently has no edit action, only a read-only table — Step 14's manual verification calls this out
   explicitly via a `curl` workaround rather than silently assuming an edit UI exists.

@@ -23,6 +23,37 @@ and `2026-09-20-20-landing-hero-about.md` and `2026-09-20-21-landing-services-co
 page must already read `content_sections` for these four keys, or this editor has nothing real to
 change).
 
+> **Admin tree correction (2026-09-20).** An earlier draft of this plan placed the new screen at
+> `frontend/app/admin/<name>/page.tsx` and edited `frontend/app/admin/layout.tsx`. Both are wrong
+> against the repo:
+>
+> - The real tree is `frontend/app/admin/(dashboard)/{layout,page}.tsx` plus
+>   `(dashboard)/leads/` and `(dashboard)/templates/`, with `frontend/app/admin/login/page.tsx`
+>   as a sibling **outside** the group. New admin screens go in
+>   **`frontend/app/admin/(dashboard)/<name>/page.tsx`** — placed outside the group they render
+>   with no sidebar at all.
+> - **`frontend/app/admin/layout.tsx` does not exist and must not be created.** It would become the
+>   parent of *both* `login/` and `(dashboard)/`, so the admin sidebar — a list of links to
+>   protected pages — would render on the login screen for anonymous visitors, and the dashboard
+>   layout would nest inside it as a second sidebar. The nav to edit is
+>   **`frontend/app/admin/(dashboard)/layout.tsx`**.
+
+> **DOM test environment (2026-09-20).** This plan's component tests need a real DOM
+> (`@testing-library/react`, and in places `fireEvent` / `IntersectionObserver`). That environment
+> is **not** on by default here: `vitest.config.mjs` deliberately stays on the Node environment so
+> `lib/webgl.test.ts` can keep deleting `window`/`document` to assert its SSR branch. Run
+> **`2026-09-20-19b-dom-test-environment.md` first**, then start every DOM-requiring test file in
+> this plan with exactly these two lines:
+>
+> ```
+> // @vitest-environment jsdom
+> import "@testing-library/jest-dom/vitest";
+> ```
+>
+> A file missing the docblock runs in Node and fails with `document is not defined`, which reads
+> like a component bug rather than a missing header. Do **not** run `npm install` yourself — plan
+> 19b owns the dependency change.
+
 ## Global Constraints
 
 - Backend must run within `-Xmx350m` (spec section 7 RAM budget) — no unbounded in-memory collections, use pagination on list endpoints.
@@ -135,11 +166,11 @@ Expected: PASS
 ### Task 2: Frontend — per-section editor forms
 
 **Files:**
-- Create: `frontend/app/admin/content/page.tsx`
+- Create: `frontend/app/admin/(dashboard)/content/page.tsx`
 - Create: `frontend/lib/contentSectionShapes.ts` — typed shape + field labels per `sectionKey`
 - Create: `frontend/components/admin/ContentSectionForm.tsx`
 - Test: `frontend/components/admin/ContentSectionForm.test.tsx`
-- Modify: `frontend/app/admin/layout.tsx` — add "Content" nav link
+- Modify: `frontend/app/admin/(dashboard)/layout.tsx` — add "Content" nav link
 - Modify: `frontend/lib/adminApiClient.ts` (plan 14) — no change needed, reused as-is
 
 **Interfaces:**
@@ -210,6 +241,8 @@ Expected: PASS
 - [ ] **Step 4: Write the failing `ContentSectionForm` test**
 
 ```tsx
+// @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ContentSectionForm } from "./ContentSectionForm";
@@ -258,7 +291,7 @@ Expected: both PASS.
 - [ ] **Step 9: Commit**
 
 ```bash
-git add backend/src/main/java/com/portfolio/platform/service/ContentSectionService.java backend/src/main/java/com/portfolio/platform/service/impl/ContentSectionServiceImpl.java backend/src/main/java/com/portfolio/platform/controller/ContentSectionController.java backend/src/test frontend/app/admin/content frontend/lib/contentSectionShapes.ts frontend/components/admin/ContentSectionForm.tsx frontend/components/admin/ContentSectionForm.test.tsx frontend/app/admin/layout.tsx
+git add backend/src/main/java/com/portfolio/platform/service/ContentSectionService.java backend/src/main/java/com/portfolio/platform/service/impl/ContentSectionServiceImpl.java backend/src/main/java/com/portfolio/platform/controller/ContentSectionController.java backend/src/test frontend/app/admin/(dashboard)/content frontend/lib/contentSectionShapes.ts frontend/components/admin/ContentSectionForm.tsx frontend/components/admin/ContentSectionForm.test.tsx frontend/app/admin/(dashboard)/layout.tsx
 git commit -m "feat: add admin content section editor with per-key field forms"
 ```
 

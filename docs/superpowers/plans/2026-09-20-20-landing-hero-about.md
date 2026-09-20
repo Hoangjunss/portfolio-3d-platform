@@ -12,6 +12,22 @@
 
 **Depends on:** `2026-09-20-19-landing-nav-footer.md` (tokens wired into `globals.css`, shared layout exists). **Required by:** `2026-09-20-21-landing-services-contact.md` (reuses `RevealOnScroll`).
 
+> **DOM test environment (2026-09-20).** This plan's component tests need a real DOM
+> (`@testing-library/react`, and in places `fireEvent` / `IntersectionObserver`). That environment
+> is **not** on by default here: `vitest.config.mjs` deliberately stays on the Node environment so
+> `lib/webgl.test.ts` can keep deleting `window`/`document` to assert its SSR branch. Run
+> **`2026-09-20-19b-dom-test-environment.md` first**, then start every DOM-requiring test file in
+> this plan with exactly these two lines:
+>
+> ```
+> // @vitest-environment jsdom
+> import "@testing-library/jest-dom/vitest";
+> ```
+>
+> A file missing the docblock runs in Node and fails with `document is not defined`, which reads
+> like a component bug rather than a missing header. Do **not** run `npm install` yourself — plan
+> 19b owns the dependency change.
+
 ## Global Constraints
 
 - Backend must run within `-Xmx350m` (spec section 7 RAM budget) — no unbounded in-memory collections, use pagination on list endpoints.
@@ -37,6 +53,8 @@
 - [ ] **Step 1: Write the failing test — the wrapper starts hidden and becomes visible once observed**
 
 ```tsx
+// @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { RevealOnScroll } from "./RevealOnScroll";
@@ -200,8 +218,15 @@ Expected: FAIL — `contentClient.ts` does not exist.
 
 - [ ] **Step 3: Create `contentClient.ts`**
 
+Import `API_BASE` — do **not** redeclare it. `apiClient.ts` already exports
+`process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080"`, and that exact expression is the
+reason the `build` job carries a `Require a non-empty PUBLIC_API_BASE_URL` gate: `??` does not catch
+`""`, so an empty secret would otherwise ship a bundle calling relative URLs. The comment in
+`.github/workflows/deploy.yml` names `apiClient.ts` as the single place that trap lives. A second
+copy here makes that comment quietly wrong and doubles the surface.
+
 ```ts
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
+import { API_BASE } from "./apiClient";
 
 export async function getContentSection<T>(key: string): Promise<T | null> {
   const res = await fetch(`${API_BASE}/api/public/content-sections/${key}`, {
@@ -221,6 +246,8 @@ Expected: PASS
 - [ ] **Step 5: Write the failing `HeroSection` test — falls back to the honest default copy when the CMS has no row**
 
 ```tsx
+// @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { HeroSection } from "./HeroSection";
@@ -301,6 +328,8 @@ git commit -m "feat: add HeroSection (Hallmark Marquee, CMS-driven with honest f
 - [ ] **Step 1: Write the failing test**
 
 ```tsx
+// @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { AboutSection } from "./AboutSection";

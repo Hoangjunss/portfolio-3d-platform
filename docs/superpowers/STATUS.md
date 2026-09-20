@@ -27,21 +27,35 @@ Tiến độ: **9/19 task tính năng & refactor**. Suite 92/92 PASS.
 
 ---
 
-## Bước kế tiếp — plan 09 (rate limiting)
+## Bước kế tiếp — plan 09 (rate limiting) — ĐÃ RÀ XONG, ĐANG GIAO
 
-**`docs/superpowers/plans/2026-09-19-09-rate-limiting.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
+**`docs/superpowers/plans/2026-09-19-09-rate-limiting.md`** — đã viết lại 2026-09-20. Bản cũ có
+bốn lỗ, trong đó hai cái tự mâu thuẫn với chính ràng buộc của nó:
 
-Plan 09 phải gánh ba thứ mang sang:
+- **Map bucket không giới hạn.** `ConcurrentHashMap` khoá theo `path:ip` mọc một entry mỗi IP,
+  vĩnh viễn, trên heap 350MB. Đây không phải rò rỉ để sửa sau — **chính nó là đòn tấn công**:
+  client đổi IP liên tục làm đầy heap, và bộ rate limit trở thành đúng cái DoS nó sinh ra để
+  chặn. Bản mới dùng Caffeine có `maximumSize` + `expireAfterAccess`, và **có test bắn 20.000 IP
+  khác nhau rồi assert kích thước cache không vượt ngưỡng** — không có assertion đó thì cái bound
+  chỉ là trang trí.
+- **Một giới hạn 5/phút cho cả ba endpoint.** `/api/analytics/events` bắn cả lúc xem trang lẫn
+  mỗi cú click template, nên một khách thật duyệt portfolio sẽ vượt 5/phút trong vài giây và
+  dashboard âm thầm đếm thiếu. Bản mới tách theo path: login 10/15 phút, leads 5/giờ,
+  analytics 120/phút.
+- **429 không có body.** Cả dự án có một shape lỗi JSON duy nhất, mà filter nằm ngoài
+  `@RestControllerAdvice` nên phải tự ghi body. Không sửa thì 429 là response duy nhất rỗng ruột.
+- **Danh sách path chép hai nơi** (trong filter và trong `addUrlPatterns`). Hai danh sách sẽ lệch,
+  và khi lệch thì hỏng im lặng — một endpoint lặng lẽ không còn giới hạn.
 
-- **L-01 nửa sau (plan 07 task 2)** — đẩy việc gửi mail lead ra sau commit
-  (`@TransactionalEventListener(AFTER_COMMIT)` hoặc `@Async`) để DB connection không phải chờ
-  mạng. Nửa đầu (timeout 5s) đã vá ở `0fbf9f1`.
-- **P-03 (plan 08 task 1)** — response 405 chưa kèm header `Allow`.
-- **Cảnh báo từ quyết định (h) của plan 08**: `PublicAnalyticsController.resolveClientIp` đọc
-  `X-Forwarded-For`, mà client giả được header đó. **Rate limiting tuyệt đối không được tái sử
-  dụng phương thức đó để định danh client** — ai cũng vượt được giới hạn bằng cách đổi header.
-  Trước khi có nginx (plan 16) đặt `X-Forwarded-For` một cách đáng tin, rate limit phải dựa trên
-  `getRemoteAddr()`.
+Và lỗ thứ năm về mặt kiểm chứng: bản cũ chỉ có một unit test dùng mock, **vẫn xanh kể cả khi
+filter không hề được đăng ký**. Bản mới thêm `RateLimitIntegrationTest` gọi endpoint thật, và
+mutation M8 (gỡ hẳn đăng ký filter) là cái bản cũ không thể bắt được.
+
+**Cảnh báo mang sang plan 16:** rate limit khoá theo `getRemoteAddr()`, **không** dùng
+`X-Forwarded-For` (client giả được — xem quyết định (h) của plan 08). Mặt trái: khi có nginx,
+`getRemoteAddr()` là IP của nginx nên **cả site dùng chung một bucket**. Cách sửa đúng không phải
+đọc header trong code ứng dụng mà là `server.forward-headers-strategy: NATIVE` + danh sách proxy
+tin cậy. Đây là thứ thứ ba plan 16 nợ, cùng M-01 và D-03.
 
 ---
 
@@ -73,6 +87,7 @@ Plan 09 phải gánh ba thứ mang sang:
 | ~~**C-01 (p06)**~~ | MAJOR | Upload bị từ chối → 500 + ghi `system_error_logs`; EDITOR bơm được bảng | **Đã đóng** — `c7a3a0d`, M3 đỏ |
 | ~~**C-02 (p06)**~~ | MAJOR | Test sniffed-type không canh giá trị `mime_type` lưu xuống | **Đã đóng** — `c7a3a0d`, M1 đỏ |
 | ~~C-03 (p06)~~ | MINOR | `in.read(header)` có thể đọc thiếu → WEBP hợp lệ bị từ chối | **Đã đóng** — `c7a3a0d`, M2 đỏ |
+| **N-01 (p09 rà plan)** | — | Rate limit khoá `getRemoteAddr()`; sau nginx thì cả site chung một bucket nếu không có `forward-headers-strategy` | **Plan 16** — thứ thứ ba plan 16 nợ |
 | **A-08 (p08t2)** | MAJOR khi deploy | `analytics.ip-hash-secret` và `jwt.access-secret` đều có default nằm công khai trong repo, không gì fail nếu env không đặt | **Plan 15 phải bắt buộc env thật, fail startup nếu còn giá trị dev** |
 | A-09 (p08t2) | INFO | `/api/admin/analytics/summary` không cache, 3 query mỗi lần gọi | Plan 14 — cache TTL ngắn |
 | A-10 (p08t2) | INFO | `existsById` bỏ qua soft-delete của `TemplateService` | Ghi nhận |

@@ -40,7 +40,7 @@
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **18b / 19 / 19b / 20 XONG** — plan 20 review PASS 54/54 (`docs/reviews/2026-09-20-code-review-plan-20.md`), C-01 đóng, Decision (j) xác minh khi backend tắt. **Kế tiếp: plan 21.** Còn lại: 21 → 22 → 23 → 24 → 25 → 26 → 27 → 28 (đã rà và vá hết). **Một quyết định treo:** H1 hero là tiếng Anh theo spec dòng 71, lệch với phần còn lại tiếng Việt — không chặn plan 21, nhưng cần chủ dự án trả lời.
+Tiến độ: **18b / 19 / 19b / 20 / 21 XONG** — landing page hoàn chỉnh, **64/64**. Hai lỗi sau plan 21 đã đóng (`e65bd7d`, `3e8dfb1`): form không còn đứng cứng khi backend chết, và `:focus-visible` dùng `--color-focus` đã có. **Kế tiếp: plan 22** — plan đầu tiên có backend, **nhớ `export JAVA_HOME` JDK 21 trước khi `mvn`**. Còn lại: 22 → 23 → 24 → 25 → 26 → 27 → 28. **Nợ kỹ thuật:** 4 `!important` trong `contact-form.css` bị ép bởi inline style của `ContactForm` — gộp vào một lượt dọn CSS trước production (`docs/reviews/2026-09-20-code-review-plan-21-fixes.md`).
 
 ---
 

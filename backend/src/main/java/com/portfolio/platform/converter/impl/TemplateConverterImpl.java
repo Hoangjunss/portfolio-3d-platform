@@ -13,6 +13,11 @@ public class TemplateConverterImpl implements TemplateConverter {
 
     @Override
     public TemplateDto toDto(Template template) {
+        return toDto(template, null);
+    }
+
+    @Override
+    public TemplateDto toDto(Template template, String thumbnailUrl) {
         if (template == null) {
             return null;
         }
@@ -22,6 +27,7 @@ public class TemplateConverterImpl implements TemplateConverter {
                 template.getSlug(),
                 template.getSubdomain(),
                 template.getThumbnailMediaId(),
+                thumbnailUrl,
                 template.getDescription(),
                 template.getCategory(),
                 template.getTechTags(),

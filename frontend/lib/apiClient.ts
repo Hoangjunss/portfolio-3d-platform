@@ -6,6 +6,7 @@ export type Template = {
   slug: string;
   subdomain: string;
   thumbnailMediaId: number | null;
+  thumbnailUrl: string | null;
   description: string | null;
   category: string | null;
   techTags: string | null;

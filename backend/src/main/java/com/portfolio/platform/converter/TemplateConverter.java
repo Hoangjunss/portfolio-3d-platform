@@ -10,6 +10,8 @@ public interface TemplateConverter {
 
     TemplateDto toDto(Template template);
 
+    TemplateDto toDto(Template template, String thumbnailUrl);
+
     List<TemplateDto> toDtoList(List<Template> templates);
 
     void applyForm(Template target, TemplateUpsertForm form);

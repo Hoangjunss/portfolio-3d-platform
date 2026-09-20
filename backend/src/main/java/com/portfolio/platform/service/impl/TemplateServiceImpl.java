@@ -5,7 +5,9 @@ import com.portfolio.platform.converter.TemplateConverter;
 import com.portfolio.platform.dto.TemplateDto;
 import com.portfolio.platform.exception.ResourceNotFoundException;
 import com.portfolio.platform.form.TemplateUpsertForm;
+import com.portfolio.platform.model.Media;
 import com.portfolio.platform.model.Template;
+import com.portfolio.platform.repository.MediaRepository;
 import com.portfolio.platform.repository.TemplateRepository;
 import com.portfolio.platform.service.TemplateService;
 import com.portfolio.platform.service.UserService;
@@ -15,19 +17,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class TemplateServiceImpl implements TemplateService {
 
     private final TemplateRepository templateRepository;
+    private final MediaRepository mediaRepository;
     private final TemplateConverter templateConverter;
     private final UserService userService;
 
     public TemplateServiceImpl(TemplateRepository templateRepository,
+                               MediaRepository mediaRepository,
                                TemplateConverter templateConverter,
                                UserService userService) {
         this.templateRepository = templateRepository;
+        this.mediaRepository = mediaRepository;
         this.templateConverter = templateConverter;
         this.userService = userService;
     }
@@ -36,9 +45,26 @@ public class TemplateServiceImpl implements TemplateService {
     @Cacheable("public-templates")
     @Transactional(readOnly = true)
     public List<TemplateDto> listActive() {
-        return templateConverter.toDtoList(
-                templateRepository.findByActiveTrueAndDeletedAtIsNullOrderByDisplayOrderAsc()
-        );
+        List<Template> templates = templateRepository.findByActiveTrueAndDeletedAtIsNullOrderByDisplayOrderAsc();
+        List<Long> mediaIds = templates.stream()
+                .map(Template::getThumbnailMediaId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Map<Long, String> mediaUrls = mediaIds.isEmpty()
+                ? Collections.emptyMap()
+                : mediaRepository.findAllById(mediaIds).stream()
+                        .collect(Collectors.toMap(Media::getId, Media::getUrl));
+
+        return templates.stream()
+                .map(template -> {
+                    String thumbnailUrl = template.getThumbnailMediaId() != null
+                            ? mediaUrls.get(template.getThumbnailMediaId())
+                            : null;
+                    return templateConverter.toDto(template, thumbnailUrl);
+                })
+                .toList();
     }
 
     @Override

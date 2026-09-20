@@ -6,6 +6,7 @@ public record TemplateDto(
         String slug,
         String subdomain,
         Long thumbnailMediaId,
+        String thumbnailUrl,
         String description,
         String category,
         String techTags,

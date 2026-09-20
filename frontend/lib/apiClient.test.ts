@@ -7,13 +7,14 @@ describe("apiClient", () => {
   });
 
   describe("getTemplates", () => {
-    it("parses a full twelve-field payload", async () => {
+    it("parses a full thirteen-field payload", async () => {
       const mockTemplate: Template = {
         id: 1,
         name: "Restaurant Showcase",
         slug: "restaurant-showcase",
         subdomain: "restaurant",
         thumbnailMediaId: 42,
+        thumbnailUrl: "https://example.com/media/restaurant.webp",
         description: "A 3D showcase for modern restaurants",
         category: "Hospitality",
         techTags: "Three.js, React, Tailwind",
@@ -40,6 +41,7 @@ describe("apiClient", () => {
       expect(templates[0].slug).toBe("restaurant-showcase");
       expect(templates[0].subdomain).toBe("restaurant");
       expect(templates[0].thumbnailMediaId).toBe(42);
+      expect(templates[0].thumbnailUrl).toBe("https://example.com/media/restaurant.webp");
       expect(templates[0].description).toBe("A 3D showcase for modern restaurants");
       expect(templates[0].category).toBe("Hospitality");
       expect(templates[0].techTags).toBe("Three.js, React, Tailwind");

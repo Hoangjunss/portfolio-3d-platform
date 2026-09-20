@@ -45,6 +45,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Require a non-empty PUBLIC_API_BASE_URL
+        env:
+          PUBLIC_API_BASE_URL: ${{ secrets.PUBLIC_API_BASE_URL }}
+        # NEXT_PUBLIC_* is inlined at build time, and apiClient.ts uses `??` -- which does not
+        # catch "". An unset secret therefore builds green and ships a landing page whose every
+        # request is a relative URL against portfolio.com (AD-04).
+        run: test -n "$PUBLIC_API_BASE_URL" || { echo "PUBLIC_API_BASE_URL secret is empty" >&2; exit 1; }
+
       - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -77,40 +85,56 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v4
 
-      - name: Copy compose file and deploy script to the VPS
+      # Built here, not in a heredoc on the VPS. Secrets arrive as env vars and go out through
+      # printf, so no shell ever parses their contents -- a password containing `$` used to reach
+      # the VPS as a different string, with the same symptoms as a typo (AD-02). .gitignore
+      # already covers .env.
+      - name: Render .env
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          ANALYTICS_IP_HASH_SECRET: ${{ secrets.ANALYTICS_IP_HASH_SECRET }}
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.PUBLIC_API_BASE_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : > .env
+          for key in IMAGE_TAG DB_PASSWORD JWT_ACCESS_SECRET ANALYTICS_IP_HASH_SECRET \
+                     NEXT_PUBLIC_API_BASE_URL SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASSWORD; do
+            printf '%s=%s\n' "$key" "${!key-}" >> .env
+          done
+
+      - name: Copy compose file, deploy script and .env to the VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
           key: ${{ secrets.VPS_DEPLOY_SSH_KEY }}
-          source: "docker-compose.yml,deploy/deploy.sh"
+          source: "docker-compose.yml,deploy/deploy.sh,.env"
           target: /opt/portfolio-3d-platform
 
-      - name: Write .env and run the deploy script
+      - name: Run the deploy script
         uses: appleboy/ssh-action@v1.0.3
         env:
-          IMAGE_TAG: ${{ github.sha }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: deploy
           key: ${{ secrets.VPS_DEPLOY_SSH_KEY }}
-          envs: IMAGE_TAG
+          envs: GHCR_USER,GHCR_TOKEN
           script: |
             set -euo pipefail
-            umask 077
             cd /opt/portfolio-3d-platform
-            cat > .env <<EOF
-            IMAGE_TAG=${IMAGE_TAG}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            JWT_ACCESS_SECRET=${{ secrets.JWT_ACCESS_SECRET }}
-            ANALYTICS_IP_HASH_SECRET=${{ secrets.ANALYTICS_IP_HASH_SECRET }}
-            NEXT_PUBLIC_API_BASE_URL=${{ secrets.PUBLIC_API_BASE_URL }}
-            SMTP_HOST=${{ secrets.SMTP_HOST }}
-            SMTP_PORT=${{ secrets.SMTP_PORT }}
-            SMTP_USER=${{ secrets.SMTP_USER }}
-            SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
-            EOF
             bash deploy/deploy.sh

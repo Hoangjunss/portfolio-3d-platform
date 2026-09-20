@@ -20,3 +20,5 @@ out/
 
 # Certificates
 nginx/certs/*.pem
+claude_debug_key
+claude_debug_key.pub

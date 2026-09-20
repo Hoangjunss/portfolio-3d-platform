@@ -42,7 +42,7 @@ public class SecurityConfig {
                                     new ApiErrorDto("FORBIDDEN", "Not allowed", null));
                         }))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/public/**", "/api/analytics/events", "/actuator/health", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/public/**", "/api/analytics/events", "/error").permitAll()
                         .requestMatchers("/api/admin/users/**", "/api/admin/settings/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "EDITOR")
                         .anyRequest().authenticated())

@@ -2,6 +2,25 @@
 
 Repository secrets required by `.github/workflows/deploy.yml`.
 
+## VPS prerequisites (one-time, manual)
+
+Before the first deploy, as root on the VPS:
+
+    adduser --disabled-password --gecos "" deploy
+    usermod -aG docker deploy
+    mkdir -p /opt/portfolio-3d-platform
+    chown deploy:deploy /opt/portfolio-3d-platform
+
+`curl` and `docker compose` v2 must be installed — `deploy/deploy.sh` health-checks with
+`curl --resolve` and the pipeline never installs anything.
+
+`nginx/conf.d/` and `nginx/certs/` are **not** copied by the workflow; put them in place by hand
+(see "Manual operations" below). Nginx will not start without the certificates, and the deploy
+will correctly fail if it does not start.
+
+No `docker login` is needed by hand: the `deploy` job passes its own short-lived `GITHUB_TOKEN`
+(hence `permissions: packages: read`) and `deploy/deploy.sh` logs in and out around the pull.
+
 ## Deployment target
 - `VPS_HOST` — the VPS's public IP or hostname.
 - `VPS_DEPLOY_SSH_KEY` — private key for the dedicated `deploy` Linux user. Distinct from
@@ -17,14 +36,15 @@ profile if any still holds its development default (plan 15's `SecretsGuard`).
 - `ANALYTICS_IP_HASH_SECRET` — keyed hash for `analytics_events.ip_hash`. Anyone holding it
   can reverse every stored IP hash.
 - `PUBLIC_API_BASE_URL` — e.g. `https://api.portfolio.com`. Used **twice**: as a build arg for
-  the frontend image, and in the VPS `.env`. Both must agree.
+  the frontend image, and in the VPS `.env`. Both must agree. The `build` job now fails when it is empty.
 
 ## Mail (optional)
 `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`. Leaving these unset means lead
 notification emails are silently dropped while the leads themselves still save.
 
-`GITHUB_TOKEN` needs no setup — Actions provides it, and the `build` job's
-`permissions: packages: write` is what lets it push to GHCR.
+`GITHUB_TOKEN` needs no setup — Actions provides it. The `build` job needs
+`permissions: packages: write` to push to GHCR, and the `deploy` job additionally needs
+`permissions: packages: read` to pull.
 
 ## Rollback
 Images are tagged by commit SHA. To roll back, SSH to the VPS and run:

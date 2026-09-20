@@ -1,7 +1,7 @@
 # Trạng thái dự án — portfolio-3d-platform
 
 **Cập nhật:** 2026-09-20
-**Commit cuối:** `b12cb83` — plan 11 xong cả hai task, **đã push**
+**Commit cuối:** `b33d7da` — plan 11 xong, toolchain frontend đã nâng, **đã push**
 **Test:** backend `mvn clean test` → **126/126 PASS**; frontend `npx vitest run` → **5/5 PASS**
 
 ---
@@ -26,27 +26,36 @@
 | 10 | Cap refresh token; user management admin-only + hai guard chống khoá chết | `4339067`, `4a40bd1`, `c10adee` |
 | 11 task 1 | `GET /api/admin/leads` phân trang đúng spec 5.1 + trần page size | `136a486`, `6a39589` |
 | 11 task 2 | Next.js scaffold + `lib/apiClient.ts` có kiểu khớp DTO thật | `b12cb83` |
+| — | Nâng toolchain: Next 15.5.25 / React 19 / R3F 9 / drei 10 (đóng V-02) | `b33d7da` |
 
 Tiến độ: **13/19 task — backend xong hẳn, còn frontend (12–14) và hạ tầng (15–18)**. Backend 126/126, frontend 5/5.
 
 ---
 
-## Bước kế tiếp — plan 12 (3D carousel)
+## Bước kế tiếp — plan 12 — ĐÃ RÀ XONG, ĐANG GIAO
 
-Plan 11 xong cả hai task. **`docs/superpowers/plans/2026-09-19-12-3d-carousel.md` CẦN RÀ LẠI
-TRƯỚC KHI GIAO.**
+**V-02 đã chốt bằng dữ liệu, không bằng cảm tính** (`b33d7da`). Đọc từng advisory còn áp dụng cho
+`next@14.2.35`: **23 cái, hai cái là RCE không cần xác thực**. Điều quyết định là **mọi dải bị
+ảnh hưởng đều kết thúc dưới `15.5.24`** — nên không cần nhảy lên Next 16 như tôi ước lượng ban
+đầu, 15.5.x là đủ. Đó là lý do phải đọc từng dải thay vì nhìn con số "9 vulnerabilities".
 
-Plan 12 phải chốt **V-02** trước khi viết dòng code nào: `npm audit` còn 9 advisory, và dải bị
-ảnh hưởng của `next` kéo tới `16.3.0-preview.10` — tức chỉ Next **16.3.5+** mới nằm ngoài. Ở lại
-dòng 14 nghĩa là ship với advisory critical đã biết; lên 16 là nhảy hai major, kéo React 19 và
-có thể phải lên `@react-three/fiber` 9. Plan 12 là chỗ đúng để quyết vì nó là nơi R3F gắn vào.
+Kết quả đo: `next` biến mất hoàn toàn khỏi audit, 9 vulnerability → **2** (đều là công cụ dev,
+và cái `postcss` còn lại nằm **bên trong** `node_modules/next/` chứ không phải direct dep),
+`vitest run` 5/5, `npm run build` thành công.
 
-Giảm nhẹ mức khẩn: spec mục 4 nói template là **static export** phục vụ qua nginx, nên phần lớn
-advisory còn lại (Image Optimization, Server Actions, cache poisoning) không chạm tới. Nhưng
-`/admin` thì chạy runtime thật.
+**`docs/superpowers/plans/2026-09-19-12-3d-carousel.md`** — đã viết lại. Bản cũ có sáu lỗ:
 
-Ngoài ra plan 12 gánh: **V-03** (`three-mesh-bvh@0.7.8` deprecated, vào qua `drei`), và mọi bài
-học về dữ liệu do người gửi đặt nếu carousel render tên/mô tả template.
+- **Sinh `sessionId` trong server component**, nên mỗi lần render ra một id mới — cột
+  `analytics_events.session_id` sẽ không bao giờ nối được hai sự kiện, tức mất đúng công dụng của nó.
+- **Không gửi `PAGE_VIEW` nào.** Plan 08 nối `view_count` vào đúng sự kiện đó để đóng T-02. Không
+  có `PAGE_VIEW` thì `view_count` đứng yên 0 vĩnh viễn và T-02 mở lại trên thực tế.
+- **Thumbnail lấy từ `/thumbnails/{slug}.webp`** — đường dẫn không tồn tại và không khớp mô hình
+  dữ liệu. Rà ra luôn P-05: **không có endpoint công khai nào** đổi `thumbnailMediaId` thành URL.
+- **Trả `null` cho tới khi probe WebGL xong**, nên server gửi về một trang rỗng: không có gì cho
+  crawler, không có gì khi tắt JS, và nháy trắng ở đúng trang để bán hàng.
+- **Không có test component nào và không có mục mutation check** — plan duy nhất trong bộ thiếu cả hai.
+- **Kết thúc bằng "tự kiểm trong trình duyệt"**, thứ không có gì trong quy trình này kiểm được.
+  Thay bằng `npm run build`, vì nó type-check và chạy server render thật.
 
 ---
 
@@ -117,7 +126,9 @@ tồn tại, repo chưa có `package.json` nào. `.gitignore` gốc đã phủ `
 | ~~**L-01 (p07t2)**~~ | MAJOR | Mail đồng bộ trong transaction + JavaMail không timeout | **Đã đóng** — timeout ở `0fbf9f1`, `AFTER_COMMIT` ở `0f53317`. Nhưng xem R-14 |
 | ~~**R-14 (p09)**~~ | MINOR | Pha `AFTER_COMMIT` chưa có test nào phân biệt được | **Đã đóng** — `c10adee`, test đếm qua transaction `REQUIRES_NEW`, mutation đỏ |
 | ~~**U-01 (p10)**~~ | MAJOR | `audit_logs.entity_id` của User CREATE là null vì service trả DTO | **Đã đóng** — `c10adee` |
-| **V-02 (p11t2)** | MAJOR | Sau khi nâng `next` lên 14.2.35 vẫn còn 9 advisory; dải bị ảnh hưởng kéo tới `16.3.0-preview.10` nên chỉ Next **16.3.5+** mới sạch — nhảy hai major, kéo React 19 và có thể R3F 9 | **Plan 12 phải chốt**: ở lại 14 hay lên 16 |
+| ~~**V-02 (p11t2)**~~ | MAJOR | 23 advisory còn áp dụng cho 14.2.35, hai cái là RCE không cần xác thực | **Đã đóng** — `b33d7da`. Đọc từng dải thì mọi cái đều kết thúc **dưới 15.5.24**, nên chỉ cần lên 15.5.25 chứ không phải 16. `next` biến mất khỏi audit; 9 vulnerability → 2, đều là công cụ dev |
+| **P-05 (rà plan 12)** | MAJOR | Không có endpoint công khai nào đổi `thumbnailMediaId` thành URL ảnh — `/api/admin/media` chỉ có POST, nên khách ẩn danh không có đường lấy thumbnail | **Plan 12 task 1** |
+| P-06 (rà plan 12) | MAJOR | Bản cũ của plan 12 không gửi `PAGE_VIEW` nào, nên `view_count` đứng yên 0 mãi và T-02 coi như mở lại dù trên giấy đã đóng | **Plan 12 task 2**, quyết định (g) |
 | ~~**V-01 (p11t2)**~~ | MAJOR | `next@14.2.15` mà plan ghim dính GHSA-f82v-jwr5-mffw (Authorization Bypass in Middleware) — phá đúng thiết kế của plan 13 | **Đã đóng** — nâng 14.2.35, advisory biến mất |
 | V-03 (p11t2) | INFO | `three-mesh-bvh@0.7.8` deprecated vì lệch phiên bản three.js, vào qua `drei` | Plan 12 nhìn đầu tiên nếu `drei` lỗi lạ |
 | ~~**F-11 (p11t1)**~~ | MINOR | `@PageableDefault` chỉ đặt mặc định chứ không đặt trần; `?size=100000` trả về 2000 dòng trên cả leads lẫn users | **Đã đóng** — `6a39589`, `max-page-size: 100`, có test |

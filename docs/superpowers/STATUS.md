@@ -38,14 +38,33 @@ MAJOR — chi tiết trong `docs/reviews/2026-09-20-code-review-plan-06.md`:
 
 ---
 
-## Bước kế tiếp — plan 07 (lead + notification)
+## Bước kế tiếp — plan 07 (lead + notification) — ĐÃ RÀ XONG, ĐANG GIAO
 
-**`docs/superpowers/plans/2026-09-19-07-lead-notification.md`** — **CẦN RÀ LẠI TRƯỚC KHI GIAO.**
-Code block vẫn còn `package com.portfolio.platform.lead;` từ trước spec 5.1. Plan 05 rà ra 6 lỗi,
-plan 06 rà ra 9 lỗi (2 lỗ hổng bảo mật). Đừng giao thẳng.
+**`docs/superpowers/plans/2026-09-19-07-lead-notification.md`** — **đã viết lại 2026-09-20**,
+đang giao cho Antigravity. Bản cũ còn `package com.portfolio.platform.lead;` từ trước spec 5.1 ở
+mọi code block và không gánh finding nào của plan 06.
 
-Task 1 của plan 07 phải gánh ba việc mang sang từ review plan 06: C-01 (handler 400 cho lỗi
-upload, kèm test tầng controller), C-02 (ca PNG thật khai sai type), C-03 (`readNBytes(12)`).
+Bản mới có **2 task**:
+
+- **Task 1 — đóng C-01/C-02/C-03** (commit riêng): thêm `exception/InvalidRequestException` +
+  handler 400 không ghi log row; test tầng controller assert cả status lẫn `system_error_logs`
+  count; ca PNG thật khai `text/html` assert giá trị `mime_type` lưu xuống; `readNBytes(12)` kèm
+  một `MultipartFile` giả trả 4 byte mỗi lần đọc (vì `MockMultipartFile` không bao giờ đọc thiếu).
+- **Task 2 — lead + notification**: đủ cây package 5.1, `PublicLeadController`, mail best-effort.
+
+Ba quyết định lệch/thêm so với review, đã ghi lý do trong plan:
+
+- **(b)** `SecurityException` traversal **giữ nguyên 500**, không đổi thành 400 như review đề
+  xuất — tên file lưu suy từ UUID nên không input nào của caller chạm tới `target`; nếu nhánh đó
+  nổ thì là sai cấu hình `media.upload-dir`, đúng loại đáng ghi `system_error_logs`.
+- **(c) Lỗi mới tìm ra khi rà plan**: `application.yml` đặt `media.max-size-bytes: 10485760`
+  nhưng không đặt `spring.servlet.multipart.max-file-size` — mặc định Boot là **1MB**. Nên hôm
+  nay check 10MB của `MediaServiceImpl` là code chết, và một file PNG 2MB chết ở tầng parse
+  multipart → **500 + một dòng `system_error_logs`**. Đúng dạng C-01, đang sống. Plan sửa cả hai
+  nửa: nâng giới hạn multipart cho khớp, và thêm handler trả 413.
+- **(e)/(f)** `LeadCreateForm` phải có `@Size` khớp độ dài cột, và `sourceTemplateId` phải kiểm
+  `existsById` — nếu không thì cả hai đều thành 500 + log row **từ endpoint công khai không cần
+  đăng nhập**, tức là tệ hơn C-01.
 
 ---
 

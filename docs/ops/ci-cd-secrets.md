@@ -21,6 +21,22 @@ will correctly fail if it does not start.
 No `docker login` is needed by hand: the `deploy` job passes its own short-lived `GITHUB_TOKEN`
 (hence `permissions: packages: read`) and `deploy/deploy.sh` logs in and out around the pull.
 
+## Current state (2026-09-20)
+
+Set, generated with `openssl rand -base64 32`: `DB_PASSWORD`, `JWT_ACCESS_SECRET`,
+`ANALYTICS_IP_HASH_SECRET`. GitHub secrets are write-only, so these values cannot be read back
+from the repository -- after the first deploy they are readable on the VPS in
+`/opt/portfolio-3d-platform/.env`. Overwrite any of them with `gh secret set <NAME>` if you would
+rather use your own.
+
+**Still missing, and the `build` job stays red until they exist:** `PUBLIC_API_BASE_URL`,
+`VPS_HOST`, `VPS_DEPLOY_SSH_KEY`. Each needs a real-world fact -- the API's public domain and the
+VPS itself -- so none of them can be generated.
+
+Note that `nginx/conf.d/` uses `portfolio.com` as a placeholder. `PUBLIC_API_BASE_URL` must match
+the `server_name` in `api.conf` and the certificate in `nginx/certs/`; if the real domain differs,
+the Nginx configs need the same edit.
+
 ## Deployment target
 - `VPS_HOST` — the VPS's public IP or hostname.
 - `VPS_DEPLOY_SSH_KEY` — private key for the dedicated `deploy` Linux user. Distinct from

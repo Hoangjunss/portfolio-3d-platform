@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { RsvpSection } from './RsvpSection';
 
@@ -6,10 +6,18 @@ beforeEach(() => {
   window.localStorage.clear();
 });
 
+// The live total renders as <strong>N</strong> guests confirmed, so its text spans two elements and
+// getByText cannot match across that boundary. Read the element's own textContent instead.
+function guestCountText(): string {
+  const el = document.querySelector('.guest-count');
+  if (!el) throw new Error('.guest-count not found');
+  return el.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+}
+
 describe('RsvpSection', () => {
   it('shows 0 guests confirmed before any RSVP is submitted', () => {
     render(<RsvpSection />);
-    expect(screen.getByText(/0 guests confirmed/i)).toBeInTheDocument();
+    expect(guestCountText()).toBe('0 guests confirmed');
   });
 
   it('submitting an "attending" RSVP for 3 guests updates the live total to 3', async () => {
@@ -21,7 +29,7 @@ describe('RsvpSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /send rsvp/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/3 guests confirmed/i)).toBeInTheDocument();
+      expect(guestCountText()).toBe('3 guests confirmed');
     });
   });
 
@@ -34,7 +42,7 @@ describe('RsvpSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /send rsvp/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/0 guests confirmed/i)).toBeInTheDocument();
+      expect(guestCountText()).toBe('0 guests confirmed');
     });
   });
 
@@ -45,18 +53,20 @@ describe('RsvpSection', () => {
     fireEvent.change(screen.getByLabelText(/attending/i), { target: { value: 'yes' } });
     fireEvent.change(screen.getByLabelText(/number of guests/i), { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: /send rsvp/i }));
-    await waitFor(() => expect(screen.getByText(/2 guests confirmed/i)).toBeInTheDocument());
+    await waitFor(() => expect(guestCountText()).toBe('2 guests confirmed'));
     unmount();
 
     render(<RsvpSection />);
-    await waitFor(() => expect(screen.getByText(/2 guests confirmed/i)).toBeInTheDocument());
+    await waitFor(() => expect(guestCountText()).toBe('2 guests confirmed'));
   });
 
   it('surfaces visible error message when storage fails', async () => {
-    const originalSetItem = window.localStorage.setItem;
-    window.localStorage.setItem = () => {
+    // Assigning window.localStorage.setItem does not take effect in jsdom -- the method lives on
+    // Storage.prototype and the instance assignment is ignored, so the write never threw and the
+    // test passed through the happy path. Spy on the prototype, as the event site's test does.
+    const spy = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('QuotaExceededError');
-    };
+    });
 
     try {
       render(<RsvpSection />);
@@ -69,9 +79,9 @@ describe('RsvpSection', () => {
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
       });
-      expect(screen.getByText(/0 guests confirmed/i)).toBeInTheDocument();
+      expect(guestCountText()).toBe('0 guests confirmed');
     } finally {
-      window.localStorage.setItem = originalSetItem;
+      spy.mockRestore();
     }
   });
 });

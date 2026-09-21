@@ -22,3 +22,9 @@ out/
 nginx/certs/*.pem
 claude_debug_key
 claude_debug_key.pub
+
+# Build artifacts
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts

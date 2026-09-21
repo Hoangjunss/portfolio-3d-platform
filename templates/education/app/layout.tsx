@@ -6,11 +6,13 @@ const beVietnamPro = Be_Vietnam_Pro({
   weight: ['400', '500', '600', '700'],
   subsets: ['latin', 'vietnamese'],
   display: 'swap',
+  variable: '--font-display-face',
 });
 
 const sourceSerif4 = Source_Serif_4({
   subsets: ['latin', 'vietnamese'],
   display: 'swap',
+  variable: '--font-body-face',
 });
 
 export const metadata: Metadata = {
@@ -20,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className={`${beVietnamPro.className} ${sourceSerif4.className}`}>
+    <html lang="vi" className={`${beVietnamPro.variable} ${sourceSerif4.variable}`}>
       <body>{children}</body>
     </html>
   );

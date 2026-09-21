@@ -8,11 +8,13 @@
  * pre-emit critique: P4 H5 E4 S5 R5 V4
  */
 
-/* FONT LOADING IS NOT DONE HERE. Task 2 must load both faces via next/font/google in
- * app/layout.tsx with subsets ["latin", "vietnamese"] and apply the generated variables to <html>.
- * Naming a family in a token without loading it is a silent failure: the build stays green, the
- * console stays clean, and every page quietly renders in the fallback. That exact bug shipped once
- * already on the main portfolio site. The fallbacks below are honest degradation, not the design. */
+/* Fonts are loaded in app/layout.tsx via next/font/google, subsets ["latin", "vietnamese"], and
+ * reach this file as --font-display-face / --font-body-face.
+ *
+ * Do not "simplify" the two font tokens below back to literal family names. next/font registers a
+ * hashed family (__Be_Vietnam_Pro_xxxx), never the literal "Be Vietnam Pro", so a literal name
+ * resolves to nothing and every rule here falls through to the fallback stack — fonts downloaded,
+ * fonts unused, build green, console clean. The first cut of this site did exactly that. */
 
 :root {
   /* Colour — cool-teal anchor. Paper carries a trace of the accent hue so the page reads as one
@@ -29,8 +31,8 @@
 
   /* Display is humanist sans; body is serif, because curriculum modules and course descriptions
      are read in sequence rather than scanned like a pricing table. */
-  --font-display: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
-  --font-body:    "Source Serif 4", ui-serif, Georgia, serif;
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
+  --font-body:    var(--font-body-face), ui-serif, Georgia, serif;
 
   --text-xs:   0.79rem;
   --text-sm:   0.889rem;

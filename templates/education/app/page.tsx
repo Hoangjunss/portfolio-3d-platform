@@ -3,11 +3,11 @@ import { COURSES } from '../data/seed';
 import { CurriculumAccordion } from './CurriculumAccordion';
 import { EnrollmentSection } from './EnrollmentSection';
 
+// Only sections this page actually renders. #about and #contact were here and matched no id on
+// the page, so both were dead links; this composition has no About or Contact section to point at.
 const FOOTER_LINKS = [
-  { label: 'Giới thiệu', href: '#about' },
   { label: 'Khoá học', href: '#courses' },
   { label: 'Khung chương trình', href: '#curriculum' },
-  { label: 'Liên hệ', href: '#contact' },
 ];
 
 export default function EducationPage() {

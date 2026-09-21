@@ -13,6 +13,21 @@ function tripPanel() {
   return within(screen.getByRole('complementary', { name: /my trip/i }));
 }
 
+// Seed titles contain regex metacharacters -- "breakfast + spa voucher" -- and new RegExp(title)
+// reads the + as a quantifier, so the pattern silently stops matching the literal text. Escape
+// before building a pattern from content.
+function titlePattern(title: string): RegExp {
+  return new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+}
+
+// The subtotal and a single item's price are the same number when only one item is in the trip,
+// so a text query inside the panel matches twice. Read the subtotal element itself.
+function subtotalText(): string {
+  const el = document.querySelector('.trip-subtotal');
+  if (!el) throw new Error('.trip-subtotal not found');
+  return el.textContent ?? '';
+}
+
 describe('TripPlannerSection', () => {
   it('shows the empty state before any room/package is added', () => {
     render(<TripPlannerSection rooms={ROOMS} />);
@@ -27,15 +42,15 @@ describe('TripPlannerSection', () => {
     fireEvent.click(within(card).getByRole('button', { name: /add to trip/i }));
 
     await waitFor(() => {
-      expect(tripPanel().getByText(new RegExp(packageRoom.title))).toBeInTheDocument();
-      expect(tripPanel().getByText(/5[.,]400[.,]000/)).toBeInTheDocument();
+      expect(tripPanel().getByText(titlePattern(packageRoom.title))).toBeInTheDocument();
+      expect(subtotalText()).toMatch(/5[.,]400[.,]000/);
     });
 
     // Clicking "Add to trip" twice on the same package is idempotent
     fireEvent.click(within(card).getByRole('button', { name: /add to trip/i }));
     await waitFor(() => {
-      expect(tripPanel().getAllByText(new RegExp(packageRoom.title))).toHaveLength(1);
-      expect(tripPanel().getByText(/5[.,]400[.,]000/)).toBeInTheDocument();
+      expect(tripPanel().getAllByText(titlePattern(packageRoom.title))).toHaveLength(1);
+      expect(subtotalText()).toMatch(/5[.,]400[.,]000/);
     });
   });
 
@@ -45,15 +60,15 @@ describe('TripPlannerSection', () => {
 
     const card = screen.getByRole('heading', { name: packageRoom.title }).closest('li')!;
     fireEvent.click(within(card).getByRole('button', { name: /add to trip/i }));
-    await waitFor(() => expect(tripPanel().getByText(new RegExp(packageRoom.title))).toBeInTheDocument());
+    await waitFor(() => expect(tripPanel().getByText(titlePattern(packageRoom.title))).toBeInTheDocument());
     unmount();
 
     render(<TripPlannerSection rooms={ROOMS} />);
-    await waitFor(() => expect(tripPanel().getByText(new RegExp(packageRoom.title))).toBeInTheDocument());
+    await waitFor(() => expect(tripPanel().getByText(titlePattern(packageRoom.title))).toBeInTheDocument());
 
     fireEvent.click(tripPanel().getByRole('button', { name: /remove/i }));
     await waitFor(() => {
-      expect(tripPanel().queryByText(new RegExp(packageRoom.title))).not.toBeInTheDocument();
+      expect(tripPanel().queryByText(titlePattern(packageRoom.title))).not.toBeInTheDocument();
       expect(tripPanel().getByText(/trip is empty/i)).toBeInTheDocument();
     });
   });
@@ -64,12 +79,12 @@ describe('TripPlannerSection', () => {
 
     const card = screen.getByRole('heading', { name: packageRoom.title }).closest('li')!;
     fireEvent.click(within(card).getByRole('button', { name: /add to trip/i }));
-    await waitFor(() => expect(tripPanel().getByText(new RegExp(packageRoom.title))).toBeInTheDocument());
+    await waitFor(() => expect(tripPanel().getByText(titlePattern(packageRoom.title))).toBeInTheDocument());
 
     fireEvent.click(tripPanel().getByRole('button', { name: /reset demo data/i }));
     await waitFor(() => {
       expect(tripPanel().getByText(/trip is empty/i)).toBeInTheDocument();
-      expect(tripPanel().queryByText(new RegExp(packageRoom.title))).not.toBeInTheDocument();
+      expect(tripPanel().queryByText(titlePattern(packageRoom.title))).not.toBeInTheDocument();
     });
   });
 
@@ -88,7 +103,7 @@ describe('TripPlannerSection', () => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
       });
       expect(screen.getByText(/unable to save to your trip/i)).toBeInTheDocument();
-      expect(tripPanel().queryByText(new RegExp(packageRoom.title))).not.toBeInTheDocument();
+      expect(tripPanel().queryByText(titlePattern(packageRoom.title))).not.toBeInTheDocument();
       expect(tripPanel().getByText(/trip is empty/i)).toBeInTheDocument();
     } finally {
       spy.mockRestore();

@@ -1,9 +1,6 @@
-'use client';
-
 import {
   Hero,
   ItemGrid,
-  InquiryForm,
   Footer,
   type FooterLink,
 } from '@portfolio/template-kit';
@@ -14,6 +11,7 @@ import {
   BOOKING_INQUIRY_FIELDS,
 } from '../data/seed';
 import { TripPlannerSection } from './TripPlannerSection';
+import { BookingSection } from './BookingSection';
 
 const FOOTER_LINKS: FooterLink[] = [
   { label: 'Rooms & Packages', href: '#rooms' },
@@ -22,10 +20,6 @@ const FOOTER_LINKS: FooterLink[] = [
 ];
 
 export default function TravelPage() {
-  async function handleBookingSubmit(_values: Record<string, string>) {
-    // Booking inquiry submission flow per spec §5: uses InquiryForm's existing pending/success state
-  }
-
   return (
     <main>
       <Hero
@@ -42,14 +36,7 @@ export default function TravelPage() {
           <figcaption>{MAP_PLACEHOLDER_CAPTION}</figcaption>
         </figure>
       </section>
-      <section id="booking" className="bento-section">
-        <h2>Booking Inquiry</h2>
-        <InquiryForm
-          fields={BOOKING_INQUIRY_FIELDS}
-          submitLabel="Send booking inquiry"
-          onSubmit={handleBookingSubmit}
-        />
-      </section>
+      <BookingSection fields={BOOKING_INQUIRY_FIELDS} />
       <Footer links={FOOTER_LINKS} showSocial={true} />
     </main>
   );

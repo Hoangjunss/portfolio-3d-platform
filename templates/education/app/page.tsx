@@ -1,6 +1,7 @@
 import { Hero, ItemGrid, Footer } from '@portfolio/template-kit';
 import { COURSES } from '../data/seed';
 import { CurriculumAccordion } from './CurriculumAccordion';
+import { EnrollmentSection } from './EnrollmentSection';
 
 const FOOTER_LINKS = [
   { label: 'Giới thiệu', href: '#about' },
@@ -18,7 +19,7 @@ export default function EducationPage() {
         ctaLabel="Xem các khoá học"
         ctaHref="#courses"
       />
-      {/* Interactive enrollment section wired in Task 3 */}
+      <EnrollmentSection courses={COURSES} />
       <section id="courses" aria-label="Danh sách khoá học">
         <ItemGrid items={COURSES} />
       </section>

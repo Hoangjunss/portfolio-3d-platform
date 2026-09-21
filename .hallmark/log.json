@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-09-21",
+    "macrostructure": "Long Document",
+    "theme": "custom",
+    "theme_axes": "light / roman-serif / cool-indigo",
+    "vibe": "an organisation that writes to you, not one that sells to you",
+    "enrichment": "none",
+    "brief": "nonprofit demo template (site #14 of 29)"
+  },
+  {
+    "date": "2026-09-21",
     "macrostructure": "Narrative Workflow",
     "theme": "custom",
     "theme_axes": "light / display-heavy / warm-signal",

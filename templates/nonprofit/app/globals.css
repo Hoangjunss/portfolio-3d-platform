@@ -1,0 +1,308 @@
+/* Hallmark · macrostructure: Long Document · genre: editorial · tone: mission-driven / unsalesy
+ * theme: custom · vibe: "an organisation that writes to you, not one that sells to you"
+ * paper oklch(97.5% 0.008 90) · accent oklch(45% 0.105 275) deep-indigo
+ * display: Bitter (roman-serif) · body: Source Sans 3
+ * axes: light / roman-serif / cool-indigo — differs from the fitness site
+ *       (light / display-heavy / warm-signal) on display style and accent
+ * enrichment: none (typography only)
+ * pre-emit critique: P5 H4 E4 S5 R5 V4
+ */
+
+/* Fonts load in app/layout.tsx via next/font/google, subsets ["latin", "vietnamese"], arriving as
+ * --font-display-face / --font-body-face. Never swap these for literal family names; next/font
+ * registers a hashed family and a literal resolves to nothing. */
+
+:root {
+  --color-paper:      oklch(97.5% 0.008 90);
+  --color-paper-2:    oklch(94.5% 0.010 90);
+  --color-rule:       oklch(86% 0.010 90);
+  --color-muted:      oklch(48% 0.014 265);
+  --color-ink:        oklch(24% 0.020 270);
+  --color-accent:     oklch(45% 0.105 275);
+  --color-accent-dim: oklch(36% 0.085 275);
+  --color-focus:      oklch(52% 0.130 275);
+
+  --font-display: var(--font-display-face), ui-serif, Georgia, serif;
+  --font-body:    var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs:   0.8rem;
+  --text-sm:   0.9rem;
+  --text-base: 1.0625rem;
+  --text-md:   1.2rem;
+  --text-lg:   1.5rem;
+  --text-xl:   1.95rem;
+  --text-2xl:  2.6rem;
+  --text-display: clamp(2.3rem, 1.5rem + 3.4vw, 3.8rem);
+
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4.5rem;
+
+  --rule-hair: 1px;
+  --rule-bold: 3px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in:     cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --dur-short: 140ms;
+  --dur-mid:   220ms;
+
+  /* Long Document lives or dies on measure. Everything text-bearing is capped here. */
+  --measure: 66ch;
+  --gutter: clamp(1rem, 5vw, 3rem);
+}
+
+html, body { overflow-x: clip; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  margin: 0;
+}
+
+p { margin: 0; max-width: var(--measure); }
+a { color: var(--color-accent); text-underline-offset: 0.2em; }
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Hero (tk-hero)
+   Long Document: the fold opens the piece rather than selling it. The CTA is a text link with a
+   drawn underline, not a filled button — a filled primary button is the single strongest
+   "checkout funnel" signal and the brief rules that register out. */
+.tk-hero {
+  padding: var(--space-3xl) var(--gutter) var(--space-2xl);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  background-color: var(--color-paper);
+  background-size: cover;
+  background-position: center;
+}
+
+.tk-hero h1 {
+  font-size: var(--text-display);
+  max-width: 22ch;
+  margin-bottom: var(--space-lg);
+}
+
+.tk-hero p {
+  font-size: var(--text-md);
+  color: var(--color-muted);
+  margin-bottom: var(--space-xl);
+}
+
+.tk-hero a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: var(--rule-bold) solid var(--color-accent);
+  transition: color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-hero a:hover { color: var(--color-accent-dim); border-color: var(--color-accent-dim); }
+
+/* Section wrapper shared by the document's parts. */
+.doc-section { padding: var(--space-2xl) var(--gutter); }
+
+.doc-section > h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-xs);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.doc-section > p { color: var(--color-muted); margin-bottom: var(--space-lg); }
+
+/* Causes / programmes (tk-item-grid) — set as a reading list, not as product cards. */
+.tk-item-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-item-grid > li {
+  min-width: 0;
+  padding-left: var(--space-md);
+  border-left: var(--rule-bold) solid var(--color-rule);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-item-grid > li:hover { border-left-color: var(--color-accent); }
+
+.tk-item-grid > li > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.tk-item-grid > li > h3 { font-size: var(--text-md); margin-bottom: var(--space-2xs); }
+.tk-item-grid > li > p { font-size: var(--text-sm); color: var(--color-muted); }
+
+/* Impact numbers (tk-stat-block)
+   The spec requires the section's own copy to say these are illustrative figures for a fictional
+   organisation. That disclosure is styled to be read -- same size as body copy, full contrast, sat
+   directly under the numbers. Shrinking it to grey 10px would technically satisfy the rule and
+   defeat its purpose, which is the whole reason invented metrics are a banned pattern. */
+.tk-stat-block {
+  margin: 0;
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1fr);
+  padding: var(--space-lg) 0;
+  border-block: var(--rule-hair) solid var(--color-rule);
+}
+
+.tk-stat-block > div { min-width: 0; }
+
+.tk-stat-block dt {
+  order: 2;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.tk-stat-block dd {
+  order: 1;
+  margin: 0 0 var(--space-2xs);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.tk-stat-block > div { display: flex; flex-direction: column; }
+
+.stat-disclaimer {
+  max-width: var(--measure);
+  margin-top: var(--space-md);
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+/* Pledge form (tk-inquiry-form)
+   Deliberately not styled as a checkout: no filled primary, no urgency colour, generous spacing. */
+.tk-inquiry-form {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 34rem;
+  padding-top: var(--space-md);
+}
+
+.tk-inquiry-form label {
+  display: grid;
+  gap: var(--space-2xs);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.tk-inquiry-form input,
+.tk-inquiry-form textarea {
+  min-height: 44px;
+  padding: var(--space-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  background: var(--color-paper-2);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-inquiry-form textarea { min-height: 7rem; resize: vertical; }
+.tk-inquiry-form input:hover:not(:disabled),
+.tk-inquiry-form textarea:hover:not(:disabled) { border-color: var(--color-muted); }
+.tk-inquiry-form input:disabled,
+.tk-inquiry-form textarea:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.tk-inquiry-form button {
+  justify-self: start;
+  min-height: 48px;
+  margin-top: var(--space-xs);
+  padding: var(--space-sm) var(--space-xl);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-inquiry-form button:hover:not(:disabled) { background: var(--color-accent-dim); border-color: var(--color-accent-dim); }
+.tk-inquiry-form button:active:not(:disabled) { transform: translateY(1px); }
+.tk-inquiry-form button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.tk-inquiry-form [role='status'] { color: var(--color-accent); font-size: var(--text-sm); }
+.tk-inquiry-form [role='alert']  { color: var(--color-ink);    font-size: var(--text-sm); }
+
+/* Footer (tk-footer) */
+.tk-footer {
+  padding: var(--space-xl) var(--gutter) var(--space-2xl);
+  border-top: var(--rule-hair) solid var(--color-rule);
+  font-size: var(--text-sm);
+}
+
+.tk-footer nav { display: flex; flex-wrap: wrap; gap: var(--space-md) var(--space-lg); }
+
+.tk-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tk-footer nav a:hover { color: var(--color-accent); text-decoration: underline; }
+.tk-footer-social { margin-top: var(--space-md); }
+
+@media (min-width: 768px) {
+  .tk-item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl); }
+  .tk-stat-block { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .tk-inquiry-form button:active:not(:disabled) { transform: none; }
+}

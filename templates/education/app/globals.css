@@ -1,0 +1,360 @@
+/* Hallmark · macrostructure: Catalogue · genre: editorial · tone: editorial / credible institution
+ * theme: custom · vibe: "approachable academy, credible, unhurried, read-not-scanned"
+ * paper oklch(97.5% 0.006 210) · accent oklch(52% 0.085 208) cool-teal
+ * display: Be Vietnam Pro (humanist-sans) · body: Source Serif 4 (serif)
+ * axes: light / humanist-sans / cool — differs from the portfolio site (light / high-contrast-serif
+ *       / warm) on display style and accent hue
+ * enrichment: none (typography only) · nav: n/a (this composition has no nav)
+ * pre-emit critique: P4 H5 E4 S5 R5 V4
+ */
+
+/* FONT LOADING IS NOT DONE HERE. Task 2 must load both faces via next/font/google in
+ * app/layout.tsx with subsets ["latin", "vietnamese"] and apply the generated variables to <html>.
+ * Naming a family in a token without loading it is a silent failure: the build stays green, the
+ * console stays clean, and every page quietly renders in the fallback. That exact bug shipped once
+ * already on the main portfolio site. The fallbacks below are honest degradation, not the design. */
+
+:root {
+  /* Colour — cool-teal anchor. Paper carries a trace of the accent hue so the page reads as one
+     material rather than grey-plus-a-highlight. */
+  --color-paper:      oklch(97.5% 0.006 210);
+  --color-paper-2:    oklch(94.5% 0.010 210);
+  --color-paper-3:    oklch(91%   0.014 210);
+  --color-rule:       oklch(86%   0.012 210);
+  --color-muted:      oklch(52%   0.014 215);
+  --color-ink:        oklch(24%   0.020 220);
+  --color-accent:     oklch(52%   0.085 208);
+  --color-accent-ink: oklch(34%   0.070 210);
+  --color-focus:      oklch(56%   0.130 240);
+
+  /* Display is humanist sans; body is serif, because curriculum modules and course descriptions
+     are read in sequence rather than scanned like a pricing table. */
+  --font-display: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "Source Serif 4", ui-serif, Georgia, serif;
+
+  --text-xs:   0.79rem;
+  --text-sm:   0.889rem;
+  --text-base: 1rem;
+  --text-md:   1.125rem;
+  --text-lg:   1.424rem;
+  --text-xl:   1.802rem;
+  --text-2xl:  2.281rem;
+  --text-display: clamp(2.4rem, 1.6rem + 3.4vw, 4.05rem);
+
+  /* 4pt scale */
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4.5rem;
+
+  --rule-hair: 1px;
+  --rule-bold: 3px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in:     cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --dur-short: 140ms;
+  --dur-mid:   220ms;
+
+  --measure: 68ch;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+}
+
+/* clip, never hidden — hidden breaks position:sticky in some engines */
+html, body { overflow-x: clip; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings stay roman. Emphasis is carried by weight, accent and rules, never by italics. */
+h1, h2, h3, h4, summary {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  margin: 0;
+}
+
+p { margin: 0; max-width: var(--measure); }
+
+a { color: var(--color-accent-ink); text-underline-offset: 0.18em; }
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Hero (tk-hero)
+   Catalogue macrostructure: the hero names the institution and hands over to the index quickly
+   instead of trying to fill the fold. The accent rule under the headline is the page's only piece
+   of drawn furniture. */
+.tk-hero {
+  padding: var(--space-3xl) var(--gutter) var(--space-2xl);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  background-color: var(--color-paper);
+  background-size: cover;
+  background-position: center;
+}
+
+.tk-hero h1 {
+  font-size: var(--text-display);
+  max-width: 19ch;
+  margin-bottom: var(--space-md);
+}
+
+.tk-hero h1::after {
+  content: "";
+  display: block;
+  width: 4.5rem;
+  height: var(--rule-bold);
+  margin-top: var(--space-md);
+  background: var(--color-accent);
+}
+
+.tk-hero p {
+  font-size: var(--text-md);
+  color: var(--color-muted);
+  max-width: 54ch;
+  margin-bottom: var(--space-xl);
+}
+
+.tk-hero a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-hero a:hover { background: var(--color-accent-ink); border-color: var(--color-accent-ink); }
+.tk-hero a:active { transform: translateY(1px); }
+
+/* Course index (tk-item-grid)
+   The catalogue spine. Uniform cells, hairline-separated, numbered by CSS counter so the section
+   reads as inventory rather than as marketing cards. Tracks use minmax(0, 1fr) — never a bare 1fr —
+   so a long course title cannot force horizontal scroll. */
+.tk-item-grid {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2xl) var(--gutter);
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1fr);
+  counter-reset: course;
+}
+
+.tk-item-grid > li {
+  counter-increment: course;
+  min-width: 0;
+  padding-top: var(--space-md);
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+.tk-item-grid > li > h3 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-xs);
+}
+
+.tk-item-grid > li > h3::before {
+  content: counter(course, decimal-leading-zero);
+  display: block;
+  margin-bottom: var(--space-2xs);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.tk-item-grid > li > p { color: var(--color-muted); font-size: var(--text-sm); }
+
+.tk-item-grid > li > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-md);
+}
+
+/* Curriculum accordion (page-level details/summary)
+   Native disclosure, so keyboard and screen-reader behaviour comes from the platform instead of
+   being re-implemented with a div and an onClick. */
+.curriculum { padding: 0 var(--gutter) var(--space-2xl); }
+
+.curriculum > h2 {
+  font-size: var(--text-xl);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-md);
+  border-bottom: var(--rule-bold) solid var(--color-ink);
+}
+
+.curriculum details { border-bottom: var(--rule-hair) solid var(--color-rule); }
+
+.curriculum summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-height: 44px;
+  padding: var(--space-sm) 0;
+  font-size: var(--text-md);
+  cursor: pointer;
+  list-style: none;
+}
+
+.curriculum summary::-webkit-details-marker { display: none; }
+
+.curriculum summary::after {
+  content: "+";
+  flex: none;
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--color-accent);
+  transition: transform var(--dur-short) var(--ease-out);
+}
+
+.curriculum details[open] > summary::after { transform: rotate(45deg); }
+.curriculum summary:hover { color: var(--color-accent-ink); }
+
+.curriculum ol {
+  margin: 0;
+  padding: 0 0 var(--space-md) var(--space-lg);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+}
+
+.curriculum ol > li { padding-block: var(--space-2xs); }
+
+/* Enrolment panel (tk-saved-items-panel)
+   Sits directly under the hero so a returning visitor sees their enrolment state before scrolling
+   into the catalogue. Tinted paper marks it as theirs without a coloured card border. */
+.tk-saved-items-panel,
+.tk-saved-items-empty {
+  margin: 0 var(--gutter);
+  padding: var(--space-lg);
+  background: var(--color-paper-2);
+  border-left: var(--rule-bold) solid var(--color-accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.tk-saved-items-empty { color: var(--color-muted); font-size: var(--text-sm); }
+
+.tk-saved-items-panel { list-style: none; display: grid; gap: var(--space-xs); }
+
+.tk-saved-items-panel > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-width: 0;
+  padding-block: var(--space-2xs);
+}
+
+.tk-saved-items-panel > li > span { min-width: 0; overflow-wrap: anywhere; }
+
+.tk-saved-items-panel button {
+  flex: none;
+  min-height: 44px;
+  padding: var(--space-2xs) var(--space-sm);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  color: var(--color-accent-ink);
+  background: transparent;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-short) var(--ease-out),
+              background var(--dur-short) var(--ease-out);
+}
+
+.tk-saved-items-panel button:hover {
+  background: var(--color-paper-3);
+  border-color: var(--color-accent);
+}
+
+.tk-saved-items-panel button:active { transform: translateY(1px); }
+
+.tk-saved-items-panel button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: var(--color-rule);
+  background: transparent;
+}
+
+/* Footer (tk-footer)
+   The kit fixes this markup to footer > nav > a, so the footer voice is expressed through rule
+   weight and spacing rather than a column structure this site cannot emit. */
+.tk-footer {
+  padding: var(--space-xl) var(--gutter) var(--space-2xl);
+  border-top: var(--rule-bold) solid var(--color-ink);
+  font-size: var(--text-sm);
+}
+
+.tk-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md) var(--space-lg);
+}
+
+.tk-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tk-footer nav a:hover { color: var(--color-accent-ink); text-decoration: underline; }
+
+.tk-footer-social { margin-top: var(--space-md); }
+
+/* Wider viewports. Below 768 every section is single-column, per the mobile floor. */
+@media (min-width: 768px) {
+  .tk-item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl); }
+  .curriculum, .tk-saved-items-panel, .tk-saved-items-empty { max-width: 78ch; }
+}
+
+@media (min-width: 1024px) {
+  .tk-item-grid[data-columns="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tk-item-grid[data-columns="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tk-hero a:active,
+  .tk-saved-items-panel button:active { transform: none; }
+}

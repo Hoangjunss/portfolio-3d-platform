@@ -8,6 +8,7 @@ import {
   type FooterLink,
 } from '@portfolio/template-kit';
 import { SCHEDULE, TRAINERS, MEMBERSHIP_TIERS } from '../data/seed';
+import { BookingSection } from './BookingSection';
 
 const SCHEDULE_COLUMNS: RecordTableColumn[] = [
   { key: 'className', label: 'Class' },
@@ -34,7 +35,7 @@ export default function FitnessPage() {
         <span className="stage-number">01</span>
         <h2>Class Schedule</h2>
         <RecordTable columns={SCHEDULE_COLUMNS} rows={SCHEDULE} />
-        {/* Booking client component slot - wired in Task 3 */}
+        <BookingSection />
       </section>
       <section id="trainers" className="stage" aria-label="Trainers">
         <span className="stage-number">02</span>

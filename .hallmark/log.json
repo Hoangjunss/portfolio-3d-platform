@@ -57,6 +57,24 @@
     "date": "2026-09-21",
     "macrostructure": "Catalogue",
     "theme": "custom",
+    "theme_axes": "light / architectural-humanist / mineral-spruce",
+    "vibe": "curated architectural brokerage, trust-driven, editorial clarity, calm cartography",
+    "enrichment": "none",
+    "brief": "Sông Hồng Real Estate — realestate demo template (site #6 of 29)"
+  },
+  {
+    "date": "2026-09-21",
+    "macrostructure": "Catalogue",
+    "theme": "custom",
+    "theme_axes": "light / warm-serif / terracotta",
+    "vibe": "intimate contemporary bistro, hearth cooking, tactile, golden hour",
+    "enrichment": "none",
+    "brief": "Ember & Sage — restaurant demo template (site #5 of 29)"
+  },
+  {
+    "date": "2026-09-21",
+    "macrostructure": "Catalogue",
+    "theme": "custom",
     "theme_axes": "light / humanist-sans / cool",
     "vibe": "approachable academy, credible, unhurried, read-not-scanned",
     "enrichment": "none",

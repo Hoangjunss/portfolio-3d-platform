@@ -1,0 +1,509 @@
+/* Hallmark · macrostructure: Catalogue · genre: architectural brokerage · tone: trustworthy / editorial clarity
+ * theme: custom · vibe: "curated architectural brokerage, trust-driven, editorial clarity, calm cartography"
+ * paper oklch(97.8% 0.005 160) · accent oklch(46% 0.082 172) mineral-spruce
+ * display: Be Vietnam Pro (humanist-sans) · body: Plus Jakarta Sans (modern sans)
+ * axes: light / architectural-humanist / mineral-spruce
+ * enrichment: none (typography & structured layout only) · nav: n/a
+ */
+
+:root {
+  /* Colour — mineral spruce anchor. Paper carries a subtle mineral undertone so the background
+     reads as architectural fine paper rather than sterile white. */
+  --color-paper:      oklch(97.8% 0.005 160);
+  --color-paper-2:    oklch(95.0% 0.008 160);
+  --color-paper-3:    oklch(92.0% 0.012 160);
+  --color-rule:       oklch(87.0% 0.010 160);
+  --color-muted:      oklch(50.0% 0.015 170);
+  --color-ink:        oklch(22.0% 0.020 175);
+  --color-accent:     oklch(46.0% 0.082 172);
+  --color-accent-ink: oklch(32.0% 0.070 172);
+  --color-focus:      oklch(52.0% 0.120 190);
+
+  /* Typography */
+  --font-display: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs:   0.79rem;
+  --text-sm:   0.889rem;
+  --text-base: 1rem;
+  --text-md:   1.125rem;
+  --text-lg:   1.333rem;
+  --text-xl:   1.777rem;
+  --text-2xl:  2.369rem;
+  --text-display: clamp(2.2rem, 1.5rem + 3.2vw, 3.8rem);
+
+  /* Spacing Scale (4pt base) */
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4.5rem;
+
+  --rule-hair: 1px;
+  --rule-bold: 2px;
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in:     cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --dur-short: 140ms;
+  --dur-mid:   220ms;
+
+  --measure: 68ch;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+}
+
+/* Prevent horizontal scroll while preserving sticky positioning */
+html, body {
+  overflow-x: clip;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+  max-width: var(--measure);
+}
+
+a {
+  color: var(--color-accent-ink);
+  text-underline-offset: 0.18em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Hero (tk-hero) */
+.tk-hero {
+  padding: var(--space-3xl) var(--gutter) var(--space-2xl);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  background-color: var(--color-paper);
+}
+
+.tk-hero h1 {
+  font-size: var(--text-display);
+  font-weight: 700;
+  max-width: 22ch;
+  margin-bottom: var(--space-md);
+  color: var(--color-ink);
+}
+
+.tk-hero p {
+  font-size: var(--text-md);
+  color: var(--color-muted);
+  max-width: 52ch;
+  margin-bottom: var(--space-xl);
+}
+
+.tk-hero a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-xl);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background var(--dur-short) var(--ease-out),
+              border-color var(--dur-short) var(--ease-out),
+              transform var(--dur-short) var(--ease-out);
+}
+
+.tk-hero a:hover {
+  background: var(--color-accent-ink);
+  border-color: var(--color-accent-ink);
+}
+
+.tk-hero a:active {
+  transform: translateY(1px);
+}
+
+/* Saved Listings Interactive Section (realestate-save-listings) */
+.realestate-save-listings {
+  padding: var(--space-xl) var(--gutter);
+  display: grid;
+  gap: var(--space-xl);
+}
+
+.realestate-save-listings aside {
+  background: var(--color-paper-2);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-left: var(--rule-bold) solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  max-width: var(--measure);
+}
+
+.realestate-save-listings aside h3 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-md);
+  color: var(--color-ink);
+}
+
+.realestate-save-listings aside button {
+  margin-top: var(--space-md);
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-muted);
+  background: transparent;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--dur-short) var(--ease-out);
+}
+
+.realestate-save-listings aside button:hover {
+  color: var(--color-ink);
+  background: var(--color-paper-3);
+  border-color: var(--color-muted);
+}
+
+.tk-saved-items-panel,
+.tk-saved-items-empty {
+  margin: 0;
+  padding: 0;
+}
+
+.tk-saved-items-empty {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-style: italic;
+}
+
+.tk-saved-items-panel {
+  list-style: none;
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.tk-saved-items-panel > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-xs) 0;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  font-size: var(--text-sm);
+}
+
+.tk-saved-items-panel > li:last-child {
+  border-bottom: none;
+}
+
+.tk-saved-items-panel > li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+.tk-saved-items-panel button {
+  flex: none;
+  min-height: 44px;
+  padding: var(--space-2xs) var(--space-sm);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-accent-ink);
+  background: transparent;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--dur-short) var(--ease-out);
+}
+
+.tk-saved-items-panel button:hover {
+  background: var(--color-paper-3);
+  border-color: var(--color-accent);
+}
+
+/* Save Toggle Overlay Controls */
+.realestate-save-toggle-overlay {
+  display: grid;
+  gap: var(--space-md);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.realestate-save-toggle-overlay button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-accent-ink);
+  background: var(--color-paper);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--dur-short) var(--ease-out);
+}
+
+.realestate-save-toggle-overlay button:hover {
+  background: var(--color-paper-2);
+}
+
+.realestate-save-toggle-overlay button[aria-pressed="true"] {
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.realestate-save-toggle-overlay button[aria-pressed="true"]:hover {
+  background: var(--color-accent-ink);
+  border-color: var(--color-accent-ink);
+}
+
+/* Listings Grid (tk-item-grid) */
+.tk-item-grid {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2xl) var(--gutter);
+  display: grid;
+  gap: var(--space-xl);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-item-grid > li {
+  min-width: 0;
+  background: var(--color-paper);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-item-grid > li:hover {
+  border-color: var(--color-accent);
+}
+
+.tk-item-grid > li > img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  background: var(--color-paper-2);
+}
+
+.tk-item-grid > li > h3 {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--color-ink);
+  margin-bottom: var(--space-xs);
+}
+
+.tk-item-grid > li > p {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+/* Inquiry Form (tk-inquiry-form) */
+.tk-inquiry-form {
+  padding: var(--space-2xl) var(--gutter);
+  max-width: var(--measure);
+  display: grid;
+  gap: var(--space-md);
+}
+
+.tk-inquiry-form .tk-form-group {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.tk-inquiry-form label {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+.tk-inquiry-form input,
+.tk-inquiry-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-inquiry-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.tk-inquiry-form input:focus-visible,
+.tk-inquiry-form textarea:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+  border-color: var(--color-accent);
+}
+
+.tk-inquiry-form button[type="submit"] {
+  justify-self: start;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-xl);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out),
+              border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-inquiry-form button[type="submit"]:hover {
+  background: var(--color-accent-ink);
+  border-color: var(--color-accent-ink);
+}
+
+.tk-inquiry-form button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tk-form-status {
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+.tk-form-status[data-type="success"] {
+  background: var(--color-paper-2);
+  color: var(--color-accent-ink);
+  border: var(--rule-hair) solid var(--color-accent);
+}
+
+.tk-form-status[data-type="error"] {
+  background: oklch(95% 0.04 25);
+  color: oklch(40% 0.14 25);
+  border: var(--rule-hair) solid oklch(75% 0.12 25);
+}
+
+/* Footer (tk-footer) */
+.tk-footer {
+  padding: var(--space-2xl) var(--gutter);
+  border-top: var(--rule-hair) solid var(--color-rule);
+  background: var(--color-paper);
+}
+
+.tk-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md) var(--space-xl);
+  margin-bottom: var(--space-md);
+}
+
+.tk-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.tk-footer nav a:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.tk-footer-social {
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+}
+
+/* Viewport Breakpoints */
+@media (min-width: 768px) {
+  .tk-item-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .realestate-save-toggle-overlay {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .tk-item-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .realestate-save-toggle-overlay {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Accessibility: Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tk-hero a:active,
+  .realestate-save-listings aside button:active,
+  .realestate-save-toggle-overlay button:active {
+    transform: none;
+  }
+}

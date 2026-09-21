@@ -8,10 +8,12 @@ import {
   type FooterLink,
 } from '@portfolio/template-kit';
 import {
+  ROOMS,
   AMENITIES,
   MAP_PLACEHOLDER_CAPTION,
   BOOKING_INQUIRY_FIELDS,
 } from '../data/seed';
+import { TripPlannerSection } from './TripPlannerSection';
 
 const FOOTER_LINKS: FooterLink[] = [
   { label: 'Rooms & Packages', href: '#rooms' },
@@ -32,10 +34,7 @@ export default function TravelPage() {
         ctaLabel="Check availability"
         ctaHref="#booking"
       />
-      {/* Trip planner slot — wired in Task 3 */}
-      <section id="rooms" className="bento-section">
-        <h2>Rooms &amp; Packages</h2>
-      </section>
+      <TripPlannerSection rooms={ROOMS} />
       <section id="amenities" className="bento-section">
         <h2>Resort Amenities</h2>
         <ItemGrid items={AMENITIES} columns={3} />

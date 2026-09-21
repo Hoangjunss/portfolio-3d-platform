@@ -1,7 +1,7 @@
 # Trạng thái dự án — portfolio-3d-platform
 
-**Cập nhật:** 2026-09-20
-**Commit cối:** `3bc502a` — đã push lên `origin/master`. **AF-01 đóng**: run [35502552392](https://github.com/Hoangjunss/portfolio-3d-platform/actions/runs/35502552392) không còn lỗi `repository name must be lowercase`.
+**Cập nhật:** 2026-09-21
+**Commit cuối:** `a941d3d` — `docs: plan 31 complete — corporate site design score`. Mốc CI gần nhất đã ghi nhận: `3bc502a` đã push lên `origin/master`; **AF-01 đóng**: run [35502552392](https://github.com/Hoangjunss/portfolio-3d-platform/actions/runs/35502552392) không còn lỗi `repository name must be lowercase`.
 **Blocker hiện tại — AF-02:** repo có **0 secrets** (`gh api .../actions/secrets` → `total_count: 0`), nên job `build` dừng ngay ở gate `Require a non-empty PUBLIC_API_BASE_URL`. Đây là gate cố ý của `44952e6`, không phải bug. Phải set secrets bằng tay — xem `docs/ops/ci-cd-secrets.md`.
 **Test:** backend `mvn clean test` → **137/137 PASS**; frontend `npx vitest run` → **42/42 PASS**; `npm run build` xanh
 
@@ -39,8 +39,9 @@
 | 16 task 1 | nginx TLS ×4 conf + `forward-headers-strategy` + test — **đóng N-01, M-01** | `5737471` |
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
+| 31 | Corporate demo template: Hallmark theme, static export, callback-request interaction và design score | `fb5e411`, `b3c2a82`, `5ec7d84`, `a941d3d` |
 
-Tiến độ: **18b → 27 XONG**, **30 XONG**, **40 → 45 XONG** (`education`, `event`, `wedding`, `fitness`, `nonprofit`, `travel` đều xanh + build gate ✓). Backend **187/187**, frontend **106/106**, kit **48/48**. **Còn lại: 28, và 23 site (31–39, 46–59).** **Checklist 6 mục**: chép config từ một site đã xanh, không từ `template-kit/`. **`page.tsx` phải là server component** — đừng đặt handler ở đó; tách ra client component như `travel/app/BookingSection.tsx`, nếu không cả trang thành client JS mà test vẫn xanh. **Bẫy install 5/5 lần**: sinh lại lockfile là bước bắt buộc. **Quyết định treo:** chuỗi UI tiếng Anh hardcode trong kit + chrome tiếng Anh ở mọi site `lang="vi"`. **Chưa ai rà:** spec 2b + 63 plan file.
+Tiến độ: **18b → 27 XONG**, **30 XONG**, **31 XONG**, **40 → 45 XONG** (`education`, `event`, `wedding`, `fitness`, `nonprofit`, `travel` đều xanh + build gate ✓). Backend **187/187**, frontend **106/106**, kit **48/48**. Corporate có đủ source, test và build-gate theo plan; xem `docs/superpowers/corporate-hallmark-evidence.md` để biết giới hạn chứng cứ Hallmark/hậu kiểm. **Còn lại: 22 site (32–39, 46–59).** **Checklist 6 mục**: chép config từ một site đã xanh, không từ `template-kit/`. **`page.tsx` phải là server component** — đừng đặt handler ở đó; tách ra client component như `travel/app/BookingSection.tsx`, nếu không cả trang thành client JS mà test vẫn xanh. **Bẫy install 5/5 lần**: sinh lại lockfile là bước bắt buộc. **Quyết định treo:** chuỗi UI tiếng Anh hardcode trong kit + chrome tiếng Anh ở mọi site `lang="vi"`. **Chưa ai rà:** spec 2b + 63 plan file.
 
 ---
 

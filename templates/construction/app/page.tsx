@@ -11,6 +11,7 @@ import {
   PROCESS_STEPS,
   SERVICES,
 } from '../data/seed';
+import { QuoteRequestSection } from './QuoteRequestSection';
 
 const FOOTER_LINKS: FooterLink[] = [
   { label: 'Projects', href: '#projects' },
@@ -53,20 +54,7 @@ export default function ConstructionPage() {
         </div>
       </section>
 
-      {/* Quote request slot — wired in Task 3 */}
-      <section id="quote" className="split" data-flip="true">
-        <div className="split-text">
-          <span className="split-label">BÁO GIÁ / QUOTE</span>
-          <h2>Request a Quote</h2>
-          <p>
-            Select any project from our portfolio to request an architectural consultation or
-            preliminary construction estimate.
-          </p>
-        </div>
-        <div className="split-proof">
-          <p className="tk-saved-items-empty">Select a project above to request a quote.</p>
-        </div>
-      </section>
+      <QuoteRequestSection projects={PROJECTS} />
 
       <section id="process" className="split">
         <div className="split-text">

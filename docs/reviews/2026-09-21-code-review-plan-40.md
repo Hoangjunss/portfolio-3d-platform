@@ -151,3 +151,24 @@ plan 19.
 yêu cầu), nhưng cũng **không có phản hồi nào cho người dùng**: Safari private hoặc hết quota thì
 bấm "Đăng ký" không xảy ra gì và không ai biết vì sao. Mở rộng phạm vi ngoài mục tiêu "cho xanh",
 nên để lại.
+
+
+---
+
+## ĐÍNH CHÍNH (2026-09-21, sau khi rà 5 site khác)
+
+Kết luận B-03 ở trên **sai về nguyên nhân**. Tôi viết rằng `@types/node@24.13.6` khai
+`typesVersions` trỏ vào `ts5.6/` mà không ship thư mục đó.
+
+`realestate` và `restaurant` chạy đúng `@types/node@24.13.6` với TypeScript 5.6.3 và **build bình
+thường**. Kiểm trong `node_modules` của chúng: `ts5.6/index.d.ts` **có tồn tại**.
+
+Nguyên nhân thật ở education gần như chắc chắn là **bản cài hỏng** — cùng lần install đã cho ra
+binary rolldown cụt (6.026.240 B thay vì 20.796.928 B). Gói `@types/node` khi đó nhiều khả năng cũng
+giải nén thiếu. Ghim xuống `22.20.4` đi kèm một lần tải sạch, nên nó sửa được vì lý do khác.
+
+Bản ghim vẫn giữ (vô hại), nhưng **lý do ghi ở trên là sai**, và `^24` ở các site khác không phải
+lỗi. Bài học đúng: khi một lỗi xuất hiện trên bản cài đã biết là hỏng, **cài lại sạch trước khi đi
+tìm nguyên nhân ở nơi khác.**
+
+Chi tiết: `docs/reviews/2026-09-21-audit-5-sites-not-reviewed.md` §7.

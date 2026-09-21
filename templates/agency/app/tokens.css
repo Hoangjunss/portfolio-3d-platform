@@ -7,8 +7,8 @@
   --color-accent: oklch(62% 0.15 205);
   --color-accent-dark: oklch(43% 0.12 215);
   --color-focus: oklch(51% 0.17 205);
-  --font-display: "Arial Narrow", "Franklin Gothic Medium", Impact, sans-serif;
-  --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: var(--font-display-loaded), "Arial Narrow", sans-serif;
+  --font-body: var(--font-body-loaded), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --space-xs: 0.5rem;
   --space-sm: 0.75rem;
   --space-md: 1rem;

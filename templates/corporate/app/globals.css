@@ -1,9 +1,14 @@
-/* Hallmark · macrostructure: Structured Grid / Editorial Ledger · tone: B2B corporate / advisory
+/* Hallmark · pre-emit critique: P5 H4 E4 S4 R4 V5
+ * macrostructure: Specimen · genre: editorial · tone: B2B corporate / advisory
  * theme: custom · vibe: "authoritative consultancy, high-trust, structured, precision-crafted"
  * paper: oklch(98% 0.004 250) · accent: oklch(42% 0.11 254) corporate-lapis · brass: oklch(68% 0.11 78)
  * display: Plus Jakarta Sans (grotesque) · body: Be Vietnam Pro (humanist sans)
  * axes: light / crisp-grotesque / cool-slate-indigo with warm-brass accents
- * enrichment: none · nav: n/a (this composition uses footer nav only)
+ * enrichment: Tier-A CSS-art (concentric ledger-mark) · nav: N1a wordmark + 3 links, sticky
+ * redesigned 2026-09-21: replaced shared template-kit Hero/ItemGrid shell with local
+ * CorporateHero + ServicesLedger — numbered left-margin labels, asymmetric hero split,
+ * stacked eyebrow (not tag-left/heading-right) — this site no longer shares its DOM shape
+ * with the sibling agency/saas/restaurant/realestate template-kit compositions.
  */
 
 :root {
@@ -105,24 +110,93 @@ a {
 }
 
 /* ==========================================================================
-   Hero Section (tk-hero)
+   Nav (corporate-nav)
    ========================================================================== */
-.tk-hero {
+.corporate-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--gutter);
+  background: var(--color-paper);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.corporate-nav-mark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.corporate-nav nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+}
+
+.corporate-nav nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-muted);
+  text-decoration: none;
+  transition: color var(--dur-short) var(--ease-out);
+}
+
+.corporate-nav nav a:hover {
+  color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Hero Section (corporate-hero) — Specimen split: statement left, ledger-mark right
+   ========================================================================== */
+.corporate-hero {
+  display: grid;
+  gap: var(--space-2xl);
+  grid-template-columns: minmax(0, 1fr);
   padding: var(--space-3xl) var(--gutter) var(--space-2xl);
   border-bottom: var(--rule-hair) solid var(--color-rule);
   background-color: var(--color-paper);
-  background-size: cover;
-  background-position: center;
 }
 
-.tk-hero h1 {
+@media (min-width: 900px) {
+  .corporate-hero {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+    align-items: start;
+  }
+}
+
+.corporate-hero-eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-sm);
+}
+
+.corporate-hero-main h1 {
   font-size: var(--text-display);
   max-width: 22ch;
   margin-bottom: var(--space-md);
   color: var(--color-ink);
 }
 
-.tk-hero h1::after {
+.corporate-hero-main h1::after {
   content: "";
   display: block;
   width: 3.5rem;
@@ -131,7 +205,7 @@ a {
   background: var(--color-accent-highlight);
 }
 
-.tk-hero p {
+.corporate-hero-sub {
   font-size: var(--text-md);
   color: var(--color-muted);
   max-width: 56ch;
@@ -139,7 +213,7 @@ a {
   line-height: 1.65;
 }
 
-.tk-hero a {
+.corporate-hero-cta {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -156,13 +230,137 @@ a {
   transition: background var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
 }
 
-.tk-hero a:hover {
+.corporate-hero-cta:hover {
   background: var(--color-accent-ink);
   border-color: var(--color-accent-ink);
 }
 
-.tk-hero a:active {
+.corporate-hero-cta:active {
   transform: translateY(1px);
+}
+
+/* Tier-A CSS-art enrichment: concentric ledger-mark, no external asset */
+.corporate-hero-mark {
+  display: grid;
+  align-content: start;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper-2);
+}
+
+.corporate-hero-mark-rings {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  max-width: 9rem;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      var(--color-accent-highlight) 0deg 6deg,
+      transparent 6deg 18deg
+    );
+  -webkit-mask: radial-gradient(circle, transparent 56%, black 57%, black 62%, transparent 63%);
+          mask: radial-gradient(circle, transparent 56%, black 57%, black 62%, transparent 63%);
+}
+
+.corporate-hero-credentials {
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+/* ==========================================================================
+   Services Ledger (corporate-services) — numbered lead item + grid, Specimen labels
+   ========================================================================== */
+.corporate-services {
+  padding: var(--space-2xl) var(--gutter);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.corporate-services-eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin-bottom: var(--space-lg);
+}
+
+.corporate-services-lead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-lg);
+  padding-bottom: var(--space-xl);
+  margin-bottom: var(--space-xl);
+  border-bottom: var(--rule-mid) solid var(--color-accent);
+}
+
+.corporate-services-lead > span {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.corporate-services-lead h3 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-xs);
+}
+
+.corporate-services-lead p {
+  color: var(--color-muted);
+  font-size: var(--text-md);
+  line-height: 1.6;
+}
+
+.corporate-services-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-lg) var(--space-xl);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) {
+  .corporate-services-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.corporate-services-grid > li {
+  min-width: 0;
+  padding-top: var(--space-sm);
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+.corporate-services-grid > li > span {
+  display: block;
+  margin-bottom: var(--space-2xs);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.corporate-services-grid > li > h3 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-xs);
+  color: var(--color-ink);
+}
+
+.corporate-services-grid > li > p {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  line-height: 1.6;
 }
 
 /* ==========================================================================
@@ -339,63 +537,13 @@ a {
   border: var(--rule-hair) solid var(--color-rule);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--dur-short) var(--ease-out);
+  transition: color var(--dur-short) var(--ease-out), background-color var(--dur-short) var(--ease-out), border-color var(--dur-short) var(--ease-out);
 }
 
 .corporate-callback aside button:hover {
   color: var(--color-ink);
   background: var(--color-paper-2);
   border-color: var(--color-ink);
-}
-
-/* ==========================================================================
-   Services Section (tk-item-grid)
-   ========================================================================== */
-.tk-item-grid {
-  list-style: none;
-  margin: 0;
-  padding: var(--space-2xl) var(--gutter);
-  display: grid;
-  gap: var(--space-lg);
-  grid-template-columns: minmax(0, 1fr);
-  counter-reset: service;
-  border-bottom: var(--rule-hair) solid var(--color-rule);
-}
-
-.tk-item-grid > li {
-  counter-increment: service;
-  min-width: 0;
-  padding: var(--space-lg);
-  background: var(--color-paper);
-  border: var(--rule-hair) solid var(--color-rule);
-  border-top: var(--rule-mid) solid var(--color-accent);
-  border-radius: var(--radius-sm);
-  display: flex;
-  flex-direction: column;
-}
-
-.tk-item-grid > li > h3 {
-  font-size: var(--text-lg);
-  margin-bottom: var(--space-xs);
-  color: var(--color-ink);
-}
-
-.tk-item-grid > li > h3::before {
-  content: counter(service, decimal-leading-zero);
-  display: block;
-  margin-bottom: var(--space-2xs);
-  font-family: var(--font-display);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--color-accent);
-  font-variant-numeric: tabular-nums;
-}
-
-.tk-item-grid > li > p {
-  color: var(--color-muted);
-  font-size: var(--text-sm);
-  line-height: 1.6;
 }
 
 /* ==========================================================================
@@ -479,20 +627,7 @@ a {
   }
 }
 
-@media (min-width: 768px) {
-  .tk-item-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-xl);
-  }
-}
-
 @media (min-width: 1024px) {
-  .tk-item-grid[data-columns="3"] {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .tk-item-grid[data-columns="4"] {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
   .tk-people-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -507,7 +642,7 @@ a {
     transition-duration: 0.01ms !important;
   }
 
-  .tk-hero a:active {
+  .corporate-hero-cta:active {
     transform: none;
   }
 }

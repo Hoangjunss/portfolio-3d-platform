@@ -28,8 +28,13 @@ export function TemplateCarousel2D({
 
   if (!templates || templates.length === 0) {
     return (
-      <div className="py-16 text-center text-slate-400">
-        <p className="text-lg">No templates available at the moment.</p>
+      <div className="py-16 text-center">
+        <p
+          className="text-lg"
+          style={{ fontFamily: "var(--font-body)", color: "var(--color-muted)" }}
+        >
+          Chưa có mẫu nào để hiển thị.
+        </p>
       </div>
     );
   }
@@ -53,9 +58,12 @@ export function TemplateCarousel2D({
                     onSelect(template);
                   }
                 }}
-                className="group relative flex flex-col h-full rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 overflow-hidden cursor-pointer"
+                className="group relative flex flex-col h-full rounded-[var(--radius-md)] border border-[var(--color-rule)] hover:border-[var(--color-accent)] bg-[var(--color-paper-2)] overflow-hidden cursor-pointer transition-[border-color,box-shadow] duration-[var(--dur-short)] ease-[var(--ease-out)]"
               >
-                <div className="relative aspect-[16/10] w-full bg-slate-800 overflow-hidden">
+                <div
+                  className="relative aspect-[16/10] w-full overflow-hidden"
+                  style={{ backgroundColor: "var(--color-paper)" }}
+                >
                   {/* Decision (i): Null thumbnailUrl renders coloured fallback box with template name */}
                   {template.thumbnailUrl ? (
                     <img
@@ -65,11 +73,23 @@ export function TemplateCarousel2D({
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-950 p-4 text-center">
-                      <span className="text-xs uppercase tracking-wider text-indigo-400 font-semibold mb-1">
+                    <div
+                      className="w-full h-full flex flex-col items-center justify-center p-4 text-center"
+                      style={{
+                        background:
+                          "linear-gradient(to bottom right, var(--color-paper), var(--color-paper-2))",
+                      }}
+                    >
+                      <span
+                        className="text-xs uppercase tracking-wider font-semibold mb-1"
+                        style={{ fontFamily: "var(--font-wordmark)", color: "var(--color-accent)" }}
+                      >
                         {template.category || "Template"}
                       </span>
-                      <span className="text-sm font-medium text-slate-300">
+                      <span
+                        className="text-sm font-medium"
+                        style={{ fontFamily: "var(--font-body)", color: "var(--color-muted)" }}
+                      >
                         {template.name}
                       </span>
                     </div>
@@ -78,28 +98,49 @@ export function TemplateCarousel2D({
 
                 <div className="flex flex-col flex-1 p-5">
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <h3 className="text-lg font-bold text-white group-hover:text-indigo-400 transition-colors">
+                    <h3
+                      className="text-lg font-semibold transition-colors group-hover:text-[var(--color-accent)]"
+                      style={{ fontFamily: "var(--font-display)", color: "var(--color-ink)" }}
+                    >
                       {template.name}
                     </h3>
                     {template.category && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-full border"
+                        style={{
+                          fontFamily: "var(--font-wordmark)",
+                          color: "var(--color-muted)",
+                          borderColor: "var(--color-rule)",
+                        }}
+                      >
                         {template.category}
                       </span>
                     )}
                   </div>
 
                   {template.description && (
-                    <p className="text-sm text-slate-400 line-clamp-2 mb-4">
+                    <p
+                      className="text-sm line-clamp-2 mb-4"
+                      style={{ fontFamily: "var(--font-body)", color: "var(--color-muted)" }}
+                    >
                       {template.description}
                     </p>
                   )}
 
                   {template.techTags && (
-                    <div className="mt-auto pt-3 flex flex-wrap gap-1 border-t border-slate-800/80">
+                    <div
+                      className="mt-auto pt-3 flex flex-wrap gap-1 border-t"
+                      style={{ borderColor: "var(--color-rule)" }}
+                    >
                       {template.techTags.split(",").map((tag) => (
                         <span
                           key={tag.trim()}
-                          className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800/50 text-slate-400"
+                          className="text-[11px] px-2 py-0.5 rounded"
+                          style={{
+                            fontFamily: "var(--font-wordmark)",
+                            color: "var(--color-muted)",
+                            backgroundColor: "var(--color-paper)",
+                          }}
                         >
                           {tag.trim()}
                         </span>
@@ -118,8 +159,8 @@ export function TemplateCarousel2D({
           <button
             type="button"
             onClick={scrollPrev}
-            aria-label="Previous template"
-            className="p-2.5 rounded-full bg-slate-900 border border-slate-700 hover:border-indigo-500 hover:bg-slate-800 text-slate-300 hover:text-white transition-all shadow-md"
+            aria-label="Mẫu trước"
+            className="p-2.5 rounded-full border border-[var(--color-rule)] hover:border-[var(--color-accent)] bg-[var(--color-paper-2)] text-[var(--color-ink)] transition-colors duration-[var(--dur-short)] ease-[var(--ease-out)]"
           >
             <svg
               className="w-5 h-5"
@@ -138,8 +179,8 @@ export function TemplateCarousel2D({
           <button
             type="button"
             onClick={scrollNext}
-            aria-label="Next template"
-            className="p-2.5 rounded-full bg-slate-900 border border-slate-700 hover:border-indigo-500 hover:bg-slate-800 text-slate-300 hover:text-white transition-all shadow-md"
+            aria-label="Mẫu tiếp theo"
+            className="p-2.5 rounded-full border border-[var(--color-rule)] hover:border-[var(--color-accent)] bg-[var(--color-paper-2)] text-[var(--color-ink)] transition-colors duration-[var(--dur-short)] ease-[var(--ease-out)]"
           >
             <svg
               className="w-5 h-5"

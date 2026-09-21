@@ -20,14 +20,19 @@ export function CallbackSection() {
   );
 
   async function handleSubmit(values: Record<string, string>) {
-    add({
-      id: crypto.randomUUID(),
-      name: values.name,
-      email: values.email,
-      phone: values.phone,
-      message: values.message,
-      submittedAt: new Date().toISOString(),
-    });
+    try {
+      add({
+        id: crypto.randomUUID(),
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        message: values.message,
+        submittedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Failed to save callback request', error);
+      throw error;
+    }
   }
 
   const sorted = [...items].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));

@@ -1,7 +1,6 @@
 export const restaurant = {
   name: 'Ember & Sage',
   tagline: 'Modern hearth cooking, seasonal plates, and a wood-fired kitchen you can watch work.',
-  heroImage: '/hero.jpg',
   address: '48 Nguyen Hue, District 1, Ho Chi Minh City',
   hours: 'Tue–Sun, 17:00–23:00 (closed Mondays)',
 };

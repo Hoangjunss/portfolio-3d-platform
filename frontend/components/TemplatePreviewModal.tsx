@@ -44,18 +44,29 @@ export function TemplatePreviewModal({
       role="dialog"
       aria-modal="true"
       aria-label={`Preview: ${template.name}`}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[var(--color-ink)]/80 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="relative flex flex-col w-full max-w-5xl h-[85vh] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
+        className="relative flex flex-col w-full max-w-5xl h-[85vh] bg-[var(--color-paper-2)] border border-[var(--color-rule)] rounded-[var(--radius-md)] shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90">
+        <div
+          className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-rule)]"
+          style={{ backgroundColor: "var(--color-paper-2)" }}
+        >
           <div>
-            <h2 className="text-xl font-bold text-white">{template.name}</h2>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">
+            <h2
+              className="text-xl font-semibold"
+              style={{ fontFamily: "var(--font-display)", color: "var(--color-ink)" }}
+            >
+              {template.name}
+            </h2>
+            <p
+              className="text-xs mt-0.5"
+              style={{ fontFamily: "var(--font-wordmark)", color: "var(--color-muted)" }}
+            >
               {demoUrl}
             </p>
           </div>
@@ -66,9 +77,10 @@ export function TemplatePreviewModal({
               target="_blank"
               rel="noopener noreferrer"
               onClick={handleOpenFullDemo}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-[var(--radius-sm)] transition-colors duration-[var(--dur-short)] ease-[var(--ease-out)]"
+              style={{ fontFamily: "var(--font-body)", backgroundColor: "var(--color-accent)", color: "var(--color-paper)" }}
             >
-              Open full demo
+              Mở bản demo đầy đủ
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -86,8 +98,8 @@ export function TemplatePreviewModal({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close preview modal"
-              className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              aria-label="Đóng preview"
+              className="p-2 rounded-[var(--radius-sm)] transition-colors duration-[var(--dur-short)] ease-[var(--ease-out)] text-[var(--color-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-paper)]"
             >
               <svg
                 className="w-5 h-5"
@@ -107,7 +119,7 @@ export function TemplatePreviewModal({
         </div>
 
         {/* Iframe preview container */}
-        <div className="flex-1 w-full bg-slate-950 relative">
+        <div className="flex-1 w-full relative" style={{ backgroundColor: "var(--color-paper)" }}>
           {/*
             Decision (k) Sandbox tokens:
             - allow-scripts: Required for interactive elements and animations within the template demo.

@@ -4,6 +4,7 @@ import { Footer } from '@portfolio/template-kit/src/components/Footer';
 import { agency, LISTINGS, toGridItem } from '../data/seed';
 import { SaveListingsSection } from './SaveListingsSection';
 import { InquirySection } from './InquirySection';
+import { SiteNav } from './SiteNav';
 
 const FOOTER_LINKS = [
   { label: 'Listings', href: '#listings' },
@@ -14,7 +15,8 @@ const FOOTER_LINKS = [
 
 export default function RealEstatePage() {
   return (
-    <main>
+    <main id="top">
+      <SiteNav wordmark={agency.name} />
       <Hero
         headline={agency.name}
         subhead={agency.tagline}

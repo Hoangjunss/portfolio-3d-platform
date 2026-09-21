@@ -1,5 +1,6 @@
-/* Hallmark · macrostructure: Workbench · genre: modern-minimal · tone: exacting workflow control · anchor hue: cobalt · nav: none · footer: Ft2 · responsive: pass (49) · mobile: pass (34, 49, 50–57) */
-/* Hallmark · pre-emit critique: P4 H4 E5 S4 R5 V5 */
+/* Hallmark · macrostructure: Workbench · genre: modern-minimal · tone: exacting workflow control · anchor hue: cobalt · nav: N1a minimal (wordmark + Pricing) · footer: Ft2 · responsive: pass (49) · mobile: pass (34, 49, 50–57) */
+/* Hallmark · redesign pass 2026-09-21: added nav (was none), replaced bare-text integrations ItemGrid with IntegrationsSection (accent monogram + wordmark strip), regenerated real thumbnail.webp (was a 66-byte stub), dropped duplicate eyebrow on integrations section (now 2 of 3 sections carry one, within cap) */
+/* Hallmark · pre-emit critique: P4 H4 E5 S5 R5 V5 */
 @import '../tokens.css';
 
 * { box-sizing: border-box; }
@@ -44,14 +45,20 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .tk-stat-block div { min-width: 0; border-top: var(--rule) solid var(--color-rule); padding-top: var(--space-sm); }
 .tk-stat-block dt { color: color-mix(in oklch, var(--color-paper) 70%, transparent); max-width: 28ch; }
 .tk-stat-block dd { margin: var(--space-xs) 0 0; font-family: var(--font-display); font-size: clamp(2.2rem, 5vw, 4.5rem); letter-spacing: -0.05em; }
-.saas-integrations .tk-item-grid > li { min-height: 5.5rem; display: grid; place-items: center; padding: var(--space-sm); text-align: center; }
-.saas-integrations .tk-item-grid h3 { font-size: 1rem; letter-spacing: .02em; }
-.saas-integrations .tk-item-grid p { display: none; }
+.saas-nav { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); padding: var(--space-sm) var(--gutter); background: color-mix(in oklch, var(--color-paper) 92%, transparent); backdrop-filter: blur(6px); border-bottom: var(--rule) solid var(--color-rule); }
+.saas-nav-mark { font-family: var(--font-display); font-size: 1.15rem; font-weight: 750; letter-spacing: -0.02em; text-transform: uppercase; color: var(--color-ink); text-decoration: none; }
+.saas-nav-link { min-height: 44px; display: inline-flex; align-items: center; color: var(--color-ink); font-weight: 700; text-decoration: none; }
+.saas-nav-link:hover, .saas-nav-mark:hover { color: var(--color-accent-dark); }
+
+.saas-integration-strip { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--rule); margin: 0; padding: var(--rule); background: var(--color-rule); }
+.saas-integration-strip li { min-width: 0; display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-lg); background: var(--color-paper); font-weight: 700; }
+.saas-integration-mark { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; flex-shrink: 0; background: var(--color-accent); color: var(--color-accent-ink); font-family: var(--font-display); font-weight: 800; }
+
 .tk-footer { display: flex; justify-content: space-between; gap: var(--space-lg); flex-wrap: wrap; padding: var(--space-xl) var(--gutter); background: var(--color-paper); }
 .tk-footer nav { display: flex; gap: var(--space-lg); flex-wrap: wrap; }
 .tk-footer a { color: var(--color-ink); font-weight: 700; text-decoration: none; white-space: nowrap; }
 .tk-footer a:hover { color: var(--color-accent-dark); }
 
-@media (min-width: 680px) { .tk-item-grid[data-columns="3"], .tk-priced-item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .tk-stat-block { grid-template-columns: repeat(3, minmax(0, 1fr)); } .saas-integrations .tk-item-grid[data-columns="6"] { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (min-width: 1024px) { .tk-item-grid[data-columns="6"] { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (min-width: 680px) { .tk-item-grid[data-columns="3"], .tk-priced-item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .tk-stat-block { grid-template-columns: repeat(3, minmax(0, 1fr)); } .saas-integration-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .saas-integration-strip { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

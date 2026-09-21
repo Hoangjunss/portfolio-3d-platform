@@ -2,6 +2,51 @@
   {
     "date": "2026-09-21",
     "macrostructure": "Portfolio Grid",
+    "theme": "custom (cool-teal, unchanged)",
+    "theme_axes": "light / display-condensed / cool-teal",
+    "vibe": "confident studio index, typographic and direct",
+    "enrichment": "Tier-B raster (generated gradient+monogram cards via sharp)",
+    "brief": "agency demo template redesign pass — replaced shared template-kit Hero with local StudioHero (N9 edge-aligned sticky masthead nav, was none), regenerated 7 broken WorkItem images + thumbnail.webp (were missing/66-byte stub) as real designed WEBP via sharp+SVG, loaded real font pairing (Big Shoulders + IBM Plex Sans via next/font, was Arial/Impact fallback chain with no font loading) (plan 32, site #2 of 29-plan set)"
+  },
+  {
+    "date": "2026-09-21",
+    "macrostructure": "Specimen",
+    "theme": "custom (cool-lapis-brass, unchanged)",
+    "theme_axes": "light / crisp-grotesque / cool-lapis-brass",
+    "vibe": "authoritative consultancy, high-trust, structured, precision-crafted",
+    "enrichment": "Tier-A CSS-art (concentric ledger-mark ring)",
+    "brief": "corporate demo template redesign pass — replaced shared template-kit Hero/ItemGrid shell with local CorporateHero (asymmetric split, stacked eyebrow) + ServicesLedger (numbered lead item + grid, Specimen left-margin labels), added N1a sticky nav (was none), added try/catch around CallbackSection add(), removed dead .tk-item-grid CSS, fixed transition:all on reset button, corrected stamp lie (was falsely claiming 'Structured Grid / Editorial Ledger' on a linear flow — now genuinely Specimen) (plan 31, site #1 of 29-plan set)"
+  },
+  {
+    "date": "2026-09-21",
+    "macrostructure": "Workbench",
+    "theme": "custom",
+    "theme_axes": "light / grotesk-sans / cool-cobalt",
+    "vibe": "exacting workflow control, no gloss",
+    "enrichment": "none",
+    "brief": "saas demo template redesign pass — added N1a nav (was none), fixed integrations grid (bare-text ItemGrid -> IntegrationsSection with wordmark+monogram strip), regenerated real thumbnail.webp (was 66-byte stub), deduped repeated eyebrow kicker (site #33 of 29-plan set)"
+  },
+  {
+    "date": "2026-09-21",
+    "macrostructure": "Marquee Hero",
+    "theme": "custom (Atelier-warm, unchanged)",
+    "theme_axes": "light / high-contrast-serif / warm-bronze",
+    "vibe": "warm atelier, premium, unhurried",
+    "enrichment": "none",
+    "brief": "main frontend redesign pass — TemplateCarousel2D/3D + TemplatePreviewModal rewired from hardcoded Tailwind slate/indigo to tokens.css (gate 48 fix), font-bold/text-white headings moved to --font-display/--color-ink, one English string translated to Vietnamese for copy-voice consistency"
+  },
+  {
+    "date": "2026-09-21",
+    "macrostructure": "Catalogue",
+    "theme": "custom",
+    "theme_axes": "light / architectural-humanist / mineral-spruce",
+    "vibe": "curated architectural brokerage, trust-driven, editorial clarity, calm cartography",
+    "enrichment": "none",
+    "brief": "realestate demo template redesign pass — fixed dead inquiry form, transition:all tells, missing nav (added N1a sticky), side-stripe card border (site #36 of 29-plan set)"
+  },
+  {
+    "date": "2026-09-21",
+    "macrostructure": "Portfolio Grid",
     "theme": "custom",
     "theme_axes": "light / display-condensed / cool-teal",
     "vibe": "confident studio index, typographic and direct",

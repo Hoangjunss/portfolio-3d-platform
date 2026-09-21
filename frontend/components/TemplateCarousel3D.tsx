@@ -42,20 +42,33 @@ function TextureMaterial({ url }: { url: string }) {
   return <meshBasicMaterial map={texture} toneMapped={false} />;
 }
 
+// WebGL materials can't read CSS custom properties, so these mirror the
+// tokens.css Atelier-warm palette as literal hex: --color-paper-2 and --color-accent.
+const MESH_FALLBACK_COLOR = "#efe8e0";
+
 function FallbackCardMaterial({ template }: { template: Template }) {
   return (
     <>
-      <meshBasicMaterial color="#1e293b" />
+      <meshBasicMaterial color={MESH_FALLBACK_COLOR} />
       <Html
         center
         distanceFactor={6}
         className="pointer-events-none select-none text-center p-3 w-48"
       >
-        <div className="rounded-lg bg-slate-950/80 p-3 border border-slate-800 shadow-lg backdrop-blur-sm">
-          <p className="text-[10px] uppercase font-bold tracking-wider text-indigo-400 mb-1">
+        <div
+          className="rounded-[var(--radius-sm)] p-3 border shadow-lg backdrop-blur-sm"
+          style={{ backgroundColor: "var(--color-paper-2)", borderColor: "var(--color-rule)" }}
+        >
+          <p
+            className="text-[10px] uppercase font-semibold tracking-wider mb-1"
+            style={{ fontFamily: "var(--font-wordmark)", color: "var(--color-accent)" }}
+          >
             {template.category || "Template"}
           </p>
-          <p className="text-xs font-semibold text-white truncate">
+          <p
+            className="text-xs font-semibold truncate"
+            style={{ fontFamily: "var(--font-body)", color: "var(--color-ink)" }}
+          >
             {template.name}
           </p>
         </div>
@@ -146,7 +159,7 @@ function CardMesh({
         <TextureErrorBoundary
           fallback={<FallbackCardMaterial template={template} />}
         >
-          <Suspense fallback={<meshBasicMaterial color="#334155" />}>
+          <Suspense fallback={<meshBasicMaterial color="#d8cfc2" />}>
             <TextureMaterial url={template.thumbnailUrl} />
           </Suspense>
         </TextureErrorBoundary>
@@ -248,8 +261,8 @@ export function TemplateCarousel3D({
               e.stopPropagation();
               handlePrev();
             }}
-            aria-label="Previous 3D card"
-            className="pointer-events-auto p-3 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 hover:border-indigo-500 text-white shadow-xl transition-all backdrop-blur-md"
+            aria-label="Thẻ 3D trước"
+            className="pointer-events-auto p-3 rounded-full border border-[var(--color-rule)] hover:border-[var(--color-accent)] bg-[var(--color-paper-2)]/80 text-[var(--color-ink)] shadow-xl transition-colors duration-[var(--dur-short)] ease-[var(--ease-out)] backdrop-blur-md"
           >
             <svg
               className="w-5 h-5"
@@ -271,8 +284,8 @@ export function TemplateCarousel3D({
               e.stopPropagation();
               handleNext();
             }}
-            aria-label="Next 3D card"
-            className="pointer-events-auto p-3 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 hover:border-indigo-500 text-white shadow-xl transition-all backdrop-blur-md"
+            aria-label="Thẻ 3D tiếp theo"
+            className="pointer-events-auto p-3 rounded-full border border-[var(--color-rule)] hover:border-[var(--color-accent)] bg-[var(--color-paper-2)]/80 text-[var(--color-ink)] shadow-xl transition-colors duration-[var(--dur-short)] ease-[var(--ease-out)] backdrop-blur-md"
           >
             <svg
               className="w-5 h-5"
@@ -294,11 +307,17 @@ export function TemplateCarousel3D({
       {/* Active template indicator */}
       {templates[activeIndex] && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none text-center">
-          <p className="text-sm font-semibold text-white drop-shadow">
+          <p
+            className="text-sm font-semibold drop-shadow"
+            style={{ fontFamily: "var(--font-display)", color: "var(--color-ink)" }}
+          >
             {templates[activeIndex].name}
           </p>
-          <p className="text-xs text-slate-400 drop-shadow">
-            Click to preview &middot; Drag or use arrows to rotate
+          <p
+            className="text-xs drop-shadow"
+            style={{ fontFamily: "var(--font-body)", color: "var(--color-muted)" }}
+          >
+            Nhấn để xem trước &middot; Kéo hoặc dùng mũi tên để xoay
           </p>
         </div>
       )}

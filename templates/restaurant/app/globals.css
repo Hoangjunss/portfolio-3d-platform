@@ -3,8 +3,8 @@
  * paper oklch(97% 0.012 55) · accent oklch(55% 0.14 38) terracotta / burnt sienna
  * display: Fraunces (warm editorial serif) · body: Plus Jakarta Sans (humanist sans)
  * axes: light / high-contrast-serif / warm terracotta
- * enrichment: none (typography and warm tonal hierarchy only) · nav: n/a
- * pre-emit critique: P4 H5 E4 S5 R5 V4
+ * enrichment: none (typography and warm tonal hierarchy only, deliberate — heroImage dead field removed) · nav: n/a
+ * pre-emit critique: P5 H5 E5 S5 R5 V4 (2026-09-21 redesign pass: removed italic h1/h2, accent-underline menu heads, validated reservation form)
  */
 
 /* FONT LOADING NOTE:
@@ -120,7 +120,7 @@ a {
 .tk-hero h1 {
   font-size: var(--text-display);
   font-weight: 600;
-  font-style: italic;
+  font-style: normal;
   max-width: 18ch;
   margin-bottom: var(--space-md);
   color: var(--color-ink);
@@ -177,11 +177,12 @@ a {
 
 .menu-section > h2 {
   font-size: var(--text-xl);
-  font-style: italic;
-  color: var(--color-ink);
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-accent-ink);
   margin-bottom: var(--space-xl);
   padding-bottom: var(--space-xs);
-  border-bottom: var(--rule-hair) solid var(--color-rule);
+  border-bottom: var(--rule-bold) solid var(--color-accent);
 }
 
 /* Priced Item Grid (tk-priced-item-grid) */

@@ -22,11 +22,22 @@ export function ReservationSection() {
   const { items, add, reset } = useLocalCollection<Reservation>('restaurant-reservations', []);
 
   async function handleSubmit(values: Record<string, string>) {
+    const partySize = Number(values.partySize);
+    if (!Number.isInteger(partySize) || partySize < 1) {
+      throw new Error('Party size must be a whole number of at least 1.');
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(values.date)) {
+      throw new Error('Date must be in YYYY-MM-DD format.');
+    }
+    if (!/^\d{2}:\d{2}$/.test(values.time)) {
+      throw new Error('Time must be in HH:MM format.');
+    }
+
     add({
       id: crypto.randomUUID(),
       name: values.name,
       phone: values.phone,
-      partySize: Number(values.partySize),
+      partySize,
       date: values.date,
       time: values.time,
     });

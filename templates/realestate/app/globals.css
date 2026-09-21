@@ -3,7 +3,9 @@
  * paper oklch(97.8% 0.005 160) · accent oklch(46% 0.082 172) mineral-spruce
  * display: Be Vietnam Pro (humanist-sans) · body: Plus Jakarta Sans (modern sans)
  * axes: light / architectural-humanist / mineral-spruce
- * enrichment: none (typography & structured layout only) · nav: n/a
+ * enrichment: none (typography & structured layout only) · nav: N1a (wordmark + 3-link sticky bar)
+ * redesign pass 2026-09-21: wired InquirySection to persist (was empty stub), named transitions
+ * (was transition: all ×3), added SiteNav, softened save-listings side-stripe to accent dot
  */
 
 :root {
@@ -157,6 +159,64 @@ a {
 }
 
 /* Saved Listings Interactive Section (realestate-save-listings) */
+.realestate-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--gutter);
+  background: color-mix(in oklch, var(--color-paper) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.realestate-nav-wordmark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-md);
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.realestate-nav nav {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.realestate-nav nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--dur-short) var(--ease-out);
+}
+
+.realestate-nav nav a:hover {
+  color: var(--color-accent);
+}
+
+.realestate-nav nav a:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .realestate-nav nav {
+    gap: var(--space-sm);
+  }
+  .realestate-nav nav a {
+    font-size: var(--text-xs);
+  }
+}
+
 .realestate-save-listings {
   padding: var(--space-xl) var(--gutter);
   display: grid;
@@ -164,12 +224,23 @@ a {
 }
 
 .realestate-save-listings aside {
+  position: relative;
   background: var(--color-paper-2);
   border: var(--rule-hair) solid var(--color-rule);
-  border-left: var(--rule-bold) solid var(--color-accent);
   border-radius: var(--radius-md);
   padding: var(--space-lg);
   max-width: var(--measure);
+}
+
+.realestate-save-listings aside::before {
+  content: '';
+  position: absolute;
+  top: var(--space-lg);
+  left: calc(-1 * var(--rule-hair));
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--color-accent);
+  border-radius: 999px;
 }
 
 .realestate-save-listings aside h3 {
@@ -190,7 +261,9 @@ a {
   border: var(--rule-hair) solid var(--color-rule);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--dur-short) var(--ease-out);
+  transition: color var(--dur-short) var(--ease-out),
+    background-color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out);
 }
 
 .realestate-save-listings aside button:hover {
@@ -250,7 +323,8 @@ a {
   border: var(--rule-hair) solid var(--color-rule);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--dur-short) var(--ease-out);
+  transition: background-color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out);
 }
 
 .tk-saved-items-panel button:hover {
@@ -280,7 +354,9 @@ a {
   border: var(--rule-hair) solid var(--color-accent);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--dur-short) var(--ease-out);
+  transition: color var(--dur-short) var(--ease-out),
+    background-color var(--dur-short) var(--ease-out),
+    border-color var(--dur-short) var(--ease-out);
 }
 
 .realestate-save-toggle-overlay button:hover {

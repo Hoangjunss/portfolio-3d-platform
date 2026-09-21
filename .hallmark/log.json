@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-09-21",
+    "macrostructure": "Portfolio Grid",
+    "theme": "custom",
+    "theme_axes": "light / display-condensed / cool-teal",
+    "vibe": "confident studio index, typographic and direct",
+    "enrichment": "none",
+    "brief": "agency demo template (site #2 of 29)"
+  },
+  {
+    "date": "2026-09-21",
     "macrostructure": "Split Studio",
     "theme": "custom",
     "theme_axes": "light / mono / cool-blueprint",

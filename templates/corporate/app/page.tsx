@@ -1,10 +1,11 @@
 import { Hero, ItemGrid, PeopleGrid, Footer } from '@portfolio/template-kit';
+import { CallbackSection } from './CallbackSection';
 import { SERVICES, LEADERSHIP } from '../data/seed';
 
 const FOOTER_LINKS = [
-  { label: 'About', href: '#about' },
+  { label: 'About', href: '#services' },
   { label: 'Services', href: '#services' },
-  { label: 'Careers', href: '#careers' },
+  { label: 'Leadership', href: '#leadership' },
   { label: 'Contact', href: '#callback' },
 ];
 
@@ -18,8 +19,7 @@ export default function CorporatePage() {
         ctaHref="#callback"
       />
 
-      {/* Task 3 interactive feature slot: CallbackSection */}
-      <div id="callback" />
+      <CallbackSection />
 
       <section id="services">
         <ItemGrid items={SERVICES} columns={3} />

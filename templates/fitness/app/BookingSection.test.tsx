@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { BookingSection } from './BookingSection';
 import { SCHEDULE } from '../data/seed';
@@ -9,10 +9,17 @@ beforeEach(() => {
   vi.restoreAllMocks();
 });
 
+// A class name appears twice on the page: once inside its Book button and once inside the
+// My classes panel. A page-wide getByText matches both, so every panel assertion scopes to the
+// aside instead of searching the whole document.
+function panel() {
+  return within(screen.getByRole('complementary', { name: /my classes/i }));
+}
+
 describe('BookingSection', () => {
   it('shows an empty state before any class is booked', () => {
     render(<BookingSection />);
-    expect(screen.getByText(/no bookings yet/i)).toBeInTheDocument();
+    expect(panel().getByText(/no bookings yet/i)).toBeInTheDocument();
   });
 
   it('booking a class adds it to the "My classes" panel', async () => {
@@ -22,7 +29,7 @@ describe('BookingSection', () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText(/sunrise hiit/i)).toBeInTheDocument();
+      expect(panel().getByText(/sunrise hiit/i)).toBeInTheDocument();
     });
     expect(button).toHaveAttribute('aria-pressed', 'true');
   });
@@ -30,11 +37,11 @@ describe('BookingSection', () => {
   it('persists a booking across remount (simulated reload)', async () => {
     const { unmount } = render(<BookingSection />);
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`book.*${SCHEDULE[0].className}`, 'i') }));
-    await waitFor(() => expect(screen.getByText(/sunrise hiit/i)).toBeInTheDocument());
+    await waitFor(() => expect(panel().getByText(/sunrise hiit/i)).toBeInTheDocument());
     unmount();
 
     render(<BookingSection />);
-    await waitFor(() => expect(screen.getByText(/sunrise hiit/i)).toBeInTheDocument());
+    await waitFor(() => expect(panel().getByText(/sunrise hiit/i)).toBeInTheDocument());
     expect(screen.getByRole('button', { name: new RegExp(`book.*${SCHEDULE[0].className}`, 'i') })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -44,13 +51,13 @@ describe('BookingSection', () => {
   it('cancelling a booking removes it from the panel', async () => {
     render(<BookingSection />);
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`book.*${SCHEDULE[0].className}`, 'i') }));
-    await waitFor(() => expect(screen.getByText(/sunrise hiit/i)).toBeInTheDocument());
+    await waitFor(() => expect(panel().getByText(/sunrise hiit/i)).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole('button', { name: /remove/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText(/sunrise hiit/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/no bookings yet/i)).toBeInTheDocument();
+      expect(panel().queryByText(/sunrise hiit/i)).not.toBeInTheDocument();
+      expect(panel().getByText(/no bookings yet/i)).toBeInTheDocument();
     });
   });
 
@@ -58,13 +65,13 @@ describe('BookingSection', () => {
     render(<BookingSection />);
     const button = screen.getByRole('button', { name: new RegExp(`book.*${SCHEDULE[0].className}`, 'i') });
     fireEvent.click(button);
-    await waitFor(() => expect(screen.getByText(/sunrise hiit/i)).toBeInTheDocument());
+    await waitFor(() => expect(panel().getByText(/sunrise hiit/i)).toBeInTheDocument());
     expect(button).toHaveAttribute('aria-pressed', 'true');
 
     fireEvent.click(button);
     await waitFor(() => {
-      expect(screen.queryByText(/sunrise hiit/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/no bookings yet/i)).toBeInTheDocument();
+      expect(panel().queryByText(/sunrise hiit/i)).not.toBeInTheDocument();
+      expect(panel().getByText(/no bookings yet/i)).toBeInTheDocument();
     });
     expect(button).toHaveAttribute('aria-pressed', 'false');
   });
@@ -72,12 +79,12 @@ describe('BookingSection', () => {
   it('reset control clears the bookings back to empty', async () => {
     render(<BookingSection />);
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`book.*${SCHEDULE[0].className}`, 'i') }));
-    await waitFor(() => expect(screen.getByText(/sunrise hiit/i)).toBeInTheDocument());
+    await waitFor(() => expect(panel().getByText(/sunrise hiit/i)).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole('button', { name: /reset/i }));
     await waitFor(() => {
-      expect(screen.queryByText(/sunrise hiit/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/no bookings yet/i)).toBeInTheDocument();
+      expect(panel().queryByText(/sunrise hiit/i)).not.toBeInTheDocument();
+      expect(panel().getByText(/no bookings yet/i)).toBeInTheDocument();
     });
   });
 
@@ -94,7 +101,7 @@ describe('BookingSection', () => {
       await waitFor(() => {
         expect(screen.getByRole('alert')).toBeInTheDocument();
       });
-      expect(screen.queryByText(/sunrise hiit/i)).not.toBeInTheDocument();
+      expect(panel().queryByText(/sunrise hiit/i)).not.toBeInTheDocument();
       expect(button).toHaveAttribute('aria-pressed', 'false');
     } finally {
       spy.mockRestore();

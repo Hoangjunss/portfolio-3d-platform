@@ -17,7 +17,11 @@ export interface RecordTableProps<T extends { id: string }> {
   onDelete?: (id: string) => void;
 }
 
-export function RecordTable<T extends { id: string; [key: string]: unknown }>({ columns, rows, onEdit, onDelete }: RecordTableProps<T>) {
+// The row type only has to carry an id. Requiring an index signature here forced every consuming
+// site to add [key: string]: unknown to its own domain type, which makes any property name valid
+// and throws away the type safety the interface existed for. Column access is cast at the one
+// place that needs it instead.
+export function RecordTable<T extends { id: string }>({ columns, rows, onEdit, onDelete }: RecordTableProps<T>) {
   const showActions = Boolean(onEdit || onDelete);
   const [search, setSearch] = useState('');
 
@@ -25,7 +29,7 @@ export function RecordTable<T extends { id: string; [key: string]: unknown }>({ 
     if (!search.trim()) return rows;
     const needle = search.toLowerCase();
     return rows.filter((row) =>
-      columns.some((column) => String(row[column.key] ?? '').toLowerCase().includes(needle)),
+      columns.some((column) => String((row as Record<string, unknown>)[column.key] ?? '').toLowerCase().includes(needle)),
     );
   }, [rows, search, columns]);
 
@@ -45,7 +49,7 @@ export function RecordTable<T extends { id: string; [key: string]: unknown }>({ 
         <tbody>
           {filtered.map((row) => (
             <tr key={row.id}>
-              {columns.map((column) => <td key={column.key}>{String(row[column.key] ?? '')}</td>)}
+              {columns.map((column) => <td key={column.key}>{String((row as Record<string, unknown>)[column.key] ?? '')}</td>)}
               {showActions ? (
                 <td>
                   {onEdit ? <button type="button" onClick={() => onEdit(row)}>Edit</button> : null}

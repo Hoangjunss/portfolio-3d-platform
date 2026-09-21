@@ -35,6 +35,13 @@ jobs:
           npx vitest run
           npm run build
 
+      - name: template-kit tests
+        working-directory: template-kit
+        run: |
+          npm install
+          npm test
+
+
   build:
     needs: test
     runs-on: ubuntu-latest

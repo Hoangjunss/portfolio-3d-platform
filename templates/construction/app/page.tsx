@@ -56,7 +56,7 @@ export default function ConstructionPage() {
 
       <QuoteRequestSection projects={PROJECTS} />
 
-      <section id="process" className="split">
+      <section id="process" className="split" data-flip="true">
         <div className="split-text">
           <span className="split-label">QUY TRÌNH / PROCESS</span>
           <h2>Build Process</h2>
@@ -73,7 +73,7 @@ export default function ConstructionPage() {
         </div>
       </section>
 
-      <section id="services" className="split" data-flip="true">
+      <section id="services" className="split">
         <div className="split-text">
           <span className="split-label">DỊCH VỤ / SERVICES</span>
           <h2>Our Services</h2>

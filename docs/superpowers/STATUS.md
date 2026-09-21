@@ -41,7 +41,11 @@
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 | 31 | Corporate demo template: Hallmark theme, static export, callback-request interaction và design score | `fb5e411`, `b3c2a82`, `5ec7d84`, `a941d3d` |
 
-Tiến độ: **18b → 27 XONG**, **30 XONG**, **31 XONG**, **40 → 45 XONG** (`education`, `event`, `wedding`, `fitness`, `nonprofit`, `travel` đều xanh + build gate ✓). Backend **187/187**, frontend **106/106**, kit **48/48**. Corporate có đủ source, test và build-gate theo plan; xem `docs/superpowers/corporate-hallmark-evidence.md` để biết giới hạn chứng cứ Hallmark/hậu kiểm. **Còn lại: 22 site (32–39, 46–59).** **Checklist 6 mục**: chép config từ một site đã xanh, không từ `template-kit/`. **`page.tsx` phải là server component** — đừng đặt handler ở đó; tách ra client component như `travel/app/BookingSection.tsx`, nếu không cả trang thành client JS mà test vẫn xanh. **Bẫy install 5/5 lần**: sinh lại lockfile là bước bắt buộc. **Quyết định treo:** chuỗi UI tiếng Anh hardcode trong kit + chrome tiếng Anh ở mọi site `lang="vi"`. **Chưa ai rà:** spec 2b + 63 plan file.
+Tiến độ: **18b → 27 XONG**, **30 XONG**, **31 XONG**, **40 → 46 XONG** — bảy site tôi tự kiểm (`education`, `event`, `wedding`, `fitness`, `nonprofit`, `travel`, `construction`) đều xanh + build gate ✓. Backend **187/187**, frontend **106/106**, kit **48/48**. Corporate có đủ source/test/build-gate theo plan; xem `docs/superpowers/corporate-hallmark-evidence.md` về giới hạn chứng cứ Hallmark.
+
+**CHƯA KIỂM:** một tiến trình song song đã push thêm `restaurant`, `realestate`, `agency`, `saas` (commit `eb8b54a`, `cec77e7`, `e904fa7`). Tôi **không** chạy test/build cho bốn site đó, nên đừng coi chúng là đã xác minh chỉ vì có commit.
+
+**Checklist 6 mục**: chép config từ một site đã xanh, không từ `template-kit/`. **`page.tsx` phải là server component** — handler đặt ở đó sẽ kéo cả trang thành client JS mà test vẫn xanh (xem `travel/app/BookingSection.tsx`). **Hai bẫy truy vấn trong test**: luôn `within(...)` để thu hẹp vùng, và **đừng dựng matcher bằng `new RegExp(seedText)`** — chuỗi seed chứa ký tự regex nên pattern im lặng ngừng khớp. Đưa hai điều này vào handoff thì plan 44 và 46 xanh ngay lần đầu. **Bẫy install 6/6 lần**: sinh lại lockfile là bước bắt buộc, đừng commit bản đầu. **Quyết định treo:** chuỗi UI tiếng Anh hardcode trong kit + chrome tiếng Anh ở mọi site `lang="vi"`. **Chưa ai rà:** spec 2b + 63 plan file.
 
 ---
 

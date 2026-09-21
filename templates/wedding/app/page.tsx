@@ -1,6 +1,7 @@
 import { Hero, PhotoGallery, Footer } from '@portfolio/template-kit';
 import { WEDDING, PHOTOS } from '../data/seed';
 import { WeddingCountdown } from './WeddingCountdown';
+import { RsvpSection } from './RsvpSection';
 
 const FOOTER_LINKS = [
   { label: 'Ảnh cưới', href: '#gallery' },
@@ -20,8 +21,7 @@ export default function WeddingPage() {
       <section id="gallery" aria-label="Ảnh cưới">
         <PhotoGallery photos={PHOTOS} layout="grid" lightbox={true} />
       </section>
-      {/* RSVP interactive section wired in Task 3 */}
-      <section id="rsvp" className="wedding-rsvp" aria-label="RSVP" />
+      <RsvpSection />
       <Footer links={FOOTER_LINKS} showSocial={true} />
     </main>
   );

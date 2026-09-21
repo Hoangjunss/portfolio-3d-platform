@@ -40,7 +40,7 @@
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **18b → 27 XONG**, **plan 30 XONG**, **plan 40 XONG** (site `education` build xanh, `npm test` 5/5 + build gate 1/1). Backend **187/187**, frontend **106/106**, template-kit **47/47**. **Ba bài học áp cho cả 29 site package** (`docs/reviews/2026-09-21-code-review-plan-40.md`): (1) `vitest.config` phải chép từ `frontend/` chứ không phải `template-kit/` — app Next buộc `jsx: preserve` nên cần override `oxc.jsx.runtime`; (2) cần `resolve.dedupe: ['react','react-dom']` vì kit là `file:` dependency mang React riêng; (3) ghim `@types/node@22.x` — dòng 24.x đòi TS ≥ 5.8 trong khi repo chạy 5.6.3. **Còn lại: 28, và 28 site (31–39, 41–59).** **CHƯA AI RÀ:** spec 2b + 63 plan file của chương trình 29 site.
+Tiến độ: **18b → 27 XONG**, **30 XONG**, **40 + 41 XONG** (site `education` và `event` đều build xanh + build gate ✓). Backend **187/187**, frontend **106/106**, kit **47/47**. **Còn lại: 28, và 27 site (31–39, 42–59).** **Checklist bắt buộc cho mọi site package** (`docs/reviews/2026-09-21-code-review-plan-4[01].md`): chép config từ `templates/education/`, **không** từ `template-kit/` — cần `oxc.jsx.runtime`, `resolve.dedupe` cho react, `@types/node` ghim `22.20.4`, `exclude: scripts/**`, `layout.tsx` dùng `variable:` chứ không `.className`. **LỖ HỔNG TEST CỦA KIT:** 47/47 không thể bắt lỗi `"use client"`, lỗi type barrel, hay lỗi timing của `useLocalCollection` — vitest không bao giờ đẩy component qua một bản build Next. CI cần một smoke build Next cho kit. **CHƯA AI RÀ:** spec 2b + 63 plan file của chương trình 29 site.
 
 ---
 

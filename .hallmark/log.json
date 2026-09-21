@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-09-21",
+    "macrostructure": "Manifesto",
+    "theme": "custom",
+    "theme_axes": "dark / display-condensed / chromatic-magenta",
+    "vibe": "one-day summit, sharp, current, slightly irreverent",
+    "enrichment": "none",
+    "brief": "Dong Vong Tech Summit - event demo template (site #11 of 29)"
+  },
+  {
+    "date": "2026-09-21",
     "macrostructure": "Catalogue",
     "theme": "custom",
     "theme_axes": "light / humanist-sans / cool",

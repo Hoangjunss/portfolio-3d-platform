@@ -1,0 +1,421 @@
+/* Hallmark · macrostructure: Manifesto · genre: editorial · tone: bold-energetic / practitioner
+ * theme: custom · vibe: "one-day summit, sharp, current, slightly irreverent"
+ * paper oklch(17% 0.010 300) · accent oklch(64% 0.240 350) magenta
+ * display: Archivo (grotesque/condensed) · body: IBM Plex Sans · outlier: IBM Plex Mono (<time> only)
+ * axes: dark / display-condensed / chromatic-magenta — differs from the education site
+ *       (light / humanist-sans / cool) on all three
+ * enrichment: none (typography only) · nav: n/a (this composition has no nav)
+ * pre-emit critique: P4 H5 E4 S5 R4 V5
+ */
+
+/* Fonts are loaded in app/layout.tsx via next/font/google with subsets ["latin", "vietnamese"] and
+ * reach this file as --font-display-face / --font-body-face / --font-mono-face.
+ *
+ * Do not replace those with literal family names. next/font registers a hashed family, never
+ * "Archivo", so a literal resolves to nothing and every rule here silently falls through to the
+ * fallback stack — fonts downloaded, fonts unused, build green, console clean. That shipped once
+ * on the main portfolio site and again on the education site. */
+
+:root {
+  /* Near-black neutral carrying a trace of the accent hue, so the page reads as one material.
+     The accent is loud, so it is rationed: times, prices, the add-control, and nothing else. */
+  --color-paper:      oklch(17% 0.010 300);
+  --color-paper-2:    oklch(22% 0.014 300);
+  --color-paper-3:    oklch(27% 0.018 300);
+  --color-rule:       oklch(34% 0.014 300);
+  --color-muted:      oklch(68% 0.012 300);
+  --color-ink:        oklch(96% 0.004 300);
+  --color-accent:     oklch(64% 0.240 350);
+  --color-accent-dim: oklch(52% 0.190 350);
+  --color-focus:      oklch(80% 0.180 350);
+
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
+  --font-body:    var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    var(--font-mono-face), ui-monospace, monospace;
+
+  --text-xs:   0.79rem;
+  --text-sm:   0.889rem;
+  --text-base: 1rem;
+  --text-md:   1.125rem;
+  --text-lg:   1.424rem;
+  --text-xl:   1.802rem;
+  --text-2xl:  2.281rem;
+  --text-display: clamp(2.8rem, 1.4rem + 6vw, 6rem);
+
+  /* 4pt scale */
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4.5rem;
+
+  --rule-hair: 1px;
+  --rule-bold: 3px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in:     cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --dur-short: 140ms;
+  --dur-mid:   220ms;
+
+  --measure: 66ch;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+}
+
+/* clip, never hidden — hidden breaks position:sticky in some engines */
+html, body { overflow-x: clip; }
+
+html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings stay roman. Manifesto carries emphasis with scale and weight, never italics. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  margin: 0;
+}
+
+p { margin: 0; max-width: var(--measure); color: var(--color-muted); }
+
+a { color: var(--color-ink); text-underline-offset: 0.18em; }
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Hero (tk-hero)
+   Manifesto: the statement is the fold. Type does the work; there is no image and no ornament. */
+.tk-hero {
+  padding: var(--space-3xl) var(--gutter);
+  border-bottom: var(--rule-bold) solid var(--color-accent);
+  background-color: var(--color-paper);
+  background-size: cover;
+  background-position: center;
+}
+
+.tk-hero h1 {
+  font-size: var(--text-display);
+  font-stretch: 85%;
+  text-transform: uppercase;
+  max-width: 16ch;
+  margin-bottom: var(--space-lg);
+}
+
+.tk-hero p {
+  font-size: var(--text-md);
+  max-width: 52ch;
+  margin-bottom: var(--space-xl);
+}
+
+.tk-hero a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-lg);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-hero a:hover { background: var(--color-accent-dim); border-color: var(--color-accent-dim); }
+.tk-hero a:active { transform: translateY(1px); }
+
+/* Agenda (tk-timeline)
+   Ten entries in one day, so density is the problem to solve. The time column is monospaced with
+   tabular figures so the hours line up into a readable left edge; the accent marks only the time.
+   data-orientation="horizontal" scrolls on narrow screens rather than crushing the entries. */
+.tk-timeline {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2xl) var(--gutter);
+  display: grid;
+  gap: 0;
+  counter-reset: session;
+}
+
+.tk-timeline > li {
+  min-width: 0;
+  padding: var(--space-md) 0;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  display: grid;
+  gap: var(--space-2xs) var(--space-lg);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-timeline > li > time {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--color-accent);
+}
+
+.tk-timeline > li > h3 { font-size: var(--text-lg); }
+.tk-timeline > li > p { font-size: var(--text-sm); }
+
+/* Page-local control row for the per-session Add button. Timeline has no action slot and this
+   plan does not change the kit, so the control is a sibling the page supplies. */
+.agenda-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding-top: var(--space-xs);
+}
+
+.agenda-controls button {
+  min-height: 44px;
+  padding: var(--space-2xs) var(--space-md);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  background: transparent;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-short) var(--ease-out),
+              background var(--dur-short) var(--ease-out);
+}
+
+.agenda-controls button:hover { border-color: var(--color-accent); background: var(--color-paper-2); }
+.agenda-controls button:active { transform: translateY(1px); }
+.agenda-controls button[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent); }
+.agenda-controls button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Speakers (tk-people-grid) */
+.tk-people-grid {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2xl) var(--gutter);
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-people-grid > li { min-width: 0; }
+
+.tk-people-grid > li > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-md);
+  filter: grayscale(1) contrast(1.05);
+  transition: filter var(--dur-mid) var(--ease-out);
+}
+
+.tk-people-grid > li:hover > img { filter: none; }
+.tk-people-grid > li > h3 { font-size: var(--text-md); }
+.tk-people-grid > li > p { font-size: var(--text-sm); }
+
+/* Tickets (tk-priced-item-grid)
+   The price is the loudest thing in the cell, set in the display face so it reads as a figure
+   rather than as running text. */
+.tk-priced-item-grid {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2xl) var(--gutter);
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-priced-item-grid > li {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-lg);
+  background: var(--color-paper-2);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-md);
+}
+
+.tk-priced-item-grid > li > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+.tk-priced-item-grid > li > h3 { font-size: var(--text-md); }
+
+.tk-priced-item-grid > li > span {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.tk-priced-item-grid > li > button {
+  margin-top: auto;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-priced-item-grid > li > button:hover { background: var(--color-accent-dim); border-color: var(--color-accent-dim); }
+.tk-priced-item-grid > li > button:active { transform: translateY(1px); }
+.tk-priced-item-grid > li > button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* My schedule (tk-saved-items-panel) */
+.tk-saved-items-panel,
+.tk-saved-items-empty {
+  margin: 0 var(--gutter);
+  padding: var(--space-lg);
+  background: var(--color-paper-2);
+  border-left: var(--rule-bold) solid var(--color-accent);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.tk-saved-items-empty { color: var(--color-muted); font-size: var(--text-sm); }
+
+.tk-saved-items-panel { list-style: none; display: grid; gap: var(--space-xs); }
+
+.tk-saved-items-panel > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-width: 0;
+  padding-block: var(--space-2xs);
+}
+
+.tk-saved-items-panel > li > span { min-width: 0; overflow-wrap: anywhere; }
+
+.tk-saved-items-panel button {
+  flex: none;
+  min-height: 44px;
+  padding: var(--space-2xs) var(--space-sm);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  background: transparent;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-saved-items-panel button:hover { border-color: var(--color-accent); }
+.tk-saved-items-panel button:active { transform: translateY(1px); }
+.tk-saved-items-panel button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* The reset-demo-data control is deliberately quiet — it destroys the visitor's schedule, so it
+   must never compete with the add buttons. */
+.schedule-reset {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: var(--space-sm) var(--gutter) 0;
+  padding: 0 var(--space-xs);
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.schedule-reset:hover { color: var(--color-ink); }
+
+/* Footer (tk-footer) — kit markup is fixed to footer > nav > a, so the voice is rule weight. */
+.tk-footer {
+  padding: var(--space-xl) var(--gutter) var(--space-2xl);
+  border-top: var(--rule-bold) solid var(--color-accent);
+  font-size: var(--text-sm);
+}
+
+.tk-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md) var(--space-lg);
+}
+
+.tk-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tk-footer nav a:hover { color: var(--color-accent); }
+
+.tk-footer-social { margin-top: var(--space-md); }
+
+/* Wider viewports. Below 768 every section is single-column, per the mobile floor. */
+@media (min-width: 768px) {
+  .tk-timeline > li { grid-template-columns: 6rem minmax(0, 1fr); align-items: baseline; }
+  .tk-timeline > li > time { grid-row: span 3; }
+  .tk-people-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tk-priced-item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tk-saved-items-panel, .tk-saved-items-empty { max-width: 78ch; }
+}
+
+@media (min-width: 1024px) {
+  .tk-people-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tk-hero a:active,
+  .agenda-controls button:active,
+  .tk-priced-item-grid > li > button:active,
+  .tk-saved-items-panel button:active { transform: none; }
+
+  .tk-people-grid > li > img { filter: none; }
+}

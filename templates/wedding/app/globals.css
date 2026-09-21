@@ -1,0 +1,341 @@
+/* Hallmark · macrostructure: Letter · genre: editorial · tone: warm / intimate / celebratory
+ * theme: custom · vibe: "garden-hall invitation, unhurried, not rose-gold"
+ * paper oklch(97% 0.012 85) · accent oklch(48% 0.090 150) garden-green
+ * display: Cormorant Garamond (classical-serif) · body: Mulish (humanist sans)
+ * axes: light / classical-serif / chromatic-green — differs from the event site
+ *       (dark / display-condensed / chromatic-magenta) on all three
+ * enrichment: none (typography only; the gallery carries the site's only imagery)
+ * pre-emit critique: P5 H4 E4 S5 R5 V4
+ */
+
+/* Fonts are loaded in app/layout.tsx via next/font/google with subsets ["latin", "vietnamese"] and
+ * arrive here as --font-display-face / --font-body-face. Never replace those with literal family
+ * names: next/font registers a hashed family, so a literal resolves to nothing and the whole page
+ * silently falls back. That shipped twice already in this repo. The Vietnamese subset is not
+ * optional here — the couple are Nguyễn Hoàng Minh and Đặng Thanh Hà, and their own names are the
+ * largest type on the page. */
+
+:root {
+  /* Anchor is the garden, not rose-gold. Terracotta is a secondary and appears only on the RSVP
+     action and the countdown figures, so the page stays green-led. */
+  --color-paper:      oklch(97% 0.012 85);
+  --color-paper-2:    oklch(94% 0.016 85);
+  --color-rule:       oklch(86% 0.014 95);
+  --color-muted:      oklch(50% 0.016 120);
+  --color-ink:        oklch(26% 0.022 140);
+  --color-accent:     oklch(48% 0.090 150);
+  --color-accent-dim: oklch(38% 0.070 150);
+  --color-warm:       oklch(58% 0.115 45);
+  --color-focus:      oklch(52% 0.120 150);
+
+  --font-display: var(--font-display-face), ui-serif, Georgia, serif;
+  --font-body:    var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs:   0.8rem;
+  --text-sm:   0.9rem;
+  --text-base: 1.0625rem;
+  --text-md:   1.2rem;
+  --text-lg:   1.5rem;
+  --text-xl:   2rem;
+  --text-2xl:  2.75rem;
+  --text-display: clamp(2.6rem, 1.5rem + 4.6vw, 5rem);
+
+  /* 4pt scale */
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4.5rem;
+
+  --rule-hair: 1px;
+  --rule-bold: 2px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in:     cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --dur-short: 140ms;
+  --dur-mid:   240ms;
+
+  --measure: 62ch;
+  --gutter: clamp(1rem, 5vw, 3rem);
+}
+
+/* clip, never hidden — hidden breaks position:sticky in some engines */
+html, body { overflow-x: clip; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  text-rendering: optimizeLegibility;
+}
+
+/* Roman only. An invitation is the single most tempting place to reach for an italic display face,
+   and it is the most reliable tell there is. Emphasis is carried by scale and by the rules. */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.005em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  margin: 0;
+}
+
+p { margin: 0; max-width: var(--measure); }
+
+a { color: var(--color-accent-dim); text-underline-offset: 0.2em; }
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Hero (tk-hero)
+   Letter macrostructure: the fold is the opening of an invitation, centred and unhurried, with the
+   couple's names as the largest thing on the page. A hairline frame stands in for the card edge —
+   a drawn rule rather than an ornament, so it survives at 320px. */
+.tk-hero {
+  padding: var(--space-3xl) var(--gutter);
+  text-align: center;
+  background-color: var(--color-paper);
+  background-size: cover;
+  background-position: center;
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.tk-hero h1 {
+  font-size: var(--text-display);
+  max-width: 18ch;
+  margin: 0 auto var(--space-lg);
+}
+
+.tk-hero p {
+  font-size: var(--text-md);
+  color: var(--color-muted);
+  max-width: 46ch;
+  margin: 0 auto var(--space-xl);
+}
+
+.tk-hero a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-xl);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-warm);
+  border: var(--rule-hair) solid var(--color-warm);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-hero a:hover { background: var(--color-accent-dim); border-color: var(--color-accent-dim); }
+.tk-hero a:active { transform: translateY(1px); }
+
+/* Countdown — page-level, not a kit component.
+   Figures are tabular so the digits do not jitter as they tick, which is the whole reason a live
+   countdown usually looks cheap. */
+.wedding-countdown {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-lg) var(--space-xl);
+  padding: var(--space-xl) var(--gutter);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.wedding-countdown > div { text-align: center; min-width: 4.5rem; }
+
+.wedding-countdown dd,
+.wedding-countdown .count {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--color-warm);
+}
+
+.wedding-countdown dt,
+.wedding-countdown .label {
+  margin-top: var(--space-2xs);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* Photo gallery (tk-photo-gallery)
+   Reference direction 2 asks for a considered photo story rather than a thumbnail wall, so the
+   grid is generous and the first cell spans on wide screens. minmax(0, 1fr) throughout — a bare
+   1fr lets a wide image force horizontal scroll. */
+.tk-photo-gallery {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2xl) var(--gutter);
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-photo-gallery > li { min-width: 0; }
+
+.tk-photo-gallery > li > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--dur-mid) var(--ease-out);
+}
+
+.tk-photo-gallery[data-lightbox='true'] > li > img { cursor: zoom-in; }
+.tk-photo-gallery[data-lightbox='true'] > li > img:hover { opacity: 0.88; }
+
+/* RSVP (tk-inquiry-form)
+   The kit renders label > input pairs and a submit button, plus its own status paragraphs. Nothing
+   here changes that markup; it only dresses it. */
+.tk-inquiry-form {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: var(--space-2xl) var(--gutter) var(--space-3xl);
+}
+
+.tk-inquiry-form label {
+  display: grid;
+  gap: var(--space-2xs);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+}
+
+.tk-inquiry-form input,
+.tk-inquiry-form textarea {
+  min-height: 44px;
+  padding: var(--space-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  background: var(--color-paper-2);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-inquiry-form textarea { min-height: 7rem; resize: vertical; }
+
+.tk-inquiry-form input:hover:not(:disabled),
+.tk-inquiry-form textarea:hover:not(:disabled) { border-color: var(--color-muted); }
+
+.tk-inquiry-form input:disabled,
+.tk-inquiry-form textarea:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.tk-inquiry-form button {
+  min-height: 44px;
+  margin-top: var(--space-xs);
+  padding: var(--space-sm) var(--space-xl);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-warm);
+  border: var(--rule-hair) solid var(--color-warm);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-inquiry-form button:hover:not(:disabled) { background: var(--color-accent-dim); border-color: var(--color-accent-dim); }
+.tk-inquiry-form button:active:not(:disabled) { transform: translateY(1px); }
+.tk-inquiry-form button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.tk-inquiry-form [role='status'] { color: var(--color-accent); font-size: var(--text-sm); }
+.tk-inquiry-form [role='alert']  { color: var(--color-warm);   font-size: var(--text-sm); }
+
+/* Live guests-confirmed total, page-level. */
+.guest-count {
+  margin: 0 auto;
+  padding: 0 var(--gutter) var(--space-xl);
+  max-width: 34rem;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.guest-count strong {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--color-accent);
+}
+
+/* Footer (tk-footer) — kit markup is fixed to footer > nav > a. */
+.tk-footer {
+  padding: var(--space-xl) var(--gutter) var(--space-2xl);
+  border-top: var(--rule-hair) solid var(--color-rule);
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
+.tk-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md) var(--space-lg);
+}
+
+.tk-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-ink);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.tk-footer nav a:hover { color: var(--color-accent); text-decoration: underline; }
+
+.tk-footer-social { margin-top: var(--space-md); }
+
+/* Wider viewports. Below 768 everything is one column, per the mobile floor. */
+@media (min-width: 768px) {
+  .tk-photo-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-md); }
+  .tk-photo-gallery > li:first-child { grid-column: span 2; grid-row: span 2; }
+}
+
+@media (min-width: 1024px) {
+  .tk-photo-gallery { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tk-hero a:active,
+  .tk-inquiry-form button:active:not(:disabled) { transform: none; }
+}

@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-09-21",
+    "macrostructure": "Letter",
+    "theme": "custom",
+    "theme_axes": "light / classical-serif / chromatic-green",
+    "vibe": "garden-hall invitation, unhurried, not rose-gold",
+    "enrichment": "none",
+    "brief": "Nguyen Hoang Minh & Dang Thanh Ha - wedding demo template (site #12 of 29)"
+  },
+  {
+    "date": "2026-09-21",
     "macrostructure": "Manifesto",
     "theme": "custom",
     "theme_axes": "dark / display-condensed / chromatic-magenta",

@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-09-21",
+    "macrostructure": "Narrative Workflow",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm-signal",
+    "vibe": "programming board, strength gym, no gloss",
+    "enrichment": "none",
+    "brief": "fitness demo template (site #13 of 29)"
+  },
+  {
+    "date": "2026-09-21",
     "macrostructure": "Letter",
     "theme": "custom",
     "theme_axes": "light / classical-serif / chromatic-green",

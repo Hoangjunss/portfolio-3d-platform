@@ -1,0 +1,452 @@
+/* Hallmark · macrostructure: Narrative Workflow · genre: editorial · tone: disciplined / physical
+ * theme: custom · vibe: "programming board, strength gym, no gloss"
+ * paper oklch(97% 0.004 80) · accent oklch(63% 0.185 45) signal-orange
+ * display: Barlow 800/900 (display-heavy) · body: Work Sans
+ * axes: light / display-heavy / warm-signal — differs from the event site
+ *       (dark / display-condensed / chromatic-magenta) on all three, which matters because both
+ *       briefs point at the same high-contrast-plus-one-accent family
+ * enrichment: none (typography only; the brief explicitly rejects stock gym photography)
+ * pre-emit critique: P4 H5 E4 S5 R5 V4
+ */
+
+/* Fonts load in app/layout.tsx via next/font/google, subsets ["latin", "vietnamese"], and arrive
+ * as --font-display-face / --font-body-face. Never swap these for literal family names: next/font
+ * registers a hashed family, so a literal resolves to nothing and the page silently falls back.
+ * That has now shipped twice in this repo. */
+
+:root {
+  /* High-contrast neutral ground. Chroma is kept near zero so the single accent does all the work. */
+  --color-paper:      oklch(97% 0.004 80);
+  --color-paper-2:    oklch(93.5% 0.005 80);
+  --color-paper-3:    oklch(89% 0.006 80);
+  --color-rule:       oklch(82% 0.006 80);
+  --color-muted:      oklch(48% 0.008 70);
+  --color-ink:        oklch(18% 0.006 80);
+  --color-accent:     oklch(63% 0.185 45);
+  --color-accent-dim: oklch(52% 0.150 45);
+  --color-focus:      oklch(55% 0.170 45);
+
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
+  --font-body:    var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs:   0.78rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-md:   1.125rem;
+  --text-lg:   1.5rem;
+  --text-xl:   2rem;
+  --text-2xl:  2.75rem;
+  --text-display: clamp(2.8rem, 1.5rem + 5.4vw, 5.5rem);
+
+  /* 4pt scale */
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4.5rem;
+
+  --rule-hair: 1px;
+  --rule-bold: 4px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in:     cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --dur-short: 120ms;
+  --dur-mid:   200ms;
+
+  --measure: 64ch;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+}
+
+/* clip, never hidden — hidden breaks position:sticky in some engines */
+html, body { overflow-x: clip; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.55;
+  text-rendering: optimizeLegibility;
+}
+
+/* Roman, heavy, tight. Weight is the physical signal here, not width. */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  margin: 0;
+}
+
+p { margin: 0; max-width: var(--measure); }
+
+a { color: var(--color-ink); text-underline-offset: 0.18em; }
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Hero (tk-hero) */
+.tk-hero {
+  padding: var(--space-3xl) var(--gutter);
+  border-bottom: var(--rule-bold) solid var(--color-ink);
+  background-color: var(--color-paper);
+  background-size: cover;
+  background-position: center;
+}
+
+.tk-hero h1 {
+  font-size: var(--text-display);
+  font-weight: 900;
+  max-width: 14ch;
+  margin-bottom: var(--space-lg);
+}
+
+.tk-hero p {
+  font-size: var(--text-md);
+  color: var(--color-muted);
+  max-width: 50ch;
+  margin-bottom: var(--space-xl);
+}
+
+.tk-hero a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-xl);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-ink);
+  border: var(--rule-hair) solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-hero a:hover { background: var(--color-accent); border-color: var(--color-accent); }
+.tk-hero a:active { transform: translateY(1px); }
+
+/* Numbered stages — Narrative Workflow.
+   The number sits directly above its heading in the same column. A number in a left margin with the
+   heading beside it is the templated-editorial pattern, and it collapses badly at 320px anyway. */
+.stage {
+  padding: var(--space-2xl) var(--gutter);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.stage-number {
+  display: block;
+  margin-bottom: var(--space-2xs);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.stage > h2 {
+  font-size: var(--text-xl);
+  margin-bottom: var(--space-md);
+}
+
+.stage > p { color: var(--color-muted); margin-bottom: var(--space-lg); }
+
+/* Class schedule (tk-record-table)
+   Rendered read-only: with no onEdit/onDelete the kit omits the Actions column entirely, so a
+   visitor is never shown Edit or Delete on a published timetable. The table scrolls rather than
+   crushing its columns on a narrow screen. */
+.tk-record-table { display: grid; gap: var(--space-md); }
+
+.tk-record-table > label {
+  display: grid;
+  gap: var(--space-2xs);
+  max-width: 22rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.tk-record-table input {
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-record-table input:hover { border-color: var(--color-muted); }
+
+.tk-record-table > table {
+  width: 100%;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.tk-record-table th {
+  padding: var(--space-sm);
+  text-align: left;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-ink);
+}
+
+.tk-record-table td {
+  padding: var(--space-sm);
+  font-size: var(--text-sm);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
+.tk-record-table tbody tr:hover td { background: var(--color-paper-2); }
+
+/* Booking controls — page-local, since the kit's table has no per-row action slot in read-only
+   mode and this plan does not add one. */
+.booking-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding-top: var(--space-md);
+}
+
+.booking-controls button {
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  background: transparent;
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+}
+
+.booking-controls button:hover { background: var(--color-ink); color: var(--color-paper); }
+.booking-controls button:active { transform: translateY(1px); }
+
+.booking-controls button[aria-pressed='true'] {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-paper);
+}
+
+.booking-controls button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Trainers (tk-people-grid) */
+.tk-people-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-people-grid > li { min-width: 0; }
+
+.tk-people-grid > li > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-sm);
+  filter: grayscale(1) contrast(1.1);
+  transition: filter var(--dur-mid) var(--ease-out);
+}
+
+.tk-people-grid > li:hover > img { filter: contrast(1.05); }
+.tk-people-grid > li > h3 { font-size: var(--text-md); }
+.tk-people-grid > li > p { font-size: var(--text-sm); color: var(--color-muted); }
+
+/* Membership (tk-priced-item-grid) */
+.tk-priced-item-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-lg);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-priced-item-grid > li {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border: 2px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+}
+
+.tk-priced-item-grid > li > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+.tk-priced-item-grid > li > h3 { font-size: var(--text-md); }
+
+.tk-priced-item-grid > li > span {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.tk-priced-item-grid > li > button {
+  margin-top: auto;
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-ink);
+  border: var(--rule-hair) solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-priced-item-grid > li > button:hover { background: var(--color-accent); border-color: var(--color-accent); }
+.tk-priced-item-grid > li > button:active { transform: translateY(1px); }
+.tk-priced-item-grid > li > button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* My classes (tk-saved-items-panel) */
+.tk-saved-items-panel,
+.tk-saved-items-empty {
+  padding: var(--space-lg);
+  background: var(--color-paper-2);
+  border-left: var(--rule-bold) solid var(--color-accent);
+}
+
+.tk-saved-items-empty { color: var(--color-muted); font-size: var(--text-sm); }
+
+.tk-saved-items-panel { list-style: none; margin: 0; display: grid; gap: var(--space-xs); }
+
+.tk-saved-items-panel > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-width: 0;
+  padding-block: var(--space-2xs);
+}
+
+.tk-saved-items-panel > li > span { min-width: 0; overflow-wrap: anywhere; font-size: var(--text-sm); }
+
+.tk-saved-items-panel button {
+  flex: none;
+  min-height: 44px;
+  padding: var(--space-2xs) var(--space-sm);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  background: transparent;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-saved-items-panel button:hover { border-color: var(--color-accent); }
+.tk-saved-items-panel button:active { transform: translateY(1px); }
+.tk-saved-items-panel button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Footer (tk-footer) */
+.tk-footer {
+  padding: var(--space-xl) var(--gutter) var(--space-2xl);
+  border-top: var(--rule-bold) solid var(--color-ink);
+  font-size: var(--text-sm);
+}
+
+.tk-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md) var(--space-lg);
+}
+
+.tk-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tk-footer nav a:hover { color: var(--color-accent); }
+
+.tk-footer-social { margin-top: var(--space-md); }
+
+/* Wider viewports. Below 768 everything is one column, per the mobile floor. */
+@media (min-width: 768px) {
+  .tk-people-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tk-priced-item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tk-record-table > table { display: table; }
+}
+
+@media (min-width: 1024px) {
+  .tk-people-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tk-hero a:active,
+  .booking-controls button:active,
+  .tk-priced-item-grid > li > button:active,
+  .tk-saved-items-panel button:active { transform: none; }
+
+  .tk-people-grid > li > img { filter: none; }
+}

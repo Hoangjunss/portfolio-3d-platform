@@ -46,6 +46,15 @@
   },
   {
     "date": "2026-09-21",
+    "macrostructure": "Structured Grid",
+    "theme": "custom",
+    "theme_axes": "light / crisp-grotesque / cool-lapis-brass",
+    "vibe": "authoritative consultancy, high-trust, structured, precision-crafted",
+    "enrichment": "none",
+    "brief": "Thang Long Consulting Group - corporate demo template (site #1 of 29)"
+  },
+  {
+    "date": "2026-09-21",
     "macrostructure": "Manifesto",
     "theme": "custom",
     "theme_axes": "dark / display-condensed / chromatic-magenta",

@@ -38,4 +38,11 @@ describe('RecordTable', () => {
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
     expect(onDelete).toHaveBeenCalledWith('1');
   });
+
+  it('renders no Actions column and no row buttons when neither handler is given', () => {
+    render(<RecordTable columns={columns} rows={[{ id: '1', name: 'Mai', email: 'mai@example.com' }]} />);
+    expect(screen.queryByRole('columnheader', { name: /actions/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  });
 });

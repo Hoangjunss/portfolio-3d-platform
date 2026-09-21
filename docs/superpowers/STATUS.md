@@ -40,7 +40,7 @@
 | 17 task 0 | Bỏ đường ACME chết khỏi `00-redirect.conf` — đóng AC-01 | `416b58e` |
 | 17 task 1 | GitHub Actions test→build→deploy, tag theo SHA, `.env` ghi lúc deploy | `cb1adf1` |
 
-Tiến độ: **18b → 26 XONG** (18b, 19, 19b, 20, 21, 22, 23, 24, 25, 26) — backend **174/174**, frontend **100/100**. **Còn lại: 27, 28.** **Nhớ `export JAVA_HOME="C:/Program Files/Java/jdk-21.0.11"` trước mọi `mvn`.** **Handoff:** viết file + commit TRƯỚC, verify SAU; không nêu lệnh full `mvn test` hay tổng số pass; kiểm `git log --diff-filter=A` trước khi tin nhãn `Create:` (plan 25 và 26 đều gán sai). **Nợ dọn dẹp admin (5 mục):** tham số `username` chết trong `MediaService.delete`; alert "Unauthorized" nháy khi điều hướng; `MediaGrid` báo "Đã sao chép" khi không có Clipboard API; **4 chuỗi tiếng Anh** trong UI tiếng Việt; **hàng mở rộng ở `/admin/errors` chỉ dùng được bằng chuột** (thiếu `tabIndex`/`onKeyDown`/`aria-expanded`). **Nợ CSS:** 4 `!important` trong `contact-form.css`.
+Tiến độ: **18b → 27 XONG**, **plan 30 XONG**, **plan 40 XONG** (site `education` build xanh, `npm test` 5/5 + build gate 1/1). Backend **187/187**, frontend **106/106**, template-kit **47/47**. **Ba bài học áp cho cả 29 site package** (`docs/reviews/2026-09-21-code-review-plan-40.md`): (1) `vitest.config` phải chép từ `frontend/` chứ không phải `template-kit/` — app Next buộc `jsx: preserve` nên cần override `oxc.jsx.runtime`; (2) cần `resolve.dedupe: ['react','react-dom']` vì kit là `file:` dependency mang React riêng; (3) ghim `@types/node@22.x` — dòng 24.x đòi TS ≥ 5.8 trong khi repo chạy 5.6.3. **Còn lại: 28, và 28 site (31–39, 41–59).** **CHƯA AI RÀ:** spec 2b + 63 plan file của chương trình 29 site.
 
 ---
 

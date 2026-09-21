@@ -95,3 +95,59 @@ chặn nhưng làm build chậm, và có thể liên quan tới B-03.
 `*.tsbuildinfo`, `next-env.d.ts` — trước đó không được che, ở cả `frontend/`).
 
 **Plan 40 chưa xong.** B-03 phải đóng trước khi site này coi là ship được.
+
+---
+
+# Phụ lục — đã xanh (2026-09-21)
+
+`npm run build` xuất tĩnh thành công; `npm test` chạy cả hai runner: **vitest 5/5**, **build gate 1/1**.
+Không hồi quy: template-kit **47/47**, frontend **106/106**, backend **187/187**.
+
+**B-03 đóng.** `--traceResolution` chỉ thẳng nguyên nhân, không phải đoán:
+
+    'types' field 'index.d.ts' references .../@types/node/index.d.ts
+    candidate module location '.../@types/node/ts5.6/index.d.ts'
+    ======== Type reference directive 'node' was not resolved. ========
+
+`@types/node@24.13.6` khai `typesVersions: {"<=5.6": ["ts5.6/*"], "<=5.7": ["ts5.7/*"]}` nhưng
+**không ship thư mục `ts5.6/`**. TypeScript 5.6.3 khớp `<=5.6`, bị chuyển vào một đường dẫn không
+tồn tại. Tức gói types đó đòi TS ≥ 5.8.
+
+Ghim `@types/node` xuống `22.20.4` — bản **có** `ts5.6/` — thay vì nâng TypeScript ở một package,
+vì `frontend` và `template-kit` đều chạy 5.6.3 và nâng lẻ sẽ làm phân mảnh monorepo.
+
+## Ba lỗi nữa lộ ra sau khi B-03 được gỡ
+
+**E-01 — native binary tải cụt.** Cùng một gói: rolldown binding ở `template-kit` là
+**20.796.928 B**, ở `education` chỉ **6.026.240 B**. Đó cũng là lý do binary SWC của Next trong
+cùng thư mục báo *"not a valid Win32 application"*. `npm ci` sạch khôi phục cả hai. Lỗi môi trường,
+không phải lỗi code — nhưng nó giả trang thành lỗi code rất khéo.
+
+**E-02 — `vitest.config.ts` chép nhầm tiền lệ.** Nó chép từ `template-kit`, nơi tsconfig đặt
+`"jsx": "react-jsx"` nên oxc tự transform. `education` là app Next nên **buộc** `"jsx": "preserve"`,
+và oxc phải được chỉ định runtime tường minh — đúng override mà `frontend/` đã có sẵn. Mọi `.tsx`
+test đều không parse nổi. **Điều này sẽ đúng với cả 29 site package.**
+
+**E-03 — hai bản React.** `@portfolio/template-kit` là `file:` dependency nên npm symlink kèm React
+riêng; hook của kit chạy trên bản đó còn test render bằng bản của site → `Invalid hook call`.
+`resolve.dedupe: ['react','react-dom']` xử lý. Next build không dính vì tsconfig `paths` phân giải
+kit về source nằm trong chính graph của site. **Cũng sẽ đúng với cả 29 site.**
+
+## Hai lỗi nhỏ trong chính test
+
+- `build-gate.test.mjs` import `check-thumbnail.mjs` qua `../../` — đúng với cwd của script build,
+  nhưng thiếu một cấp khi tính từ trong `scripts/`, nên file không nạp được.
+- Nó chạy một bản build thật ~16s, quá **timeout mặc định 5s** của vitest. Đã loại `scripts/` khỏi
+  vitest và cho `npm test` chạy cả hai runner.
+
+## M-01 đóng
+
+Đã bỏ `#about` và `#contact` khỏi footer — không id nào trên trang khớp. Cùng loại `#templates` ở
+plan 19.
+
+## Còn mở — ghi lại, không sửa trong lượt này
+
+`EnrollmentSection` bắt lỗi `localStorage` rồi chỉ `console.error`. Không có xác nhận giả (đúng
+yêu cầu), nhưng cũng **không có phản hồi nào cho người dùng**: Safari private hoặc hết quota thì
+bấm "Đăng ký" không xảy ra gì và không ai biết vì sao. Mở rộng phạm vi ngoài mục tiêu "cho xanh",
+nên để lại.

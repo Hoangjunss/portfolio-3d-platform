@@ -1,0 +1,412 @@
+/* Hallmark · macrostructure: Bento Grid · genre: editorial · tone: relaxed / premium / coastal
+ * theme: custom · vibe: "the resort at dusk, not the brochure at midday"
+ * paper oklch(20% 0.022 250) · accent oklch(75% 0.105 78) warm-sand
+ * display: Playfair Display (high-contrast-serif) · body: Manrope
+ * axes: dark / high-contrast-serif / warm-sand — differs from the nonprofit site
+ *       (light / roman-serif / cool-indigo) on all three
+ * enrichment: none (typography only; the map block is an honest labelled placeholder, not a
+ *             fabricated map image)
+ * pre-emit critique: P4 H5 E4 S5 R4 V5
+ */
+
+/* Fonts load in app/layout.tsx via next/font/google, subsets ["latin", "vietnamese"], arriving as
+ * --font-display-face / --font-body-face. Never swap these for literal family names; next/font
+ * registers a hashed family and a literal resolves to nothing. The vietnamese subset matters here:
+ * the resort is Vịnh Ngọc and its own name is the largest type on the page. */
+
+:root {
+  --color-paper:      oklch(20% 0.022 250);
+  --color-paper-2:    oklch(25% 0.026 250);
+  --color-paper-3:    oklch(30% 0.028 250);
+  --color-rule:       oklch(36% 0.024 250);
+  --color-muted:      oklch(72% 0.016 250);
+  --color-ink:        oklch(96% 0.008 250);
+  --color-accent:     oklch(75% 0.105 78);
+  --color-accent-dim: oklch(62% 0.090 78);
+  --color-focus:      oklch(82% 0.120 78);
+
+  --font-display: var(--font-display-face), ui-serif, Georgia, serif;
+  --font-body:    var(--font-body-face), ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs:   0.79rem;
+  --text-sm:   0.889rem;
+  --text-base: 1rem;
+  --text-md:   1.15rem;
+  --text-lg:   1.5rem;
+  --text-xl:   2rem;
+  --text-2xl:  2.7rem;
+  --text-display: clamp(2.6rem, 1.5rem + 4.6vw, 5rem);
+
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4.5rem;
+
+  --rule-hair: 1px;
+  --rule-bold: 2px;
+  --radius-sm: 3px;
+  --radius-md: 8px;
+
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in:     cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  --ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --dur-short: 150ms;
+  --dur-mid:   260ms;
+
+  --measure: 62ch;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+}
+
+html, body { overflow-x: clip; }
+html { -webkit-text-size-adjust: 100%; color-scheme: dark; }
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+}
+
+/* Roman only. A high-contrast serif in italic is the fastest way to make a resort page look like
+   every other resort page. */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.005em;
+  overflow-wrap: anywhere;
+  min-width: 0;
+  margin: 0;
+}
+
+p { margin: 0; max-width: var(--measure); color: var(--color-muted); }
+a { color: var(--color-accent); text-underline-offset: 0.2em; }
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Hero (tk-hero) */
+.tk-hero {
+  padding: var(--space-3xl) var(--gutter);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  background-color: var(--color-paper);
+  background-size: cover;
+  background-position: center;
+}
+
+.tk-hero h1 { font-size: var(--text-display); max-width: 17ch; margin-bottom: var(--space-lg); }
+.tk-hero p  { font-size: var(--text-md); max-width: 50ch; margin-bottom: var(--space-xl); }
+
+.tk-hero a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: var(--space-sm) var(--space-xl);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-hero a:hover { background: var(--color-accent-dim); border-color: var(--color-accent-dim); }
+.tk-hero a:active { transform: translateY(1px); }
+
+/* Bento section wrapper. */
+.bento-section { padding: var(--space-2xl) var(--gutter); }
+
+.bento-section > h2 { font-size: var(--text-xl); margin-bottom: var(--space-lg); }
+
+/* Rooms and packages (tk-priced-item-grid)
+   Bento Grid: the first tile spans, so the grid reads as an irregular arrangement rather than a
+   row of identical cards. Price sits in the display face because it is the figure a guest scans
+   for, not running text. */
+.tk-priced-item-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-md);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-priced-item-grid > li {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  background: var(--color-paper-2);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-md);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-priced-item-grid > li:hover { border-color: var(--color-accent); }
+
+.tk-priced-item-grid > li > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+
+.tk-priced-item-grid > li > h3 { font-size: var(--text-lg); }
+
+.tk-priced-item-grid > li > span {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent);
+}
+
+.tk-priced-item-grid > li > button {
+  margin-top: auto;
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-body);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink);
+  background: transparent;
+  border: var(--rule-bold) solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+}
+
+.tk-priced-item-grid > li > button:hover { background: var(--color-accent); color: var(--color-paper); }
+.tk-priced-item-grid > li > button:active { transform: translateY(1px); }
+.tk-priced-item-grid > li > button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* My trip (tk-saved-items-panel) + running subtotal */
+.tk-saved-items-panel,
+.tk-saved-items-empty {
+  padding: var(--space-lg);
+  background: var(--color-paper-2);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-md);
+}
+
+.tk-saved-items-empty { color: var(--color-muted); font-size: var(--text-sm); }
+.tk-saved-items-panel { list-style: none; margin: 0; display: grid; gap: var(--space-xs); }
+
+.tk-saved-items-panel > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-width: 0;
+  padding-block: var(--space-2xs);
+}
+
+.tk-saved-items-panel > li > span { min-width: 0; overflow-wrap: anywhere; font-size: var(--text-sm); }
+
+.tk-saved-items-panel button {
+  flex: none;
+  min-height: 44px;
+  padding: var(--space-2xs) var(--space-sm);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  background: transparent;
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out);
+}
+
+.tk-saved-items-panel button:hover { border-color: var(--color-accent); color: var(--color-ink); }
+.tk-saved-items-panel button:active { transform: translateY(1px); }
+.tk-saved-items-panel button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* The subtotal is computed from what the visitor picked, so it is real arithmetic rather than a
+   fabricated figure -- which is why it is allowed to be this prominent. */
+.trip-subtotal {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: var(--rule-hair) solid var(--color-rule);
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+.trip-subtotal strong {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+/* Amenities (tk-item-grid) — the small tiles of the bento. */
+.tk-item-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-md);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tk-item-grid > li {
+  min-width: 0;
+  padding: var(--space-md);
+  background: var(--color-paper-2);
+  border-radius: var(--radius-md);
+}
+
+.tk-item-grid > li > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.tk-item-grid > li > h3 { font-size: var(--text-md); margin-bottom: var(--space-2xs); }
+.tk-item-grid > li > p  { font-size: var(--text-sm); }
+
+/* Static map placeholder — page-level, not a kit component.
+   It is labelled as a placeholder on purpose. A decorative fake map would be inventing content
+   about a place that does not exist, so the block states what it is and what would replace it. */
+.map-placeholder {
+  margin-top: var(--space-md);
+  padding: var(--space-2xl) var(--space-lg);
+  text-align: center;
+  background: var(--color-paper-3);
+  border: var(--rule-hair) dashed var(--color-rule);
+  border-radius: var(--radius-md);
+}
+
+.map-placeholder figcaption,
+.map-placeholder p {
+  margin: 0 auto;
+  max-width: 44ch;
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+}
+
+/* Booking inquiry (tk-inquiry-form) */
+.tk-inquiry-form {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 34rem;
+}
+
+.tk-inquiry-form label {
+  display: grid;
+  gap: var(--space-2xs);
+  font-size: var(--text-sm);
+  letter-spacing: 0.03em;
+  color: var(--color-muted);
+}
+
+.tk-inquiry-form input,
+.tk-inquiry-form textarea {
+  min-height: 44px;
+  padding: var(--space-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  background: var(--color-paper-2);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--dur-short) var(--ease-out);
+}
+
+.tk-inquiry-form textarea { min-height: 7rem; resize: vertical; }
+.tk-inquiry-form input:hover:not(:disabled),
+.tk-inquiry-form textarea:hover:not(:disabled) { border-color: var(--color-accent); }
+.tk-inquiry-form input:disabled,
+.tk-inquiry-form textarea:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.tk-inquiry-form button {
+  justify-self: start;
+  min-height: 48px;
+  margin-top: var(--space-xs);
+  padding: var(--space-sm) var(--space-xl);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border: var(--rule-hair) solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-short) var(--ease-out);
+}
+
+.tk-inquiry-form button:hover:not(:disabled) { background: var(--color-accent-dim); border-color: var(--color-accent-dim); }
+.tk-inquiry-form button:active:not(:disabled) { transform: translateY(1px); }
+.tk-inquiry-form button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.tk-inquiry-form [role='status'] { color: var(--color-accent); font-size: var(--text-sm); }
+.tk-inquiry-form [role='alert']  { color: var(--color-ink);    font-size: var(--text-sm); }
+
+/* Footer (tk-footer) */
+.tk-footer {
+  padding: var(--space-xl) var(--gutter) var(--space-2xl);
+  border-top: var(--rule-hair) solid var(--color-rule);
+  font-size: var(--text-sm);
+}
+
+.tk-footer nav { display: flex; flex-wrap: wrap; gap: var(--space-md) var(--space-lg); }
+
+.tk-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--color-ink);
+  text-decoration: none;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.tk-footer nav a:hover { color: var(--color-accent); }
+.tk-footer-social { margin-top: var(--space-md); }
+
+/* Wider viewports — this is where the bento becomes irregular. Below 768 it is one column. */
+@media (min-width: 768px) {
+  .tk-priced-item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tk-priced-item-grid > li:first-child { grid-column: span 2; }
+  .tk-item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  .tk-priced-item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tk-priced-item-grid > li:first-child { grid-column: span 2; grid-row: span 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tk-hero a:active,
+  .tk-priced-item-grid > li > button:active,
+  .tk-saved-items-panel button:active,
+  .tk-inquiry-form button:active:not(:disabled) { transform: none; }
+}

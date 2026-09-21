@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-09-21",
+    "macrostructure": "Bento Grid",
+    "theme": "custom",
+    "theme_axes": "dark / high-contrast-serif / warm-sand",
+    "vibe": "the resort at dusk, not the brochure at midday",
+    "enrichment": "none",
+    "brief": "Vinh Ngoc Resort & Spa - travel demo template (site #15 of 29)"
+  },
+  {
+    "date": "2026-09-21",
     "macrostructure": "Long Document",
     "theme": "custom",
     "theme_axes": "light / roman-serif / cool-indigo",

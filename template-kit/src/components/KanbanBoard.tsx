@@ -1,3 +1,5 @@
+'use client';
+
 export interface KanbanColumn {
   key: string;
   label: string;

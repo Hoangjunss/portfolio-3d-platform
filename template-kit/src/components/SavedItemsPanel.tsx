@@ -1,3 +1,5 @@
+'use client';
+
 export interface SavedItemsPanelProps<T extends { id: string }> {
   items: T[];
   emptyLabel: string;

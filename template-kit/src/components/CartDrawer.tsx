@@ -1,3 +1,5 @@
+'use client';
+
 export interface CartLine {
   id: string;
   title: string;

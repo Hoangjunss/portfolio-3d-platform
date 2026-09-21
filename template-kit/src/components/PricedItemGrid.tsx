@@ -1,3 +1,5 @@
+'use client';
+
 export interface PricedItem {
   id: string;
   title: string;

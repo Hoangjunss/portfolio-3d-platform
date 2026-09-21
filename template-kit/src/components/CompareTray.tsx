@@ -1,3 +1,5 @@
+'use client';
+
 export interface CompareTrayProps<T extends { id: string }> {
   items: T[];
   onRemove: (id: string) => void;

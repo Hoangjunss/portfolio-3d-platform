@@ -1,6 +1,15 @@
 [
   {
     "date": "2026-09-21",
+    "macrostructure": "Split Studio",
+    "theme": "custom",
+    "theme_axes": "light / mono / cool-blueprint",
+    "vibe": "a drawing, not a brochure",
+    "enrichment": "none",
+    "brief": "construction demo template (site #16 of 29)"
+  },
+  {
+    "date": "2026-09-21",
     "macrostructure": "Bento Grid",
     "theme": "custom",
     "theme_axes": "dark / high-contrast-serif / warm-sand",

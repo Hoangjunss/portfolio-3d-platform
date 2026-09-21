@@ -11,4 +11,21 @@ describe('PricedItemGrid', () => {
   it('renders without throwing for an empty items array', () => {
     render(<PricedItemGrid currency="VND" items={[]} />);
   });
+
+  it('marks only the selected plan and exposes its status', () => {
+    render(
+      <PricedItemGrid
+        currency="USD"
+        selectedItemId="team"
+        items={[
+          { id: 'starter', title: 'Starter', price: 29 },
+          { id: 'team', title: 'Team', price: 79 },
+        ]}
+      />,
+    );
+
+    expect(screen.getByText('Starter').closest('li')).not.toHaveAttribute('data-selected');
+    expect(screen.getByText('Team').closest('li')).toHaveAttribute('data-selected', 'true');
+    expect(screen.getByText('Team').closest('li')).toHaveTextContent('Your plan');
+  });
 });

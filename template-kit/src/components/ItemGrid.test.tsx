@@ -11,4 +11,10 @@ describe('ItemGrid', () => {
   it('renders without throwing for an empty items array', () => {
     render(<ItemGrid items={[]} />);
   });
+
+  it('accepts a compact six-column grid', () => {
+    render(<ItemGrid columns={6} items={[{ id: '1', title: 'Slack', description: '' }]} />);
+
+    expect(screen.getByRole('list')).toHaveAttribute('data-columns', '6');
+  });
 });

@@ -8,7 +8,7 @@ export interface GridItem {
 
 export interface ItemGridProps {
   items: GridItem[];
-  columns?: 2 | 3 | 4;
+  columns?: 2 | 3 | 4 | 6;
 }
 
 export function ItemGrid({ items, columns = 3 }: ItemGridProps) {

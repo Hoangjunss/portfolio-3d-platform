@@ -1,5 +1,6 @@
 import { Hero, Timeline, PeopleGrid, PricedItemGrid, Footer } from '@portfolio/template-kit';
 import { AGENDA, SPEAKERS, TICKETS } from '../data/seed';
+import { ScheduleSection } from './ScheduleSection';
 
 // Only sections this page actually renders. Avoid dead anchors (#about, #contact).
 const FOOTER_LINKS = [
@@ -17,7 +18,7 @@ export default function EventPage() {
         ctaLabel="Đăng ký vé"
         ctaHref="#tickets"
       />
-      {/* Interactive section slot: Task 3 wires ScheduleSection client component here */}
+      <ScheduleSection agenda={AGENDA} />
       <section id="agenda" aria-label="Chương trình hội nghị">
         <Timeline entries={AGENDA} orientation="horizontal" />
       </section>

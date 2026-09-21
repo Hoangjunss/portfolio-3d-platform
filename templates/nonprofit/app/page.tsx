@@ -1,5 +1,6 @@
 import { Hero, ItemGrid, StatBlock, Footer, type FooterLink } from '@portfolio/template-kit';
 import { CAUSES, IMPACT_STATS } from '../data/seed';
+import { PledgeSection } from './PledgeSection';
 
 const FOOTER_LINKS: FooterLink[] = [
   { label: 'Programs', href: '#programs' },
@@ -29,9 +30,7 @@ export default function NonprofitPage() {
           These are illustrative example figures for a fictional organisation, authored for this demo scaffold only, and are not actual claims about any real charity.
         </p>
       </section>
-      <section id="pledge" className="doc-section">
-        {/* Interactive pledge section wired in Task 3 */}
-      </section>
+      <PledgeSection />
       <Footer links={FOOTER_LINKS} showSocial={true} />
     </main>
   );
